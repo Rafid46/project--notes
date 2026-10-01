@@ -1,131 +1,106 @@
 "use client";
 
+import {
+  FileText,
+  Presentation,
+  LayoutGrid,
+  Columns2,
+  Columns4,
+  User,
+  Search,
+  Plus,
+} from "lucide-react";
 import Dock from "./dock";
-import ViewDropdown from "./view-dropdown";
 import type { ViewMode, DockItemData } from "../types";
 
 interface HeaderProps {
   currentView: ViewMode;
   onSelectView: (view: ViewMode) => void;
   activeNoteTitle?: string;
+  onOpenAddNote?: (e: React.MouseEvent) => void;
 }
 
 export default function Header({
   currentView,
   onSelectView,
   activeNoteTitle = "All Notes",
+  onOpenAddNote,
 }: HeaderProps) {
   const dockItems: DockItemData[] = [
     {
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M2 3h20" />
-          <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3" />
-          <path d="m7 21 5-5 5 5" />
-        </svg>
-      ),
+      icon: <Presentation size={16} />,
       label: "Whiteboard",
       onClick: () => onSelectView("whiteboard"),
-      className: currentView === "whiteboard" ? "ring-2 ring-white" : "",
+      isActive: currentView === "whiteboard",
     },
     {
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect width="7" height="13" x="3" y="3" rx="1" />
-          <rect width="7" height="7" x="14" y="3" rx="1" />
-          <rect width="7" height="7" x="3" y="14" rx="1" />
-          <rect width="7" height="13" x="14" y="8" rx="1" />
-        </svg>
-      ),
+      icon: <LayoutGrid size={16} />,
       label: "Masonry Grid",
       onClick: () => onSelectView("masonry"),
-      className: currentView === "masonry" ? "ring-2 ring-white" : "",
+      isActive: currentView === "masonry",
     },
     {
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect width="7" height="18" x="3" y="3" rx="1" />
-          <rect width="7" height="18" x="14" y="3" rx="1" />
-        </svg>
-      ),
+      icon: <Columns2 size={16} />,
       label: "Grid 2",
       onClick: () => onSelectView("grid-2"),
-      className: currentView === "grid-2" ? "ring-2 ring-white" : "",
+      isActive: currentView === "grid-2",
     },
     {
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect width="4" height="18" x="2" y="3" rx="1" />
-          <rect width="4" height="18" x="8" y="3" rx="1" />
-          <rect width="4" height="18" x="14" y="3" rx="1" />
-          <rect width="4" height="18" x="20" y="3" rx="1" />
-        </svg>
-      ),
+      icon: <Columns4 size={16} />,
       label: "Grid 4",
       onClick: () => onSelectView("grid-4"),
-      className: currentView === "grid-4" ? "ring-2 ring-white" : "",
+      isActive: currentView === "grid-4",
     },
   ];
 
   return (
-    <header className="relative flex h-20 items-center justify-between border-b border-zinc-200 bg-white/80 px-6 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/80">
-      <div className="flex items-center gap-3">
-        <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-          {activeNoteTitle}
-        </h1>
+    <header className="absolute top-6 inset-x-0 z-30 flex items-center justify-between px-6 pointer-events-none">
+      <div className="pointer-events-auto flex items-center">
+        <div className="flex h-10 items-center gap-2.5 rounded-full bg-[#EDEDED] px-4 shadow-xs">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-900 text-white">
+            <FileText size={13} />
+          </div>
+          <span className="text-sm font-semibold text-zinc-900">Notes</span>
+        </div>
       </div>
 
-      <div className="flex items-center justify-center">
-        <Dock
-          items={dockItems}
-          panelHeight={68}
-          baseItemSize={50}
-          magnification={70}
-        />
+      <div className="pointer-events-auto absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <div className="group relative flex h-[52px] items-center justify-start rounded-full bg-[#EDEDED] shadow-xs transition-all duration-300 hover:w-64 focus-within:w-64 w-[52px] overflow-hidden">
+          <button
+            type="button"
+            aria-label="Search"
+            className="flex h-[52px] w-[52px] shrink-0 items-center justify-center text-zinc-700 hover:text-zinc-900 transition-colors"
+          >
+            <Search size={18} />
+          </button>
+          <input
+            type="text"
+            placeholder="Search notes..."
+            className="h-full w-full bg-transparent px-2 text-sm text-zinc-900 placeholder-zinc-400 outline-none opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100"
+          />
+        </div>
+
+        <Dock items={dockItems} />
+
+        <button
+          type="button"
+          onClick={onOpenAddNote}
+          aria-label="Add Note"
+          className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-[#383838] text-white shadow-xs transition-colors hover:opacity-80 focus:outline-none cursor-pointer"
+        >
+          <Plus size={18} />
+          <span className="text-sm font-semibold">Note</span>
+        </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <ViewDropdown currentView={currentView} onSelectView={onSelectView} />
+      <div className="pointer-events-auto flex items-center justify-end gap-2">
+        <button
+          type="button"
+          aria-label="User Profile"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EDEDED] text-zinc-700 shadow-xs transition-colors hover:bg-zinc-200/80 hover:text-zinc-900 focus:outline-none"
+        >
+          <User size={18} />
+        </button>
       </div>
     </header>
   );

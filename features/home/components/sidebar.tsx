@@ -1,24 +1,27 @@
 "use client";
 
 import { useState } from "react";
+import { ChevronRight, Plus } from "lucide-react";
 import type { NoteItem } from "../types";
 
 interface SidebarProps {
   notes: NoteItem[];
   selectedNoteId: string | null;
   onSelectNote: (noteId: string) => void;
-  isOpen: boolean;
-  onToggle: () => void;
+  onOpenAddSubnote?: (parentId: string, e: React.MouseEvent) => void;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 export default function Sidebar({
   notes,
   selectedNoteId,
   onSelectNote,
-  isOpen,
-  onToggle,
+  onOpenAddSubnote,
 }: SidebarProps) {
-  const [expandedNoteIds, setExpandedNoteIds] = useState<Record<string, boolean>>({
+  const [expandedNoteIds, setExpandedNoteIds] = useState<
+    Record<string, boolean>
+  >({
     "note-1": true,
     "note-2": true,
   });
@@ -31,53 +34,8 @@ export default function Sidebar({
   };
 
   return (
-    <aside
-      className={`relative flex flex-col border-r border-zinc-200 bg-zinc-50 transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-950 ${
-        isOpen ? "w-64" : "w-16"
-      }`}
-    >
-      <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
-        {isOpen && (
-          <div className="flex items-center gap-2">
-            <div className="h-5 w-5 rounded-md bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center">
-              <span className="text-xs font-bold text-white dark:text-zinc-900">N</span>
-            </div>
-            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              Project Notes
-            </span>
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={onToggle}
-          title={isOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-          className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-200/60 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-          aria-label="Toggle Sidebar"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-            <path d="M9 3v18" />
-          </svg>
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-2 py-3">
-        {isOpen && (
-          <div className="mb-2 px-2 text-xs font-semibold uppercase text-zinc-400 dark:text-zinc-500">
-            Notes & Subnotes
-          </div>
-        )}
-
+    <aside className="absolute top-20 bottom-6 left-6 z-30 flex w-64 flex-col bg-[#EDEDED] rounded-2xl overflow-hidden">
+      <div className="flex-1 overflow-y-auto px-3 py-3">
         <nav className="flex flex-col gap-1">
           {notes.map((note) => {
             const isExpanded = !!expandedNoteIds[note.id];
@@ -87,53 +45,57 @@ export default function Sidebar({
             return (
               <div key={note.id} className="flex flex-col">
                 <div
-                  className={`group flex items-center justify-between rounded-lg px-2 py-1.5 transition-colors ${
+                  className={`group flex h-[42px] items-center justify-between rounded-[10px] pl-4 pr-2 cursor-pointer transition-colors ${
                     isSelected
-                      ? "bg-zinc-200/70 font-medium text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                      : "text-zinc-700 hover:bg-zinc-200/40 dark:text-zinc-300 dark:hover:bg-zinc-900"
+                      ? "bg-white/80 font-medium text-zinc-900"
+                      : "text-zinc-700 hover:bg-zinc-200/60"
                   }`}
                 >
                   <button
                     type="button"
                     onClick={() => onSelectNote(note.id)}
-                    className="flex flex-1 items-center gap-2 overflow-hidden text-left text-sm"
+                    className="flex flex-1 h-full items-center gap-2 overflow-hidden text-left text-sm cursor-pointer"
                   >
                     <span
                       className="h-2 w-2 shrink-0 rounded-full"
                       style={{ backgroundColor: note.color || "#a1a1aa" }}
                     />
-                    {isOpen && (
-                      <span className="truncate">{note.title}</span>
-                    )}
+                    <span className="truncate">{note.title}</span>
                   </button>
 
-                  {isOpen && hasSubNotes && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
-                      onClick={() => toggleExpand(note.id)}
-                      className="flex h-5 w-5 items-center justify-center rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
-                      aria-label="Toggle Subnotes"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenAddSubnote?.(note.id, e);
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                      aria-label="Add Subnote"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={`transition-transform duration-150 ${isExpanded ? "rotate-90" : ""}`}
-                      >
-                        <path d="m9 18 6-6-6-6" />
-                      </svg>
+                      <Plus size={14} />
                     </button>
-                  )}
+                    {hasSubNotes && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleExpand(note.id);
+                        }}
+                        className="flex h-7 w-7 items-center justify-center rounded text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                        aria-label="Toggle Subnotes"
+                      >
+                        <ChevronRight
+                          size={12}
+                          className={`transition-transform duration-150 ${isExpanded ? "rotate-90" : ""}`}
+                        />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
-                {isOpen && hasSubNotes && isExpanded && (
-                  <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
+                {hasSubNotes && isExpanded && (
+                  <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-zinc-200 pl-2">
                     {note.subNotes?.map((sub) => {
                       const isSubSelected = selectedNoteId === sub.id;
                       return (
@@ -141,10 +103,10 @@ export default function Sidebar({
                           key={sub.id}
                           type="button"
                           onClick={() => onSelectNote(sub.id)}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-left text-xs transition-colors ${
+                          className={`flex h-[42px] items-center gap-2 rounded-lg px-2 text-left text-sm cursor-pointer transition-colors ${
                             isSubSelected
-                              ? "bg-zinc-200/70 font-medium text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                              : "text-zinc-600 hover:bg-zinc-200/40 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                              ? "bg-white/80 font-medium text-zinc-900 shadow-xs"
+                              : "text-zinc-600 hover:bg-zinc-200/60"
                           }`}
                         >
                           <span

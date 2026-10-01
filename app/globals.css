@@ -1,18 +1,22 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,100..900;1,100..900&display=swap");
 @import "../features/whiteboard/styles/styles.css";
 @import "tailwindcss";
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-  --ui-font: "Inter Tight", sans-serif !important;
+  --foreground: #f8f8f8;
+  --ui-font: var(--font-inter-tight), "Inter Tight", sans-serif !important;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Inter Tight", sans-serif;
-  --font-mono: "Inter Tight", monospace;
+  --color-f8f8f8: #f8f8f8;
+  --font-sans: var(--font-inter-tight), "Inter Tight", sans-serif;
+  --font-mono: var(--font-inter-tight), monospace;
+}
+
+.text-f8f8f8 {
+  color: #f8f8f8;
 }
 
 html,
@@ -24,5 +28,8 @@ body {
   overflow: hidden;
   background: var(--background);
   color: var(--foreground);
-  font-family: "Inter Tight", sans-serif;
+  font-family: var(--font-inter-tight), "Inter Tight", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }

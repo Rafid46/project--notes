@@ -133,11 +133,11 @@ export default function ViewDropdown({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-900 shadow-sm transition-colors hover:bg-zinc-50 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+        className="inline-flex items-center gap-2 rounded-full border border-zinc-300/70 bg-[#EDEDED] px-3.5 py-1.5 text-xs md:text-sm font-medium text-zinc-900 shadow-xs transition-colors hover:bg-zinc-200/70 focus:outline-none"
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <span className="text-zinc-500 dark:text-zinc-400">
+        <span className="text-zinc-500">
           {selectedOption.icon}
         </span>
         <span>{selectedOption.label}</span>
@@ -158,11 +158,11 @@ export default function ViewDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-1.5 w-48 origin-top-right rounded-lg border border-zinc-200 bg-white p-1 shadow-lg ring-1 ring-black/5 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:ring-white/5">
-          <div className="px-2 py-1.5 text-xs font-semibold uppercase text-zinc-500 dark:text-zinc-400">
+        <div className="absolute right-0 z-50 mt-1.5 w-48 origin-top-right rounded-lg border border-zinc-200 bg-white p-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+          <div className="px-2 py-1.5 text-xs font-semibold uppercase text-zinc-500">
             View Layout
           </div>
-          <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1" />
+          <div className="h-px bg-zinc-100 my-1" />
           {VIEW_OPTIONS.map((option) => {
             const isSelected = option.id === currentView;
             return (
@@ -175,12 +175,12 @@ export default function ViewDropdown({
                 }}
                 className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                   isSelected
-                    ? "bg-zinc-100 font-medium text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                    : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+                    ? "bg-zinc-100 font-medium text-zinc-900"
+                    : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-zinc-500 dark:text-zinc-400">
+                  <span className="text-zinc-500">
                     {option.icon}
                   </span>
                   <span>{option.label}</span>
@@ -196,7 +196,7 @@ export default function ViewDropdown({
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-zinc-900 dark:text-zinc-50"
+                    className="text-zinc-900"
                   >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>

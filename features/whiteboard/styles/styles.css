@@ -1,15 +1,15 @@
 .excalidraw,
 .excalidraw-container,
 .excalidraw-tooltip {
-  --ui-font: 'Inter Tight', sans-serif !important;
-  font-family: 'Inter Tight', sans-serif !important;
+  --ui-font: var(--font-inter-tight), "Inter Tight", sans-serif !important;
+  font-family: var(--font-inter-tight), "Inter Tight", sans-serif !important;
 }
 
 .excalidraw,
 .excalidraw :not(svg, svg *),
 .excalidraw-tooltip,
 .excalidraw-tooltip :not(svg, svg *) {
-  font-family: 'Inter Tight', sans-serif !important;
+  font-family: var(--font-inter-tight), "Inter Tight", sans-serif !important;
 }
 
 .excalidraw .layer-ui__wrapper,
@@ -26,7 +26,11 @@
 .excalidraw .welcome-screen-center,
 .excalidraw .welcome-screen-decorations,
 .excalidraw .encrypted-icon,
-.excalidraw .live-collaboration-trigger {
+.excalidraw .live-collaboration-trigger,
+.excalidraw .context-menu,
+.excalidraw .context-menu *,
+.excalidraw .popover:has(.context-menu),
+.popover:has(.context-menu) {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
