@@ -45,7 +45,7 @@ export default function Sidebar({
             return (
               <div key={note.id} className="flex flex-col">
                 <div
-                  className={`group flex h-[42px] items-center justify-between rounded-[10px] pl-4 pr-2 cursor-pointer transition-colors ${
+                  className={`group flex h-[52px] items-center justify-between rounded-[10px] pl-4 pr-2 cursor-pointer transition-colors ${
                     isSelected
                       ? "bg-white/80 font-medium text-zinc-900"
                       : "text-zinc-700 hover:bg-zinc-200/60"
@@ -70,10 +70,10 @@ export default function Sidebar({
                         e.stopPropagation();
                         onOpenAddSubnote?.(note.id, e);
                       }}
-                      className="flex h-7 w-7 items-center justify-center rounded text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                      className="bg-[#383838] rounded-xl text-white flex h-10 w-10 items-center justify-center rounded text-white  cursor-pointer"
                       aria-label="Add Subnote"
                     >
-                      <Plus size={14} />
+                      <Plus size={18} />
                     </button>
                     {hasSubNotes && (
                       <button
@@ -86,7 +86,7 @@ export default function Sidebar({
                         aria-label="Toggle Subnotes"
                       >
                         <ChevronRight
-                          size={12}
+                          size={16}
                           className={`transition-transform duration-150 ${isExpanded ? "rotate-90" : ""}`}
                         />
                       </button>
@@ -103,7 +103,7 @@ export default function Sidebar({
                           key={sub.id}
                           type="button"
                           onClick={() => onSelectNote(sub.id)}
-                          className={`flex h-[42px] items-center gap-2 rounded-lg px-2 text-left text-sm cursor-pointer transition-colors ${
+                          className={`flex h-[52px] items-center gap-2 rounded-xl pl-4 pr-2 text-left text-sm cursor-pointer transition-colors ${
                             isSubSelected
                               ? "bg-white/80 font-medium text-zinc-900 shadow-xs"
                               : "text-zinc-600 hover:bg-zinc-200/60"

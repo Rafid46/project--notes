@@ -13,10 +13,22 @@ interface CreateNotePopoverProps {
     parentId: string | null;
   }) => void;
   parentId: string | null;
-  anchorRect: { top: number; left: number; right: number; bottom: number } | null;
+  anchorRect: {
+    top: number;
+    left: number;
+    right: number;
+    bottom: number;
+  } | null;
 }
 
-const COLORS = ["#a1a1aa", "#f59e0b", "#0284c7", "#9333ea", "#10b981", "#ef4444"];
+const COLORS = [
+  "#a1a1aa",
+  "#f59e0b",
+  "#0284c7",
+  "#9333ea",
+  "#10b981",
+  "#ef4444",
+];
 
 export default function CreateNotePopover({
   isOpen,
@@ -32,6 +44,12 @@ export default function CreateNotePopover({
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  // Keep refs for the latest values so the click-outside listener can access them
+  const stateRef = useRef({ title, content, color });
+  useEffect(() => {
+    stateRef.current = { title, content, color };
+  }, [title, content, color]);
+
   useEffect(() => {
     if (isOpen) {
       setTitle("");
@@ -43,24 +61,66 @@ export default function CreateNotePopover({
 
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+
+    const saveAndClose = () => {
+      const {
+        title: currentTitle,
+        content: currentContent,
+        color: currentColor,
+      } = stateRef.current;
+
+      if (currentTitle.trim() || currentContent.trim()) {
+        onSave({
+          title: currentTitle.trim() || "Untitled Note",
+          content: currentContent,
+          color: currentColor,
+          parentId,
+        });
+      }
+      onClose();
     };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
+        saveAndClose();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") saveAndClose();
+    };
+
+    // Delay attaching the mousedown listener so the click that opens the popover doesn't instantly close it
+    const timeoutId = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 0);
     document.addEventListener("keydown", handleKeyDown);
+
     return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, onSave, parentId]);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    if (!title.trim()) {
-      setError("Title is required.");
+    if (!title.trim() && !content.trim()) {
+      onClose();
       return;
     }
+
     setError("");
-    onSave({ title, content, color, parentId });
+    onSave({
+      title: title.trim() || "Untitled Note",
+      content,
+      color,
+      parentId,
+    });
     onClose();
   };
 
@@ -72,7 +132,7 @@ export default function CreateNotePopover({
   };
 
   const handleContentKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSave();
     }
@@ -80,84 +140,75 @@ export default function CreateNotePopover({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[2px] p-4"
-      onClick={onClose}
+      ref={popoverRef}
+      className="absolute top-[96px] left-1/2 z-50 -translate-x-1/2 flex w-[600px] flex-col rounded-2xl bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-zinc-200"
     >
-      <div
-        ref={popoverRef}
-        onClick={(e) => e.stopPropagation()}
-        className="flex w-[600px] h-[300px] flex-col gap-3 rounded-2xl bg-white p-4 shadow-2xl border border-zinc-200"
-      >
-        <div className="flex items-center justify-between shrink-0">
-          <h3 className="text-sm font-semibold text-zinc-900">
-            {parentId ? "Add Subnote" : "Add Note"}
-          </h3>
-          <button
-            onClick={onClose}
-            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 transition-colors"
-          >
-            <X size={16} />
-          </button>
+      <div className="flex items-center gap-2 mb-2.5">
+        <span
+          className="h-2.5 w-2.5 rounded-full shrink-0 transition-colors"
+          style={{ backgroundColor: color }}
+        />
+        {parentId && (
+          <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
+            Subnote
+          </span>
+        )}
+      </div>
+
+      <input
+        type="text"
+        placeholder="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={handleTitleKeyDown}
+        // eslint-disable-next-line jsx-a11y/no-autofocus
+        autoFocus
+        className="w-full text-base font-semibold text-zinc-900 placeholder-zinc-400 outline-none bg-transparent"
+      />
+
+      <textarea
+        placeholder="Take a note... (Enter to save, Shift+Enter for newline)"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        onKeyDown={handleContentKeyDown}
+        rows={4}
+        className="mt-2 w-full text-sm leading-relaxed text-zinc-600 placeholder-zinc-400 outline-none resize-none bg-transparent"
+      />
+
+      {error && (
+        <span className="mt-2 text-xs text-red-500 shrink-0">{error}</span>
+      )}
+
+      <div className="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-1.5">
+          {COLORS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setColor(c)}
+              className={`flex h-4 w-4 items-center justify-center rounded-full border-2 transition-all ${
+                color === c
+                  ? "border-zinc-400 scale-110"
+                  : "border-transparent hover:scale-110"
+              }`}
+              style={{ backgroundColor: c }}
+              aria-label={`Select color ${c}`}
+            />
+          ))}
         </div>
 
-        <div className="flex flex-col gap-3 flex-1 overflow-hidden">
-          <div className="shrink-0">
-            <input
-              type="text"
-              placeholder="Note title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={handleTitleKeyDown}
-              // eslint-disable-next-line jsx-a11y/no-autofocus
-              autoFocus
-              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-900 placeholder-zinc-400 outline-none focus:border-zinc-300 focus:bg-white focus:ring-2 focus:ring-zinc-100 transition-all"
-            />
-          </div>
-
-          <div className="flex-1 flex flex-col min-h-0">
-            <textarea
-              placeholder="Note content (Ctrl+Enter to save)"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onKeyDown={handleContentKeyDown}
-              className="w-full h-full flex-1 resize-none rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 placeholder-zinc-400 outline-none focus:border-zinc-300 focus:bg-white focus:ring-2 focus:ring-zinc-100 transition-all"
-            />
-          </div>
-
-          {error && <span className="text-xs text-red-500 shrink-0">{error}</span>}
-
-          <div className="flex items-center justify-between mt-1 shrink-0">
-            <div className="flex items-center gap-1.5">
-              {COLORS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
-                    color === c ? "border-zinc-400 scale-110" : "border-transparent hover:scale-110"
-                  }`}
-                  style={{ backgroundColor: c }}
-                  aria-label={`Select color ${c}`}
-                />
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-zinc-400 mr-2">
-                <button className="rounded p-1.5 hover:bg-zinc-100 hover:text-zinc-600 transition-colors">
-                  <ImageIcon size={16} />
-                </button>
-                <button className="rounded p-1.5 hover:bg-zinc-100 hover:text-zinc-600 transition-colors">
-                  <Tag size={16} />
-                </button>
-              </div>
-              <button
-                onClick={handleSave}
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-              >
-                Add note
-              </button>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 text-zinc-400">
+          <button
+            className="rounded p-1 hover:bg-zinc-100 hover:text-zinc-600 transition-colors cursor-pointer"
+            aria-label="Add image"
+          >
+            <ImageIcon size={22} />
+          </button>
+          <button
+            className="rounded p-1 hover:bg-zinc-100 hover:text-zinc-600 transition-colors cursor-pointer"
+            aria-label="Add label"
+          >
+            <Tag size={22} />
+          </button>
         </div>
       </div>
     </div>

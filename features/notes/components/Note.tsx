@@ -23,7 +23,7 @@ export default function Note({
       onClick={onClick}
       onPointerDown={onPointerDown}
       style={style}
-      className={`group rounded-2xl border bg-white p-5 transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+      className={`group rounded-2xl border bg-[#f8f8f8] p-5 transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md ${
         isSelected
           ? "border-blue-500 ring-2 ring-blue-500/20"
           : "border-zinc-200/80"

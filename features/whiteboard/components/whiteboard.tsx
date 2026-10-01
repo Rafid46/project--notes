@@ -428,11 +428,11 @@ export default function Whiteboard({
       </div>
 
       <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2">
-        <div className="flex items-center gap-1 rounded-full border border-black/10 bg-white/90 px-2 py-1 shadow-lg backdrop-blur-md text-xs font-medium text-zinc-700">
+        <div className="flex h-[50px] cursor-pointer items-center gap-2 rounded-full border border-black/10 bg-white/90 px-4 shadow-lg backdrop-blur-md text-sm font-medium text-zinc-700">
           <button
             type="button"
             onClick={() => handleZoomStep(1 / 1.2)}
-            className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-zinc-100 active:scale-95 transition-transform"
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 active:scale-95 transition-transform text-lg"
             aria-label="Zoom out"
           >
             -
@@ -440,7 +440,7 @@ export default function Whiteboard({
           <button
             type="button"
             onClick={() => setZoom(1)}
-            className="min-w-10 px-1 py-0.5 text-center hover:text-zinc-900"
+            className="min-w-[48px] px-1 py-1 text-center hover:text-zinc-900"
             title="Reset zoom"
           >
             {Math.round(zoom * 100)}%
@@ -448,21 +448,21 @@ export default function Whiteboard({
           <button
             type="button"
             onClick={() => handleZoomStep(1.2)}
-            className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-zinc-100 active:scale-95 transition-transform"
+            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 active:scale-95 transition-transform text-lg"
             aria-label="Zoom in"
           >
             +
           </button>
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-full border border-black/10 bg-white/90 p-1.5 shadow-lg backdrop-blur-md">
+        <div className="flex h-[50px] cursor-pointer items-center gap-2.5 rounded-full border border-black/10 bg-white/90 px-4 shadow-lg backdrop-blur-md">
           {CANVAS_COLORS.map((c) => (
             <button
               key={c.value}
               type="button"
               title={c.label}
               onClick={() => handleColorChange(c.value)}
-              className={`h-6 w-6 rounded-full border border-black/15 transition-transform hover:scale-110 active:scale-95 ${
+              className={`h-7 w-7 rounded-full border border-black/15 transition-transform hover:scale-110 active:scale-95 ${
                 canvasColor === c.value
                   ? "ring-2 ring-blue-500 ring-offset-2"
                   : ""
@@ -473,9 +473,9 @@ export default function Whiteboard({
           ))}
           <label
             title="Custom Color"
-            className="relative flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-dashed border-zinc-400 bg-transparent transition-transform hover:scale-110 active:scale-95"
+            className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-zinc-400 bg-transparent transition-transform hover:scale-110 active:scale-95"
           >
-            <span className="text-xs font-semibold leading-none text-zinc-600">
+            <span className="text-sm font-semibold leading-none text-zinc-600">
               +
             </span>
             <input
