@@ -1,0 +1,33 @@
+.excalidraw,
+.excalidraw-container,
+.excalidraw-tooltip {
+  --ui-font: 'Inter Tight', sans-serif !important;
+  font-family: 'Inter Tight', sans-serif !important;
+}
+
+.excalidraw,
+.excalidraw :not(svg, svg *),
+.excalidraw-tooltip,
+.excalidraw-tooltip :not(svg, svg *) {
+  font-family: 'Inter Tight', sans-serif !important;
+}
+
+.excalidraw .layer-ui__wrapper,
+.excalidraw .layer-ui__wrapper *,
+.excalidraw .App-menu,
+.excalidraw .App-toolbar,
+.excalidraw .App-bottom-bar,
+.excalidraw .mobile-misc-tools-container,
+.excalidraw .hint,
+.excalidraw .help-icon,
+.excalidraw .main-menu-trigger,
+.excalidraw .sidebar-trigger,
+.excalidraw .welcome-screen,
+.excalidraw .welcome-screen-center,
+.excalidraw .welcome-screen-decorations,
+.excalidraw .encrypted-icon,
+.excalidraw .live-collaboration-trigger {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
