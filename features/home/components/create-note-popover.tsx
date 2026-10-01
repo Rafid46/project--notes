@@ -19,6 +19,7 @@ interface CreateNotePopoverProps {
     right: number;
     bottom: number;
   } | null;
+  initialTitle?: string;
 }
 
 const COLORS = [
@@ -36,6 +37,7 @@ export default function CreateNotePopover({
   onSave,
   parentId,
   anchorRect,
+  initialTitle = "",
 }: CreateNotePopoverProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -52,12 +54,12 @@ export default function CreateNotePopover({
 
   useEffect(() => {
     if (isOpen) {
-      setTitle("");
+      setTitle(initialTitle);
       setContent("");
       setColor(COLORS[0]);
       setError("");
     }
-  }, [isOpen]);
+  }, [isOpen, initialTitle]);
 
   useEffect(() => {
     if (!isOpen) return;

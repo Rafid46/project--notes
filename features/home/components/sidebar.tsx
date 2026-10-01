@@ -47,7 +47,7 @@ export default function Sidebar({
                 <div
                   className={`group flex h-[52px] items-center justify-between rounded-[10px] pl-4 pr-2 cursor-pointer transition-colors ${
                     isSelected
-                      ? "bg-white/80 font-medium text-zinc-900"
+                      ? "bg-white font-medium text-zinc-900"
                       : "text-zinc-700 hover:bg-zinc-200/60"
                   }`}
                 >
@@ -105,7 +105,7 @@ export default function Sidebar({
                           onClick={() => onSelectNote(sub.id)}
                           className={`flex h-[52px] items-center gap-2 rounded-xl pl-4 pr-2 text-left text-sm cursor-pointer transition-colors ${
                             isSubSelected
-                              ? "bg-white/80 font-medium text-zinc-900 shadow-xs"
+                              ? "bg-white font-medium text-zinc-900 shadow-xs"
                               : "text-zinc-600 hover:bg-zinc-200/60"
                           }`}
                         >

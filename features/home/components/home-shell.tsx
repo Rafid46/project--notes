@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Whiteboard from "@/features/whiteboard/components/whiteboard";
 import Sidebar from "./sidebar";
 import Header from "./header";
 import NotesGrid from "./notes-grid";
 import CreateNotePopover from "./create-note-popover";
 import type { NoteItem, ViewMode } from "../types";
+import { getActiveNote, addNoteToState } from "@/features/notes/utils/utils";
 
 const INITIAL_NOTES: NoteItem[] = [
   {
@@ -67,45 +68,60 @@ export default function HomeShell() {
   const [notes, setNotes] = useState<NoteItem[]>(INITIAL_NOTES);
   const [selectedNoteId, setSelectedNoteId] = useState<string>("note-1");
   const [viewMode, setViewMode] = useState<ViewMode>("whiteboard");
-  
+
   const [popoverConfig, setPopoverConfig] = useState<{
     isOpen: boolean;
     parentId: string | null;
-    anchorRect: { top: number; left: number; right: number; bottom: number } | null;
+    anchorRect: {
+      top: number;
+      left: number;
+      right: number;
+      bottom: number;
+    } | null;
+    initialTitle?: string;
   }>({ isOpen: false, parentId: null, anchorRect: null });
 
-  const activeNote =
-    notes.find((n) => n.id === selectedNoteId) ||
-    notes
-      .flatMap((n) => n.subNotes || [])
-      .find((s) => s.id === selectedNoteId) ||
-    notes[0];
+  // Global keydown listener for fast note creation
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Do not trigger if already typing in an input/textarea or if popover is already open
+      if (
+        popoverConfig.isOpen ||
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey
+      ) {
+        return;
+      }
 
-  const handleAddNote = (newNoteData: { title: string; content: string; color?: string; parentId: string | null }) => {
-    const newNote: NoteItem = {
-      id: `note-${Date.now()}`,
-      title: newNoteData.title,
-      content: newNoteData.content,
-      color: newNoteData.color,
-      parentId: newNoteData.parentId,
-      subNotes: [],
+      // Check if key is a single alphanumeric character (a-z, 0-9)
+      if (/^[a-zA-Z0-9]$/.test(e.key)) {
+        setPopoverConfig({
+          isOpen: true,
+          parentId: null,
+          anchorRect: null,
+          initialTitle: e.key,
+        });
+        e.preventDefault();
+      }
     };
 
-    setNotes((prev) => {
-      if (newNote.parentId) {
-        return prev.map((note) => {
-          if (note.id === newNote.parentId) {
-            return {
-              ...note,
-              subNotes: [...(note.subNotes || []), newNote],
-            };
-          }
-          return note;
-        });
-      } else {
-        return [...prev, newNote];
-      }
-    });
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [popoverConfig.isOpen]);
+
+  const activeNote = getActiveNote(notes, selectedNoteId);
+
+  const handleAddNote = (newNoteData: {
+    title: string;
+    content: string;
+    color?: string;
+    parentId: string | null;
+  }) => {
+    setNotes((prev) => addNoteToState(prev, newNoteData));
   };
 
   const openPopover = (parentId: string | null, e: React.MouseEvent) => {
@@ -113,7 +129,13 @@ export default function HomeShell() {
     setPopoverConfig({
       isOpen: true,
       parentId,
-      anchorRect: { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom },
+      anchorRect: {
+        top: rect.top,
+        left: rect.left,
+        right: rect.right,
+        bottom: rect.bottom,
+      },
+      initialTitle: "",
     });
   };
 
@@ -155,6 +177,7 @@ export default function HomeShell() {
         onSave={handleAddNote}
         parentId={popoverConfig.parentId}
         anchorRect={popoverConfig.anchorRect}
+        initialTitle={popoverConfig.initialTitle}
       />
     </main>
   );

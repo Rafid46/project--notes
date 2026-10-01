@@ -381,6 +381,39 @@ export default function Whiteboard({
     ? "rgba(255, 255, 255, 0.15)"
     : "rgba(0, 0, 0, 0.08)";
 
+  const MINIMAP_W = 160;
+  const MINIMAP_H = 112;
+  const MINIMAP_SCALE = 0.02;
+  const mmCx = MINIMAP_W / 2;
+  const mmCy = MINIMAP_H / 2;
+
+  const vpW = typeof window !== "undefined" ? window.innerWidth / zoom : 1000 / zoom;
+  const vpH = typeof window !== "undefined" ? window.innerHeight / zoom : 800 / zoom;
+  const vpX = -pan.x / zoom;
+  const vpY = -pan.y / zoom;
+
+  const mmVpX = mmCx + vpX * MINIMAP_SCALE;
+  const mmVpY = mmCy + vpY * MINIMAP_SCALE;
+  const mmVpW = vpW * MINIMAP_SCALE;
+  const mmVpH = vpH * MINIMAP_SCALE;
+
+  const handleMinimapClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    const worldX = (clickX - mmCx) / MINIMAP_SCALE;
+    const worldY = (clickY - mmCy) / MINIMAP_SCALE;
+
+    const screenCx = window.innerWidth / 2;
+    const screenCy = window.innerHeight / 2;
+
+    setPan({
+      x: screenCx - worldX * zoom,
+      y: screenCy - worldY * zoom,
+    });
+  };
+
   return (
     <div
       ref={containerRef}
@@ -425,6 +458,43 @@ export default function Whiteboard({
             />
           );
         })}
+      </div>
+
+      <div
+        className="fixed bottom-[88px] right-5 z-50 overflow-hidden rounded-xl border border-black/10 bg-white/90 shadow-lg backdrop-blur-md cursor-pointer transition-transform hover:scale-105"
+        style={{ width: MINIMAP_W, height: MINIMAP_H }}
+        onClick={handleMinimapClick}
+        title="Minimap - Click to navigate"
+      >
+        {allNotes.map((note) => {
+          const pos = cardPositions[note.id] || { x: 0, y: 0 };
+          const mx = mmCx + pos.x * MINIMAP_SCALE;
+          const my = mmCy + pos.y * MINIMAP_SCALE;
+          const isSelected = selectedNoteId === note.id;
+
+          return (
+            <div
+              key={`minimap-${note.id}`}
+              className={`absolute rounded-sm ${isSelected ? "bg-blue-500" : "bg-zinc-400"}`}
+              style={{
+                left: mx,
+                top: my,
+                width: 320 * MINIMAP_SCALE,
+                height: 160 * MINIMAP_SCALE,
+              }}
+            />
+          );
+        })}
+
+        <div
+          className="absolute border-2 border-blue-500/50 bg-blue-500/10 rounded-sm pointer-events-none"
+          style={{
+            left: mmVpX,
+            top: mmVpY,
+            width: mmVpW,
+            height: mmVpH,
+          }}
+        />
       </div>
 
       <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2">
