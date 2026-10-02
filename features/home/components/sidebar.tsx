@@ -34,7 +34,7 @@ export default function Sidebar({
   };
 
   return (
-    <aside className="absolute top-20 bottom-6 left-6 z-30 flex w-64 flex-col bg-[#EDEDED] rounded-2xl overflow-hidden">
+    <aside className="absolute top-20 bottom-6 left-6 z-30 flex w-64 flex-col bg-secondary rounded-2xl overflow-hidden">
       <div className="flex-1 overflow-y-auto px-3 py-3">
         <nav className="flex flex-col gap-1">
           {notes.map((note) => {
@@ -47,8 +47,8 @@ export default function Sidebar({
                 <div
                   className={`group flex h-[52px] items-center justify-between rounded-[10px] pl-4 pr-2 cursor-pointer transition-colors ${
                     isSelected
-                      ? "bg-white font-medium text-zinc-900"
-                      : "text-zinc-700 hover:bg-zinc-200/60"
+                      ? "bg-background font-medium text-foreground"
+                      : "text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   <button
@@ -56,10 +56,7 @@ export default function Sidebar({
                     onClick={() => onSelectNote(note.id)}
                     className="flex flex-1 h-full items-center gap-2 overflow-hidden text-left text-sm cursor-pointer"
                   >
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: note.color || "#a1a1aa" }}
-                    />
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-zinc-400" />
                     <span className="truncate">{note.title}</span>
                   </button>
 
@@ -70,7 +67,7 @@ export default function Sidebar({
                         e.stopPropagation();
                         onOpenAddSubnote?.(note.id, e);
                       }}
-                      className="bg-[#383838] rounded-xl text-white flex h-10 w-10 items-center justify-center rounded text-white  cursor-pointer"
+                      className="bg-primary rounded-xl text-primary-foreground flex h-10 w-10 items-center justify-center cursor-pointer"
                       aria-label="Add Subnote"
                     >
                       <Plus size={18} />
@@ -82,7 +79,7 @@ export default function Sidebar({
                           e.stopPropagation();
                           toggleExpand(note.id);
                         }}
-                        className="flex h-7 w-7 items-center justify-center rounded text-zinc-400 hover:text-zinc-700 cursor-pointer"
+                        className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-foreground cursor-pointer"
                         aria-label="Toggle Subnotes"
                       >
                         <ChevronRight
@@ -95,7 +92,7 @@ export default function Sidebar({
                 </div>
 
                 {hasSubNotes && isExpanded && (
-                  <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-zinc-200 pl-2">
+                  <div className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-border pl-2">
                     {note.subNotes?.map((sub) => {
                       const isSubSelected = selectedNoteId === sub.id;
                       return (
@@ -105,14 +102,11 @@ export default function Sidebar({
                           onClick={() => onSelectNote(sub.id)}
                           className={`flex h-[52px] items-center gap-2 rounded-xl pl-4 pr-2 text-left text-sm cursor-pointer transition-colors ${
                             isSubSelected
-                              ? "bg-white font-medium text-zinc-900 shadow-xs"
-                              : "text-zinc-600 hover:bg-zinc-200/60"
+                              ? "bg-background font-medium text-foreground shadow-xs"
+                              : "text-muted-foreground hover:bg-muted"
                           }`}
                         >
-                          <span
-                            className="h-1.5 w-1.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: sub.color || "#a1a1aa" }}
-                          />
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
                           <span className="truncate">{sub.title}</span>
                         </button>
                       );

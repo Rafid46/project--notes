@@ -133,11 +133,11 @@ export default function ViewDropdown({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="inline-flex items-center gap-2 rounded-full border border-zinc-300/70 bg-[#EDEDED] px-3.5 py-1.5 text-xs md:text-sm font-medium text-zinc-900 shadow-xs transition-colors hover:bg-zinc-200/70 focus:outline-none"
+        className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3.5 py-1.5 text-xs md:text-sm font-medium text-foreground shadow-xs transition-colors hover:bg-muted focus:outline-none"
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <span className="text-zinc-500">
+        <span className="text-muted-foreground">
           {selectedOption.icon}
         </span>
         <span>{selectedOption.label}</span>
@@ -151,18 +151,18 @@ export default function ViewDropdown({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`text-zinc-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-1.5 w-48 origin-top-right rounded-lg border border-zinc-200 bg-white p-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
-          <div className="px-2 py-1.5 text-xs font-semibold uppercase text-zinc-500">
+        <div className="absolute right-0 z-50 mt-1.5 w-48 origin-top-right rounded-lg border border-border bg-popover p-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+          <div className="px-2 py-1.5 text-xs font-semibold uppercase text-muted-foreground">
             View Layout
           </div>
-          <div className="h-px bg-zinc-100 my-1" />
+          <div className="h-px bg-border my-1" />
           {VIEW_OPTIONS.map((option) => {
             const isSelected = option.id === currentView;
             return (
@@ -175,12 +175,12 @@ export default function ViewDropdown({
                 }}
                 className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                   isSelected
-                    ? "bg-zinc-100 font-medium text-zinc-900"
-                    : "text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                    ? "bg-muted font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-zinc-500">
+                  <span className="text-muted-foreground">
                     {option.icon}
                   </span>
                   <span>{option.label}</span>
@@ -196,7 +196,7 @@ export default function ViewDropdown({
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-zinc-900"
+                    className="text-foreground"
                   >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>

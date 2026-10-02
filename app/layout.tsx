@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
-import { Inter_Tight } from "next/font/google";
+import { Inter_Tight, Geist } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
@@ -16,9 +20,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${interTight.variable} h-full antialiased`}
+      className={cn("h-full", "antialiased", interTight.variable, "font-sans", geist.variable)}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

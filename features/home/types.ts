@@ -8,6 +8,7 @@ export interface NoteItem {
   content: string;
   parentId: string | null;
   color?: string;
+  category?: string;
   subNotes?: NoteItem[];
 }
 

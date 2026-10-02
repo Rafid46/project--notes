@@ -33,7 +33,9 @@ export interface DockProps {
 interface DockItemProps {
   className?: string;
   children: React.ReactNode;
-  onClick?: (e?: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>) => void;
+  onClick?: (
+    e?: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>,
+  ) => void;
   mouseX: MotionValue<number>;
   spring: SpringOptions;
   distance: number;
@@ -95,8 +97,8 @@ function DockItem({
       onKeyDown={handleKeyDown}
       className={`relative inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 transition-colors cursor-pointer select-none text-xs font-medium focus:outline-none ${
         isActive
-          ? "bg-white text-zinc-900 font-semibold"
-          : "text-zinc-600 hover:text-zinc-900 hover:bg-black/5"
+          ? "bg-background text-foreground font-semibold"
+          : "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10"
       } ${className}`}
       tabIndex={0}
       role="button"
@@ -168,7 +170,7 @@ export default function Dock({
           isHovered.set(0);
           mouseX.set(Infinity);
         }}
-        className={`${className} flex items-center justify-center gap-4 rounded-full bg-[#EDEDED] px-4 pl-3 shadow-xs`}
+        className={`${className} flex items-center justify-center gap-4 rounded-full bg-secondary px-4 pl-3 shadow-xs`}
         style={{ height: panelHeight }}
         role="toolbar"
         aria-label="Application dock"

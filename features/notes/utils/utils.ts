@@ -2,7 +2,7 @@ import type { NoteItem } from "@/features/home/types";
 
 export function getActiveNote(
   notes: NoteItem[],
-  selectedNoteId: string
+  selectedNoteId: string,
 ): NoteItem | undefined {
   return (
     notes.find((n) => n.id === selectedNoteId) ||
@@ -20,7 +20,7 @@ export function addNoteToState(
     content: string;
     color?: string;
     parentId: string | null;
-  }
+  },
 ): NoteItem[] {
   const newNote: NoteItem = {
     id: `note-${Date.now()}`,
@@ -44,4 +44,25 @@ export function addNoteToState(
   } else {
     return [...prevNotes, newNote];
   }
+}
+
+export function updateNoteInState(
+  prevNotes: NoteItem[],
+  noteId: string,
+  updates: Partial<NoteItem>
+): NoteItem[] {
+  return prevNotes.map((note) => {
+    if (note.id === noteId) {
+      return { ...note, ...updates };
+    }
+    if (note.subNotes && note.subNotes.length > 0) {
+      return {
+        ...note,
+        subNotes: note.subNotes.map((sub) =>
+          sub.id === noteId ? { ...sub, ...updates } : sub
+        ),
+      };
+    }
+    return note;
+  });
 }

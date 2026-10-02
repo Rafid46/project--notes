@@ -20,12 +20,14 @@ interface WhiteboardProps {
   notes?: NoteItem[];
   selectedNoteId?: string | null;
   onSelectNote?: (noteId: string) => void;
+  onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
 }
 
 export default function Whiteboard({
   notes = [],
   selectedNoteId,
   onSelectNote,
+  onUpdateNote,
 }: WhiteboardProps) {
   const [canvasColor, setCanvasColor] = useState<string>("#ffffff");
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -450,6 +452,7 @@ export default function Whiteboard({
               note={note}
               isSelected={isSelected}
               onPointerDown={(e) => handleCardPointerDown(e, note.id)}
+              onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
               className="absolute w-80 cursor-grab active:cursor-grabbing pointer-events-auto"
               style={{
                 left: `${pos.x}px`,
