@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Whiteboard from "@/features/whiteboard/components/whiteboard";
 import Sidebar from "./sidebar";
 import Header from "./header";
@@ -196,59 +197,69 @@ export default function HomeShell() {
         initialTitle={popoverConfig.initialTitle}
       />
 
-      {isNoteModalOpen && activeNote && (
-        <>
-          <div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity"
-            onClick={() => setIsNoteModalOpen(false)}
-          />
-          <div className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-white/10 bg-background p-6 shadow-2xl duration-200 rounded-2xl">
-            <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold leading-none tracking-tight">
-                  {activeNote.title}
-                </h2>
-                {activeNote.category && (
-                  <span className="bg-blue-400 px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wider">
-                    {activeNote.category}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {activeNote.content}
-            </div>
-            {activeNote.subNotes && activeNote.subNotes.length > 0 && (
-              <div className="mt-4 border-t pt-4">
-                <h4 className="text-sm font-medium mb-2">
-                  Subnotes ({activeNote.subNotes.length})
-                </h4>
-                <ul className="space-y-2">
-                  {activeNote.subNotes.map((sub) => (
-                    <li
-                      key={sub.id}
-                      className="text-sm bg-muted p-2 rounded-md"
-                    >
-                      <span className="font-medium">{sub.title}</span>
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        {sub.content}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-4">
-              <button
-                onClick={() => setIsNoteModalOpen(false)}
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-background text-white h-10 px-4 py-2 border border-transparent"
+      <AnimatePresence>
+        {isNoteModalOpen && activeNote && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity"
+              onClick={() => setIsNoteModalOpen(false)}
+            />
+            <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
+              <motion.div
+                layoutId={`note-${activeNote.id}`}
+                className="w-full max-w-lg gap-4 border border-border bg-card p-6 shadow-2xl rounded-[26px] pointer-events-auto"
               >
-                Close
-              </button>
+                <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold leading-none tracking-tight">
+                      {activeNote.title}
+                    </h2>
+                    {activeNote.category && (
+                      <span className="bg-blue-400 px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wider">
+                        {activeNote.category}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap mt-4">
+                  {activeNote.content}
+                </div>
+                {activeNote.subNotes && activeNote.subNotes.length > 0 && (
+                  <div className="mt-4 border-t pt-4">
+                    <h4 className="text-sm font-medium mb-2">
+                      Subnotes ({activeNote.subNotes.length})
+                    </h4>
+                    <ul className="space-y-2">
+                      {activeNote.subNotes.map((sub) => (
+                        <li
+                          key={sub.id}
+                          className="text-sm bg-muted p-2 rounded-md"
+                        >
+                          <span className="font-medium">{sub.title}</span>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {sub.content}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6">
+                  <button
+                    onClick={() => setIsNoteModalOpen(false)}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-4 py-2 border border-transparent cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </AnimatePresence>
     </main>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import {
   FileText,
   Presentation,
@@ -58,13 +60,14 @@ export default function Header({
   return (
     <header className="absolute top-6 inset-x-0 z-30 flex items-center justify-between px-6">
       <div className="flex items-center">
-        <div className="flex h-10 items-center gap-2.5 rounded-full bg-secondary px-4 shadow-xs">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-background">
-            <FileText size={13} />
-          </div>
-          <span className="text-sm font-semibold text-secondary-foreground">
-            Notes
-          </span>
+        <div className="flex h-10 items-center gap-2.5  px-4">
+          <Image
+            src="/assets/hane.png"
+            alt="Logo"
+            width={104}
+            height={44}
+            className="object-contain"
+          />
         </div>
       </div>
 

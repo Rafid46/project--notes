@@ -33,6 +33,7 @@ export default function Whiteboard({
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
   const [isPanning, setIsPanning] = useState(false);
+  const [isDraggingCard, setIsDraggingCard] = useState(false);
   const [cardPositions, setCardPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
@@ -116,16 +117,7 @@ export default function Whiteboard({
     setCardPositions(initial);
   }, [notes]);
 
-  useEffect(() => {
-    if (!selectedNoteId) return;
-    const target = cardPositions[selectedNoteId];
-    if (target) {
-      setPan({
-        x: window.innerWidth / 2 - (target.x + 160) * zoomRef.current,
-        y: window.innerHeight / 2 - (target.y + 100) * zoomRef.current,
-      });
-    }
-  }, [selectedNoteId]);
+
 
   const handleZoomStep = (factor: number) => {
     const container = containerRef.current;
@@ -226,6 +218,7 @@ export default function Whiteboard({
       isPanningRef.current = false;
       panOriginRef.current = null;
       setIsPanning(false);
+      setIsDraggingCard(false);
       if (dragCardRef.current) {
         dragCardRef.current = null;
         try {
@@ -344,6 +337,7 @@ export default function Whiteboard({
     isPanningRef.current = false;
     panOriginRef.current = null;
     setIsPanning(false);
+    setIsDraggingCard(false);
 
     if (dragCardRef.current) {
       const noteId = dragCardRef.current.id;
@@ -376,6 +370,7 @@ export default function Whiteboard({
       initY: pos.y,
       moved: false,
     };
+    setIsDraggingCard(true);
   };
 
   const isDarkCanvas = canvasColor === "#18181b";
@@ -458,6 +453,7 @@ export default function Whiteboard({
                 left: `${pos.x}px`,
                 top: `${pos.y}px`,
               }}
+              disableLayoutAnimation={isPanning || isDraggingCard}
             />
           );
         })}

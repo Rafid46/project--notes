@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Plus, Circle } from "lucide-react";
 import type { NoteItem } from "../types";
 
 interface SidebarProps {
@@ -106,7 +106,7 @@ export default function Sidebar({
                               : "text-muted-foreground hover:bg-muted"
                           }`}
                         >
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-400" />
+                          <Circle size={10} className="shrink-0 text-zinc-400" />
                           <span className="truncate">{sub.title}</span>
                         </button>
                       );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
 import type { NoteItem } from "@/features/home/types";
 import {
   DropdownMenu,
@@ -26,6 +27,7 @@ interface NoteProps {
   onUpdate?: (updates: Partial<NoteItem>) => void;
   className?: string;
   style?: React.CSSProperties;
+  disableLayoutAnimation?: boolean;
 }
 
 export default function Note({
@@ -36,6 +38,7 @@ export default function Note({
   onUpdate,
   className = "",
   style,
+  disableLayoutAnimation = false,
 }: NoteProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLabelDropdownOpen, setIsLabelDropdownOpen] = useState(false);
@@ -59,14 +62,16 @@ export default function Note({
         }`}
       >
         {/* Main Body */}
-        <div
+        <motion.div
+          layout={!disableLayoutAnimation}
+          layoutId={disableLayoutAnimation ? undefined : `note-${note.id}`}
           className={`relative bg-card border rounded-[26px] p-5 z-0 transition-colors ${
             isSelected ? "border-blue-500" : "border-border"
           }`}
         >
           {/* Category Pill */}
           {note.category && (
-            <div className="absolute top-0 right-0 bg-blue-500/10 text-blue-500 px-6 py-4 rounded-[26px] rounded-tr-[24px] text-sm font-semibold z-20">
+            <div className="absolute top-[-2px] right-[-2px] bg-blue-400 text-white px-6 py-4 rounded-[26px] rounded-tr-[24px] text-sm font-semibold z-20">
               {note.category}
             </div>
           )}
@@ -104,7 +109,10 @@ export default function Note({
                 : "opacity-0 group-hover:opacity-100"
             }`}
           >
-            <DropdownMenu open={isLabelDropdownOpen} onOpenChange={setIsLabelDropdownOpen}>
+            <DropdownMenu
+              open={isLabelDropdownOpen}
+              onOpenChange={setIsLabelDropdownOpen}
+            >
               <DropdownMenuTrigger
                 onClick={(e) => {
                   e.stopPropagation();
@@ -118,7 +126,11 @@ export default function Note({
               >
                 <Tag size={16} />
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="end" className="w-56 p-0 flex flex-col overflow-hidden">
+              <DropdownMenuContent
+                side="top"
+                align="end"
+                className="w-56 p-0 flex flex-col overflow-hidden"
+              >
                 <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground border-b border-border shrink-0">
                   Labels
                 </div>
@@ -193,7 +205,10 @@ export default function Note({
               <Palette size={16} />
             </button>
 
-            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <DropdownMenu
+              open={isDropdownOpen}
+              onOpenChange={setIsDropdownOpen}
+            >
               <DropdownMenuTrigger
                 onClick={(e) => {
                   e.stopPropagation();
@@ -238,7 +253,7 @@ export default function Note({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
