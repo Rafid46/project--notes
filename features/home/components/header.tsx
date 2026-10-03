@@ -228,7 +228,7 @@ export default function Header({
               alt="Logo"
               width={104}
               height={44}
-              className="object-contain"
+              className="object-contain rounded-lg"
             />
           </div>
         </div>

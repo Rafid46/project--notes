@@ -191,7 +191,7 @@ export default function Note({
           <div
             className={`mt-2 text-sm leading-relaxed line-clamp-4 ${
               note.textColor ? "" : textColor.body
-            } [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic`}
+            } [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_img]:rounded-lg`}
             style={note.textColor ? { color: note.textColor } : undefined}
             dangerouslySetInnerHTML={{ __html: note.content }}
           />
@@ -214,7 +214,7 @@ export default function Note({
                         <img
                           src={file.url}
                           alt={file.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover rounded-lg"
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/file:opacity-100 transition-opacity flex items-center justify-between p-1.5 text-white">
                           <span className="text-[10px] truncate max-w-[70%] font-medium">
@@ -285,12 +285,13 @@ export default function Note({
           <div
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute bottom-3 right-3 transition-opacity opacity-0 group-hover:opacity-100 z-40"
+            className="absolute bottom-3 left-3 transition-opacity opacity-0 group-hover:opacity-100 z-40"
           >
             <NoteToolbar
               note={note}
               onUpdate={onUpdate}
               onActionClick={() => onClick?.()}
+              isModal={false}
             />
           </div>
         </motion.div>

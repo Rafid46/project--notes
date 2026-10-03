@@ -19,14 +19,24 @@ This document serves as the master guide for any AI assistant or developer worki
 ### Core Data Structures
 The frontend operates on the `NoteItem` interface (defined in `features/home/types.ts`):
 ```typescript
+export interface NoteFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+}
+
 export interface NoteItem {
   id: string;
   title: string;
   content: string;
-  parentId: string | null; // null = root note, populated = subnote
-  color?: string; // Hex color for the card
-  category?: string; // Tag/Label
-  subNotes?: NoteItem[]; // Nested children
+  parentId: string | null;
+  color?: string;
+  textColor?: string;
+  category?: string;
+  subNotes?: NoteItem[];
+  files?: NoteFile[];
 }
 ```
 
@@ -53,14 +63,15 @@ The backend is intended to be a separate service. When building it, adhere stric
 *   **Ownership:** Every `Note` belongs to a `User`. The backend must strictly verify `ownerId` derived from the session/token on every operation.
 
 ### Data Model & Relationships
-*   **Note Entity:** Must mirror the `NoteItem` interface above. Needs a self-referencing relation for `parentId`.
+*   **Note Entity:** Must mirror the `NoteItem` interface above (`id`, `title`, `content`, `color`, `textColor`, `category`, `parentId`, `ownerId`). Needs a self-referencing relation for `parentId`.
+*   **FileAttachment Entity:** Stores file attachments belonging to a Note (`id`, `name`, `size`, `type`, `url`, `noteId`). Cascades delete on Note deletion.
 *   **UserPreference Entity:** Must store the Whiteboard state currently held in localStorage. Needs to store `canvasColor` (string) and `positions` (JSONB mapping of `{ x, y }` coordinates keyed by Note ID).
 
 ### Expected API Endpoints (REST)
-*   **`GET /api/notes`**: Fetch user notes. Must return `subNotes` nested inside their parents.
+*   **`GET /api/notes`**: Fetch user notes. Must return `subNotes` and `files` nested inside their parents.
 *   **`POST /api/notes`**: Create a note (Root or Subnote).
-*   **`PATCH /api/notes/:id`**: Update note content/metadata. Must support debounced autosaving from the frontend editor.
-*   **`DELETE /api/notes/:id`**: Delete a note. Must cascade to delete all associated subnotes.
+*   **`PATCH /api/notes/:id`**: Update note content/metadata (including `textColor` and `files`). Must support debounced autosaving from the frontend editor.
+*   **`DELETE /api/notes/:id`**: Delete a note. Must cascade to delete all associated subnotes and attachments.
 *   **`GET /api/preferences/whiteboard`**: Fetch whiteboard `{ canvasColor, positions }`.
 *   **`PATCH /api/preferences/whiteboard`**: Update whiteboard settings (fired periodically when dragging cards).
 

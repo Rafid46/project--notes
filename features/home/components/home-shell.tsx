@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paperclip, Download, Palette, X } from "lucide-react";
-import CustomColorPicker from "@/components/ui/color-picker";
+import { Paperclip, Download, X } from "lucide-react";
 import NoteToolbar from "@/features/notes/components/note-toolbar";
 import Whiteboard from "@/features/whiteboard/components/whiteboard";
 import Sidebar from "./sidebar";
@@ -13,17 +12,6 @@ import CreateNotePopover from "./create-note-popover";
 import type { NoteItem, ViewMode } from "../types";
 import { getActiveNote, addNoteToState, updateNoteInState } from "@/features/notes/utils/utils";
 import { getSavedDefaultView, SETTINGS_CHANGE_EVENT } from "./settings-modal";
-
-const TEXT_COLORS: { label: string; value?: string; previewColor: string }[] = [
-  { label: "Default", value: undefined, previewColor: "var(--card)" },
-  { label: "Dark", value: "#09090b", previewColor: "#09090b" },
-  { label: "Light", value: "#f8fafc", previewColor: "#f8fafc" },
-  { label: "Blue", value: "#2563eb", previewColor: "#2563eb" },
-  { label: "Purple", value: "#7c3aed", previewColor: "#7c3aed" },
-  { label: "Emerald", value: "#059669", previewColor: "#059669" },
-  { label: "Amber", value: "#d97706", previewColor: "#d97706" },
-  { label: "Red", value: "#dc2626", previewColor: "#dc2626" },
-];
 
 const INITIAL_NOTES: NoteItem[] = [
   {
@@ -272,15 +260,63 @@ export default function HomeShell() {
                   onInput={(e) => handleUpdateNote(activeNote.id, { content: e.currentTarget.innerHTML })}
                   data-placeholder="Take a note..."
                   style={activeNote.textColor ? { color: activeNote.textColor } : undefined}
-                  className="text-sm whitespace-pre-wrap mt-4 min-h-[6rem] outline-none cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60 empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic"
+                  className="text-sm whitespace-pre-wrap mt-4 min-h-[6rem] outline-none cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60 empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_img]:rounded-lg"
                 />
                 {activeNote.files && activeNote.files.length > 0 && (
                   <div className="mt-4 border-t pt-4">
                     <h4 className="text-sm font-medium mb-2">
                       Attached Files ({activeNote.files.length})
                     </h4>
+                    {activeNote.files.some((f) => f.type.startsWith("image/")) && (
+                      <div className="grid grid-cols-3 gap-2 mb-3">
+                        {activeNote.files
+                          .filter((f) => f.type.startsWith("image/"))
+                          .map((file) => (
+                            <div
+                              key={file.id}
+                              className="relative group/file rounded-lg overflow-hidden border border-border/80 bg-muted/30 aspect-video"
+                            >
+                              <img
+                                src={file.url}
+                                alt={file.name}
+                                className="w-full h-full object-cover rounded-lg"
+                              />
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/file:opacity-100 transition-opacity flex items-center justify-between p-1.5 text-white">
+                                <span className="text-[10px] truncate max-w-[70%] font-medium">
+                                  {file.name}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                  <a
+                                    href={file.url}
+                                    download={file.name}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 hover:bg-white/20 rounded cursor-pointer text-white"
+                                    title="Download"
+                                  >
+                                    <Download size={12} />
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = (activeNote.files || []).filter((f) => f.id !== file.id);
+                                      handleUpdateNote(activeNote.id, { files: updated });
+                                    }}
+                                    className="p-1 hover:bg-white/20 rounded cursor-pointer text-white"
+                                    title="Remove"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-2">
-                      {activeNote.files.map((file) => (
+                      {activeNote.files
+                        .filter((f) => !f.type.startsWith("image/"))
+                        .map((file) => (
                         <div
                           key={file.id}
                           className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-muted/40 hover:bg-muted text-xs transition-colors"
@@ -334,51 +370,13 @@ export default function HomeShell() {
                     </ul>
                   </div>
                 )}
-                <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-border">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <NoteToolbar
-                      note={activeNote}
-                      onUpdate={(updates) => handleUpdateNote(activeNote.id, updates)}
-                      contentRef={modalContentRef}
-                    />
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-xs font-medium text-muted-foreground mr-1">
-                        Text Color:
-                      </span>
-                      {TEXT_COLORS.map((c) => (
-                        <button
-                          key={c.label}
-                          type="button"
-                          title={c.label}
-                          onClick={() => handleUpdateNote(activeNote.id, { textColor: c.value })}
-                          className={`w-6 h-6 rounded-full border transition-all hover:scale-110 flex items-center justify-center cursor-pointer ${
-                            (activeNote.textColor || "") === (c.value || "")
-                              ? "ring-2 ring-primary ring-offset-2 scale-105 border-primary"
-                              : "border-border/80"
-                          }`}
-                          style={{ backgroundColor: c.previewColor }}
-                        >
-                          {!c.value && (
-                            <span className="text-[10px] font-bold text-foreground">A</span>
-                          )}
-                        </button>
-                      ))}
-                      <CustomColorPicker
-                        value={activeNote.textColor || "#000000"}
-                        onChange={(color) => handleUpdateNote(activeNote.id, { textColor: color })}
-                        placement="top"
-                        align="start"
-                      >
-                        <button
-                          type="button"
-                          title="Custom text color"
-                          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors cursor-pointer"
-                        >
-                          <Palette size={15} />
-                        </button>
-                      </CustomColorPicker>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between gap-3 mt-6 pt-4 border-t border-border">
+                  <NoteToolbar
+                    note={activeNote}
+                    onUpdate={(updates) => handleUpdateNote(activeNote.id, updates)}
+                    contentRef={modalContentRef}
+                    isModal
+                  />
 
                   <button
                     onClick={() => setIsNoteModalOpen(false)}

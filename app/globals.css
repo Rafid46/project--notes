@@ -177,4 +177,7 @@ body {
   html {
     @apply font-sans;
   }
+  img {
+    @apply rounded-lg;
+  }
 }
