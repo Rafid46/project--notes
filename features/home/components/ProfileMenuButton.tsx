@@ -76,19 +76,19 @@ export default function ProfileMenuButton() {
             <div className="flex flex-col gap-2 mt-12 flex-1">
               <Link
                 href="/works"
-                className="text-5xl font-medium tracking-tight text-zinc-900 hover:opacity-60 transition-opacity"
+                className="text-5xl font-medium text-zinc-900 hover:opacity-60 transition-opacity"
               >
                 works
               </Link>
               <Link
                 href="/about"
-                className="text-5xl font-medium tracking-tight text-zinc-900 hover:opacity-60 transition-opacity"
+                className="text-5xl font-medium text-zinc-900 hover:opacity-60 transition-opacity"
               >
                 about
               </Link>
               <Link
                 href="/contact"
-                className="text-5xl font-medium tracking-tight text-zinc-900 hover:opacity-60 transition-opacity"
+                className="text-5xl font-medium text-zinc-900 hover:opacity-60 transition-opacity"
               >
                 contact
               </Link>
@@ -97,7 +97,7 @@ export default function ProfileMenuButton() {
             <div className="flex items-center justify-between mt-auto">
               <a
                 href="mailto:pertantpacome@gmail.com"
-                className="text-sm text-zinc-900 hover:underline tracking-tight"
+                className="text-sm text-zinc-900 hover:underline"
               >
                 pertantpacome@gmail.com
               </a>

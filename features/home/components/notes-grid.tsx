@@ -67,11 +67,17 @@ export default function NotesGrid({
   const getGridClassName = () => {
     switch (viewMode) {
       case "grid-2":
-        return "grid grid-cols-1 md:grid-cols-2 gap-4";
+        return "grid grid-cols-1 sm:grid-cols-2 gap-4";
+      case "grid-3":
+        return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4";
       case "grid-4":
         return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
+      case "grid-5":
+        return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4";
+      case "grid-6":
+        return "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4";
       default:
-        return "";
+        return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4";
     }
   };
 

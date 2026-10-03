@@ -56,7 +56,7 @@ export default function Sidebar({
                     onClick={() => onSelectNote(note.id)}
                     className="flex flex-1 h-full items-center gap-2 overflow-hidden text-left text-sm cursor-pointer"
                   >
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-zinc-400" />
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-foreground" />
                     <span className="truncate">{note.title}</span>
                   </button>
 
@@ -106,7 +106,10 @@ export default function Sidebar({
                               : "text-muted-foreground hover:bg-muted"
                           }`}
                         >
-                          <Circle size={10} className="shrink-0 text-zinc-400" />
+                          <Circle
+                            size={10}
+                            className="shrink-0 text-foreground"
+                          />
                           <span className="truncate">{sub.title}</span>
                         </button>
                       );

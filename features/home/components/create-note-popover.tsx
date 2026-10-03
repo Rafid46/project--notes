@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Image as ImageIcon, Tag, X } from "lucide-react";
+import CustomColorPicker from "@/components/ui/color-picker";
 
 interface CreateNotePopoverProps {
   isOpen: boolean;
@@ -219,6 +220,21 @@ export default function CreateNotePopover({
               aria-label={`Select color ${c}`}
             />
           ))}
+          <CustomColorPicker
+            value={color}
+            onChange={(newColor) => setColor(newColor)}
+            placement="top"
+            trigger={
+              <div
+                title="Custom color"
+                className="flex h-4 w-4 items-center justify-center rounded-full border border-dashed border-zinc-400 hover:scale-110 transition-transform cursor-pointer"
+              >
+                <span className="text-[10px] leading-none text-muted-foreground font-bold">
+                  +
+                </span>
+              </div>
+            }
+          />
         </div>
 
         <div className="flex items-center gap-2 text-zinc-400">

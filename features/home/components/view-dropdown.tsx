@@ -32,7 +32,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   },
   {
     id: "masonry",
-    label: "Masonry Grid",
+    label: "Masonry",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"

@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { NoteItem } from "@/features/home/types";
 import Note from "@/features/notes/components/Note";
+import CustomColorPicker from "@/components/ui/color-picker";
+import {
+  getSavedWhiteboardSettings,
+  SETTINGS_CHANGE_EVENT,
+  type WhiteboardControlSettings,
+} from "@/features/home/components/settings-modal";
 
 const CANVAS_COLORS = [
   { label: "White", value: "#ffffff" },
@@ -37,6 +43,21 @@ export default function Whiteboard({
   const [cardPositions, setCardPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
+  const [controlSettings, setControlSettings] = useState<WhiteboardControlSettings>(
+    getSavedWhiteboardSettings
+  );
+  const controlSettingsRef = useRef<WhiteboardControlSettings>(controlSettings);
+  useEffect(() => {
+    controlSettingsRef.current = controlSettings;
+  }, [controlSettings]);
+
+  useEffect(() => {
+    const handleSettingsChange = () => {
+      setControlSettings(getSavedWhiteboardSettings());
+    };
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    return () => window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef(1);
@@ -117,8 +138,6 @@ export default function Whiteboard({
     setCardPositions(initial);
   }, [notes]);
 
-
-
   const handleZoomStep = (factor: number) => {
     const container = containerRef.current;
     const nextZoom = Math.min(3, Math.max(0.2, zoomRef.current * factor));
@@ -138,10 +157,18 @@ export default function Whiteboard({
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      const settings = controlSettingsRef.current;
       const isRightClickHeld =
         (e.buttons & 2) === 2 || isRightMouseDownRef.current;
-      if (isRightClickHeld || e.ctrlKey || e.metaKey) {
-        const zoomFactor = Math.exp(-e.deltaY * 0.003);
+      const isZoomModifier =
+        isRightClickHeld ||
+        settings.wheelZoomMode === "direct" ||
+        (settings.wheelZoomMode === "ctrl" && (e.ctrlKey || e.metaKey)) ||
+        (settings.wheelZoomMode === "alt" && e.altKey);
+
+      if (isZoomModifier) {
+        const dir = settings.invertZoom ? 1 : -1;
+        const zoomFactor = Math.exp(dir * -e.deltaY * 0.0025 * (settings.zoomStep / 1.2));
         const nextZoom = Math.min(
           3,
           Math.max(0.2, zoomRef.current * zoomFactor),
@@ -178,16 +205,17 @@ export default function Whiteboard({
         isSpacePressedRef.current = true;
       }
       if (e.ctrlKey || e.metaKey) {
+        const step = controlSettingsRef.current.zoomStep;
         if (e.key === "=" || e.key === "+" || e.code === "NumpadAdd") {
           e.preventDefault();
-          handleZoomStep(1.2);
+          handleZoomStep(step);
         } else if (
           e.key === "-" ||
           e.key === "_" ||
           e.code === "NumpadSubtract"
         ) {
           e.preventDefault();
-          handleZoomStep(1 / 1.2);
+          handleZoomStep(1 / step);
         } else if (e.key === "0" || e.code === "Numpad0") {
           e.preventDefault();
           setZoom(1);
@@ -260,12 +288,25 @@ export default function Whiteboard({
     } catch {}
   };
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    const bothButtons = (e.buttons & 3) === 3;
-    const isMiddle = e.button === 1 || e.buttons === 4;
+  const isPanAction = (e: React.PointerEvent) => {
+    const trigger = controlSettingsRef.current.panTrigger;
+    const isMiddle = e.button === 1 || (e.buttons & 4) === 4;
     const isSpace = isSpacePressedRef.current && (e.buttons & 1) === 1;
+    const isRight = (e.buttons & 2) === 2 || isRightMouseDownRef.current;
+    const isAlt = e.altKey && (e.buttons & 1) === 1;
+    const isShift = e.shiftKey && (e.buttons & 1) === 1;
+    const bothButtons = (e.buttons & 3) === 3;
 
-    if (bothButtons || isMiddle || isSpace) {
+    if (trigger === "space") return isSpace || bothButtons;
+    if (trigger === "middle") return isMiddle;
+    if (trigger === "right") return isRight;
+    if (trigger === "alt") return isAlt;
+    if (trigger === "shift") return isShift;
+    return bothButtons || isMiddle || isSpace;
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (isPanAction(e)) {
       if (dragCardRef.current) {
         dragCardRef.current = null;
       }
@@ -282,11 +323,7 @@ export default function Whiteboard({
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
-    const bothButtons = (e.buttons & 3) === 3;
-    const isMiddle = e.buttons === 4;
-    const isSpace = isSpacePressedRef.current && (e.buttons & 1) === 1;
-
-    if (bothButtons || isMiddle || isSpace) {
+    if (isPanAction(e)) {
       if (dragCardRef.current) {
         dragCardRef.current = null;
       }
@@ -311,7 +348,7 @@ export default function Whiteboard({
       return;
     }
 
-    if (isPanningRef.current && !bothButtons && !isMiddle && !isSpace) {
+    if (isPanningRef.current && !isPanAction(e)) {
       isPanningRef.current = false;
       panOriginRef.current = null;
       setIsPanning(false);
@@ -384,8 +421,10 @@ export default function Whiteboard({
   const mmCx = MINIMAP_W / 2;
   const mmCy = MINIMAP_H / 2;
 
-  const vpW = typeof window !== "undefined" ? window.innerWidth / zoom : 1000 / zoom;
-  const vpH = typeof window !== "undefined" ? window.innerHeight / zoom : 800 / zoom;
+  const vpW =
+    typeof window !== "undefined" ? window.innerWidth / zoom : 1000 / zoom;
+  const vpH =
+    typeof window !== "undefined" ? window.innerHeight / zoom : 800 / zoom;
   const vpX = -pan.x / zoom;
   const vpY = -pan.y / zoom;
 
@@ -540,20 +579,21 @@ export default function Whiteboard({
               aria-label={c.label}
             />
           ))}
-          <label
-            title="Custom Color"
-            className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-zinc-400 bg-transparent transition-transform hover:scale-110 active:scale-95"
-          >
-            <span className="text-sm font-semibold leading-none text-zinc-600">
-              +
-            </span>
-            <input
-              type="color"
-              value={canvasColor}
-              onChange={(e) => handleColorChange(e.target.value)}
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            />
-          </label>
+          <CustomColorPicker
+            value={canvasColor}
+            onChange={handleColorChange}
+            placement="top"
+            trigger={
+              <div
+                title="Custom Color"
+                className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-zinc-400 bg-transparent transition-transform hover:scale-110 active:scale-95"
+              >
+                <span className="text-sm font-semibold leading-none text-zinc-600">
+                  +
+                </span>
+              </div>
+            }
+          />
         </div>
       </div>
     </div>

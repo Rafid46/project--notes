@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@heroui/react": ["./lib/heroui/index.tsx"]
     }
   },
   "include": [

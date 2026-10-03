@@ -1,6 +1,7 @@
 import type { ReactNode, MouseEvent, KeyboardEvent } from "react";
 
-export type ViewMode = "whiteboard" | "masonry" | "grid-2" | "grid-4";
+export type GridViewMode = "grid-2" | "grid-3" | "grid-4" | "grid-5" | "grid-6";
+export type ViewMode = "whiteboard" | "masonry" | GridViewMode;
 
 export interface NoteItem {
   id: string;

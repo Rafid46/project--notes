@@ -9,6 +9,7 @@ import NotesGrid from "./notes-grid";
 import CreateNotePopover from "./create-note-popover";
 import type { NoteItem, ViewMode } from "../types";
 import { getActiveNote, addNoteToState, updateNoteInState } from "@/features/notes/utils/utils";
+import { getSavedDefaultView, SETTINGS_CHANGE_EVENT } from "./settings-modal";
 
 const INITIAL_NOTES: NoteItem[] = [
   {
@@ -70,6 +71,15 @@ export default function HomeShell() {
   const [selectedNoteId, setSelectedNoteId] = useState<string>("note-1");
   const [viewMode, setViewMode] = useState<ViewMode>("whiteboard");
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+
+  useEffect(() => {
+    setViewMode(getSavedDefaultView());
+    const handleSettingsChange = () => {
+      setViewMode(getSavedDefaultView());
+    };
+    window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    return () => window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+  }, []);
 
   const [popoverConfig, setPopoverConfig] = useState<{
     isOpen: boolean;
@@ -214,11 +224,11 @@ export default function HomeShell() {
               >
                 <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold leading-none tracking-tight">
+                    <h2 className="text-lg font-semibold leading-none">
                       {activeNote.title}
                     </h2>
                     {activeNote.category && (
-                      <span className="bg-blue-400 px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wider">
+                      <span className="bg-blue-400 px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase">
                         {activeNote.category}
                       </span>
                     )}

@@ -18,6 +18,57 @@ import {
   Copy,
   Download,
 } from "lucide-react";
+import CustomColorPicker from "@/components/ui/color-picker";
+
+function getCardTextColor(colorStr?: string): {
+  title: string;
+  body: string;
+  subtext: string;
+} {
+  if (!colorStr) {
+    return {
+      title: "text-foreground group-hover:text-blue-600",
+      body: "text-muted-foreground",
+      subtext: "text-muted-foreground",
+    };
+  }
+
+  let isDark = false;
+  if (colorStr.startsWith("#")) {
+    let hex = colorStr.slice(1);
+    if (hex.length === 3)
+      hex = hex
+        .split("")
+        .map((c) => c + c)
+        .join("");
+    const num = parseInt(hex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+    isDark = luma < 140;
+  } else if (colorStr.startsWith("hsl")) {
+    const match = colorStr.match(/hsl[a]?\([^,]+,[^,]+,\s*([0-9.]+)%/);
+    if (match) {
+      const l = parseFloat(match[1]);
+      isDark = l < 50;
+    }
+  }
+
+  if (isDark) {
+    return {
+      title: "text-white font-semibold",
+      body: "text-white/85",
+      subtext: "text-white/70",
+    };
+  }
+
+  return {
+    title: "text-zinc-900 font-semibold group-hover:text-blue-600",
+    body: "text-zinc-700",
+    subtext: "text-zinc-600",
+  };
+}
 
 interface NoteProps {
   note: NoteItem;
@@ -42,8 +93,11 @@ export default function Note({
 }: NoteProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLabelDropdownOpen, setIsLabelDropdownOpen] = useState(false);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [labels, setLabels] = useState(["Work", "Personal", "Design"]);
   const [newLabel, setNewLabel] = useState("");
+
+  const textColor = getCardTextColor(note.color);
 
   return (
     <div
@@ -51,7 +105,9 @@ export default function Note({
       onPointerDown={onPointerDown}
       style={style}
       className={`relative group ${className} ${
-        isDropdownOpen || isLabelDropdownOpen ? "z-50" : "hover:z-40 z-10"
+        isDropdownOpen || isLabelDropdownOpen || isColorPickerOpen
+          ? "z-50"
+          : "hover:z-40 z-10"
       }`}
     >
       <div
@@ -61,17 +117,18 @@ export default function Note({
             : "hover:drop-shadow-md"
         }`}
       >
-        {/* Main Body */}
         <motion.div
           layout={!disableLayoutAnimation}
           layoutId={disableLayoutAnimation ? undefined : `note-${note.id}`}
-          className={`relative bg-card border rounded-[26px] p-5 z-0 transition-colors ${
-            isSelected ? "border-blue-500" : "border-border"
+          className={`relative border rounded-2xl p-5 z-0 transition-colors shadow-xs ${
+            isSelected ? "border-blue-500 shadow-md" : "border-border/60"
           }`}
+          style={{
+            backgroundColor: note.color || "var(--card)",
+          }}
         >
-          {/* Category Pill */}
           {note.category && (
-            <div className="absolute top-[-2px] right-[-2px] bg-blue-400 text-white px-6 py-4 rounded-[26px] rounded-tr-[24px] text-sm font-semibold z-20">
+            <div className="absolute top-[-2px] right-[20px] bg-blue-500 text-white px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold z-20 shadow-xs">
               {note.category}
             </div>
           )}
@@ -83,11 +140,15 @@ export default function Note({
             )}
           </div>
 
-          <h3 className="text-base font-semibold text-foreground group-hover:text-blue-600 transition-colors">
+          <h3
+            className={`text-base font-semibold transition-colors ${textColor.title}`}
+          >
             {note.title}
           </h3>
 
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-4">
+          <p
+            className={`mt-2 text-sm leading-relaxed line-clamp-4 ${textColor.body}`}
+          >
             {note.content}
           </p>
 
@@ -103,8 +164,10 @@ export default function Note({
 
           {/* Hover Toolbar */}
           <div
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
             className={`absolute bottom-4 right-4 flex items-center gap-2 transition-opacity bg-card shadow-sm border border-border rounded-full p-1 z-40 ${
-              isDropdownOpen || isLabelDropdownOpen
+              isDropdownOpen || isLabelDropdownOpen || isColorPickerOpen
                 ? "opacity-100"
                 : "opacity-0 group-hover:opacity-100"
             }`}
@@ -117,6 +180,9 @@ export default function Note({
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
                 className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
                   isLabelDropdownOpen
                     ? "bg-muted text-foreground"
@@ -127,9 +193,9 @@ export default function Note({
                 <Tag size={16} />
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                side="top"
-                align="end"
-                className="w-56 p-0 flex flex-col overflow-hidden"
+                side="bottom"
+                align="start"
+                className="w-56 p-0 flex flex-col overflow-hidden rounded-2xl"
               >
                 <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground border-b border-border shrink-0">
                   Labels
@@ -195,15 +261,27 @@ export default function Note({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-              className="cursor-pointer p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none"
-              aria-label="Change color"
+            <CustomColorPicker
+              value={note.color || "#ffffff"}
+              onChange={(newColor) => onUpdate?.({ color: newColor })}
+              onOpenChange={setIsColorPickerOpen}
+              placement="bottom"
             >
-              <Palette size={16} />
-            </button>
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
+                  isColorPickerOpen
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+                aria-label="Change card color"
+                title="Change color"
+              >
+                <Palette size={16} />
+              </button>
+            </CustomColorPicker>
 
             <DropdownMenu
               open={isDropdownOpen}
@@ -213,13 +291,20 @@ export default function Note({
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
                 className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
                 aria-label="More options"
               >
                 <MoreVertical size={16} />
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent side="top" align="end" className="w-36 py-1">
+              <DropdownMenuContent
+                side="bottom"
+                align="start"
+                className="w-36 py-1"
+              >
                 <DropdownMenuItem
                   className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
                   onClick={(e) => {
