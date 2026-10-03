@@ -19,6 +19,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --border: oklch(0.922 0 0);
+  --dot-color: rgba(163, 63, 63, 0.08);
 
   /* Hardcoded exceptions that shouldn't change with theme */
   --sidebar-bg: #fafafa;
@@ -66,7 +67,7 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(18.338% 0.00163 16.6);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -81,6 +82,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
+  --dot-color: rgba(85, 85, 85, 0.15);
 
   /* Exception remains the same */
   --sidebar-bg: #fafafa;

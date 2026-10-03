@@ -82,7 +82,13 @@ export default function NotesGrid({
   };
 
   return (
-    <div className="h-full w-full overflow-y-auto pl-80 pt-24 pr-8 pb-8">
+    <div
+      className="h-full w-full overflow-y-auto pl-80 pt-24 pr-8 pb-8"
+      style={{
+        backgroundImage: "radial-gradient(var(--dot-color) 1.5px, transparent 1.5px)",
+        backgroundSize: "24px 24px",
+      }}
+    >
       {viewMode === "masonry" ? (
         renderMasonry()
       ) : (

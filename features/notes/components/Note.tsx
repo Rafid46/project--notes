@@ -1,24 +1,75 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import type { NoteItem } from "@/features/home/types";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   ChevronRight,
-  Tag,
-  Palette,
-  MoreVertical,
-  Trash,
-  Copy,
+  FileText,
+  FileCode,
+  Archive,
+  Video,
+  Music,
+  File,
   Download,
 } from "lucide-react";
-import CustomColorPicker from "@/components/ui/color-picker";
+import NoteToolbar from "./note-toolbar";
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getFileIcon(mimeType: string, filename: string) {
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
+  if (mimeType.includes("pdf") || ext === "pdf") {
+    return <FileText className="text-red-500 shrink-0" size={16} />;
+  }
+  if (
+    mimeType.includes("zip") ||
+    mimeType.includes("tar") ||
+    mimeType.includes("rar") ||
+    mimeType.includes("compressed") ||
+    ["zip", "rar", "7z", "tar", "gz"].includes(ext)
+  ) {
+    return <Archive className="text-amber-500 shrink-0" size={16} />;
+  }
+  if (
+    mimeType.includes("code") ||
+    mimeType.includes("javascript") ||
+    mimeType.includes("json") ||
+    mimeType.includes("html") ||
+    [
+      "js",
+      "ts",
+      "tsx",
+      "jsx",
+      "json",
+      "html",
+      "css",
+      "py",
+      "rs",
+      "go",
+      "cpp",
+      "c",
+    ].includes(ext)
+  ) {
+    return <FileCode className="text-emerald-500 shrink-0" size={16} />;
+  }
+  if (
+    mimeType.startsWith("video/") ||
+    ["mp4", "webm", "mkv", "mov"].includes(ext)
+  ) {
+    return <Video className="text-purple-500 shrink-0" size={16} />;
+  }
+  if (
+    mimeType.startsWith("audio/") ||
+    ["mp3", "wav", "ogg", "m4a", "flac"].includes(ext)
+  ) {
+    return <Music className="text-pink-500 shrink-0" size={16} />;
+  }
+  return <File className="text-blue-500 shrink-0" size={16} />;
+}
 
 function getCardTextColor(colorStr?: string): {
   title: string;
@@ -91,12 +142,6 @@ export default function Note({
   style,
   disableLayoutAnimation = false,
 }: NoteProps) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLabelDropdownOpen, setIsLabelDropdownOpen] = useState(false);
-  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
-  const [labels, setLabels] = useState(["Work", "Personal", "Design"]);
-  const [newLabel, setNewLabel] = useState("");
-
   const textColor = getCardTextColor(note.color);
 
   return (
@@ -104,11 +149,7 @@ export default function Note({
       onClick={onClick}
       onPointerDown={onPointerDown}
       style={style}
-      className={`relative group ${className} ${
-        isDropdownOpen || isLabelDropdownOpen || isColorPickerOpen
-          ? "z-50"
-          : "hover:z-40 z-10"
-      }`}
+      className={`relative group ${className} hover:z-40 z-10`}
     >
       <div
         className={`relative w-full h-full transition-all duration-200 hover:-translate-y-0.5 ${
@@ -120,15 +161,13 @@ export default function Note({
         <motion.div
           layout={!disableLayoutAnimation}
           layoutId={disableLayoutAnimation ? undefined : `note-${note.id}`}
-          className={`relative border rounded-2xl p-5 z-0 transition-colors shadow-xs ${
-            isSelected ? "border-blue-500 shadow-md" : "border-border/60"
-          }`}
+          className={`relative rounded-2xl p-5 pb-14 z-0 transition-colors shadow-xs`}
           style={{
             backgroundColor: note.color || "var(--card)",
           }}
         >
           {note.category && (
-            <div className="absolute top-[-2px] right-[20px] bg-blue-500 text-white px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold z-20 shadow-xs">
+            <div className="absolute top-0 right-[20px] px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold z-20 shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]">
               {note.category}
             </div>
           )}
@@ -141,16 +180,97 @@ export default function Note({
           </div>
 
           <h3
-            className={`text-base font-semibold transition-colors ${textColor.title}`}
+            className={`text-base font-semibold transition-colors ${
+              note.textColor ? "" : textColor.title
+            }`}
+            style={note.textColor ? { color: note.textColor } : undefined}
           >
             {note.title}
           </h3>
 
-          <p
-            className={`mt-2 text-sm leading-relaxed line-clamp-4 ${textColor.body}`}
-          >
-            {note.content}
-          </p>
+          <div
+            className={`mt-2 text-sm leading-relaxed line-clamp-4 ${
+              note.textColor ? "" : textColor.body
+            } [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic`}
+            style={note.textColor ? { color: note.textColor } : undefined}
+            dangerouslySetInnerHTML={{ __html: note.content }}
+          />
+
+          {note.files && note.files.length > 0 && (
+            <div
+              className="mt-3 flex flex-col gap-1.5"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {note.files.some((f) => f.type.startsWith("image/")) && (
+                <div className="grid grid-cols-2 gap-1.5 mb-1">
+                  {note.files
+                    .filter((f) => f.type.startsWith("image/"))
+                    .map((file) => (
+                      <div
+                        key={file.id}
+                        className="relative group/file rounded-lg overflow-hidden border border-border/80 bg-muted/30 aspect-video"
+                      >
+                        <img
+                          src={file.url}
+                          alt={file.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/file:opacity-100 transition-opacity flex items-center justify-between p-1.5 text-white">
+                          <span className="text-[10px] truncate max-w-[70%] font-medium">
+                            {file.name}
+                          </span>
+                          <a
+                            href={file.url}
+                            download={file.name}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 hover:bg-white/20 rounded cursor-pointer"
+                            title="Download image"
+                          >
+                            <Download size={12} />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {note.files
+                .filter((f) => !f.type.startsWith("image/"))
+                .map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border border-border/70 bg-card/60 backdrop-blur-xs text-xs hover:bg-muted/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {getFileIcon(file.type, file.name)}
+                      <div className="flex flex-col min-w-0">
+                        <span
+                          className="font-medium text-foreground truncate max-w-[130px]"
+                          title={file.name}
+                        >
+                          {file.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatFileSize(file.size)}
+                        </span>
+                      </div>
+                    </div>
+                    <a
+                      href={file.url}
+                      download={file.name}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
+                      title="Download file"
+                    >
+                      <Download size={13} />
+                    </a>
+                  </div>
+                ))}
+            </div>
+          )}
 
           {note.subNotes && note.subNotes.length > 0 && (
             <div className="mt-4 pt-3 border-t border-border flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -162,181 +282,16 @@ export default function Note({
             </div>
           )}
 
-          {/* Hover Toolbar */}
           <div
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
-            className={`absolute bottom-4 right-4 flex items-center gap-2 transition-opacity bg-card shadow-sm border border-border rounded-full p-1 z-40 ${
-              isDropdownOpen || isLabelDropdownOpen || isColorPickerOpen
-                ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100"
-            }`}
+            className="absolute bottom-3 right-3 transition-opacity opacity-0 group-hover:opacity-100 z-40"
           >
-            <DropdownMenu
-              open={isLabelDropdownOpen}
-              onOpenChange={setIsLabelDropdownOpen}
-            >
-              <DropdownMenuTrigger
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                }}
-                className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
-                  isLabelDropdownOpen
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-                aria-label="Add label"
-              >
-                <Tag size={16} />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="bottom"
-                align="start"
-                className="w-56 p-0 flex flex-col overflow-hidden rounded-2xl"
-              >
-                <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground border-b border-border shrink-0">
-                  Labels
-                </div>
-                <div className="max-h-40 overflow-y-auto py-1">
-                  {labels.map((label) => (
-                    <DropdownMenuItem
-                      key={label}
-                      className="cursor-pointer w-full flex items-center justify-between px-3 py-1.5 text-sm rounded-none border-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (note.category === label) {
-                          onUpdate?.({ category: undefined });
-                        } else {
-                          onUpdate?.({ category: label });
-                        }
-                        setIsLabelDropdownOpen(false);
-                      }}
-                    >
-                      {label}
-                      {note.category === label && (
-                        <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </div>
-                <div className="p-2 border-t border-border flex items-center gap-2 shrink-0 bg-muted/30">
-                  <input
-                    type="text"
-                    placeholder="New label..."
-                    value={newLabel}
-                    onChange={(e) => setNewLabel(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => {
-                      e.stopPropagation();
-                      if (e.key === "Enter" && newLabel.trim()) {
-                        e.preventDefault();
-                        if (!labels.includes(newLabel.trim())) {
-                          setLabels([...labels, newLabel.trim()]);
-                        }
-                        setNewLabel("");
-                      }
-                    }}
-                    className="flex-1 min-w-0 text-xs px-2 py-1.5 bg-background rounded outline-none text-foreground border border-border focus:border-blue-500 transition-colors"
-                  />
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (newLabel.trim()) {
-                        if (!labels.includes(newLabel.trim())) {
-                          setLabels([...labels, newLabel.trim()]);
-                        }
-                        onUpdate?.({ category: newLabel.trim() });
-                        setNewLabel("");
-                        setIsLabelDropdownOpen(false);
-                      }
-                    }}
-                    className="cursor-pointer text-xs font-medium bg-blue-500 text-white px-2.5 py-1.5 rounded hover:bg-blue-600 transition-colors shrink-0 outline-none"
-                  >
-                    Add
-                  </button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <CustomColorPicker
-              value={note.color || "#ffffff"}
-              onChange={(newColor) => onUpdate?.({ color: newColor })}
-              onOpenChange={setIsColorPickerOpen}
-              placement="bottom"
-            >
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
-                  isColorPickerOpen
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-                aria-label="Change card color"
-                title="Change color"
-              >
-                <Palette size={16} />
-              </button>
-            </CustomColorPicker>
-
-            <DropdownMenu
-              open={isDropdownOpen}
-              onOpenChange={setIsDropdownOpen}
-            >
-              <DropdownMenuTrigger
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                }}
-                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
-                aria-label="More options"
-              >
-                <MoreVertical size={16} />
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent
-                side="bottom"
-                align="start"
-                className="w-36 py-1"
-              >
-                <DropdownMenuItem
-                  className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  <Trash size={14} />
-                  Delete
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  <Copy size={14} />
-                  Copy
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDropdownOpen(false);
-                  }}
-                >
-                  <Download size={14} />
-                  Export
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <NoteToolbar
+              note={note}
+              onUpdate={onUpdate}
+              onActionClick={() => onClick?.()}
+            />
           </div>
         </motion.div>
       </div>
