@@ -8,8 +8,9 @@ import Whiteboard from "@/features/whiteboard/components/whiteboard";
 import Sidebar from "./sidebar";
 import Header from "./header";
 import NotesGrid from "./notes-grid";
-import CreateNotePopover from "./create-note-popover";
+import CreateNotePopover from "./NotePopover";
 import type { NoteItem, ViewMode } from "../types";
+import { useNoteModalStore } from "@/store";
 
 import { getSavedDefaultView, SETTINGS_CHANGE_EVENT } from "./settings-modal";
 import LinkPreviewCard from "@/features/notes/components/link-preview-card";
@@ -99,7 +100,11 @@ export default function HomeShell() {
   const [notes, setNotes] = useState<NoteItem[]>(INITIAL_NOTES);
   const [selectedNoteId, setSelectedNoteId] = useState<string>("note-1");
   const [viewMode, setViewMode] = useState<ViewMode>("whiteboard");
-  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const {
+    isOpen: isNoteModalOpen,
+    openNoteModal,
+    closeNoteModal,
+  } = useNoteModalStore();
   const [isLoadingModalPreview, setIsLoadingModalPreview] = useState(false);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const fetchingUrlsRef = useRef<Set<string>>(new Set());
@@ -185,7 +190,7 @@ export default function HomeShell() {
       };
       setNotes((prev) => [...prev, newNote]);
       setSelectedNoteId(newNoteId);
-      setIsNoteModalOpen(true);
+      openNoteModal(newNoteId);
       setIsLoadingModalPreview(true);
       fetchingUrlsRef.current.add(firstUrl);
       getLinkPreview(firstUrl)
@@ -345,7 +350,7 @@ export default function HomeShell() {
             selectedNoteId={selectedNoteId}
             onSelectNote={(id) => {
               setSelectedNoteId(id);
-              setIsNoteModalOpen(true);
+              openNoteModal(id);
             }}
             onUpdateNote={handleUpdateNote}
           />
@@ -355,7 +360,7 @@ export default function HomeShell() {
             viewMode={viewMode}
             onSelectNote={(id) => {
               setSelectedNoteId(id);
-              setIsNoteModalOpen(true);
+              openNoteModal(id);
             }}
             onUpdateNote={handleUpdateNote}
           />
@@ -367,7 +372,7 @@ export default function HomeShell() {
         selectedNoteId={selectedNoteId}
         onSelectNote={(id) => {
           setSelectedNoteId(id);
-          setIsNoteModalOpen(true);
+          openNoteModal(id);
         }}
         onOpenAddSubnote={openPopover}
       />
@@ -396,7 +401,7 @@ export default function HomeShell() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity"
-              onClick={() => setIsNoteModalOpen(false)}
+              onClick={() => closeNoteModal()}
             />
             <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
               <motion.div
@@ -609,7 +614,7 @@ export default function HomeShell() {
                   />
 
                   <button
-                    onClick={() => setIsNoteModalOpen(false)}
+                    onClick={() => closeNoteModal()}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4 py-2 border border-transparent cursor-pointer shrink-0"
                   >
                     Close

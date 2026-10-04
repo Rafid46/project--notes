@@ -11,7 +11,7 @@ import {
   getLinkPreview,
 } from "@/features/notes/utils/link-preview";
 
-interface CreateNotePopoverProps {
+interface NotePopoverProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (note: {
@@ -41,14 +41,14 @@ const COLORS = [
   "#ef4444",
 ];
 
-export default function CreateNotePopover({
+export default function NotePopover({
   isOpen,
   onClose,
   onSave,
   parentId,
   anchorRect,
   initialTitle = "",
-}: CreateNotePopoverProps) {
+}: NotePopoverProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [color, setColor] = useState(COLORS[0]);

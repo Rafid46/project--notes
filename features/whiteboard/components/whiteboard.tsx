@@ -3,23 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { NoteItem } from "@/features/home/types";
 import Note from "@/features/notes/components/Note";
-import CustomColorPicker from "@/components/ui/color-picker";
+import MiniMap from "@/components/common/MiniMap";
+
 import {
   getSavedWhiteboardSettings,
   SETTINGS_CHANGE_EVENT,
   type WhiteboardControlSettings,
 } from "@/features/home/components/settings-modal";
-
-const CANVAS_COLORS = [
-  { label: "White", value: "#ffffff" },
-  { label: "Cream", value: "#fdfbf7" },
-  { label: "Soft Gray", value: "#f4f4f5" },
-  { label: "Light Mint", value: "#f0fdf4" },
-  { label: "Light Blue", value: "#f0f9ff" },
-  { label: "Dark", value: "#18181b" },
-];
-
-const COLOR_STORAGE_KEY = "project_notes_canvas_color";
+import BottomToolbar, { COLOR_STORAGE_KEY } from "./BottomToolbar";
 const POSITIONS_STORAGE_KEY = "project_notes_card_positions";
 
 interface WhiteboardProps {
@@ -43,9 +34,8 @@ export default function Whiteboard({
   const [cardPositions, setCardPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
-  const [controlSettings, setControlSettings] = useState<WhiteboardControlSettings>(
-    getSavedWhiteboardSettings
-  );
+  const [controlSettings, setControlSettings] =
+    useState<WhiteboardControlSettings>(getSavedWhiteboardSettings);
   const controlSettingsRef = useRef<WhiteboardControlSettings>(controlSettings);
   useEffect(() => {
     controlSettingsRef.current = controlSettings;
@@ -56,7 +46,8 @@ export default function Whiteboard({
       setControlSettings(getSavedWhiteboardSettings());
     };
     window.addEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
-    return () => window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
+    return () =>
+      window.removeEventListener(SETTINGS_CHANGE_EVENT, handleSettingsChange);
   }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -168,7 +159,9 @@ export default function Whiteboard({
 
       if (isZoomModifier) {
         const dir = settings.invertZoom ? 1 : -1;
-        const zoomFactor = Math.exp(dir * -e.deltaY * 0.0025 * (settings.zoomStep / 1.2));
+        const zoomFactor = Math.exp(
+          dir * -e.deltaY * 0.0025 * (settings.zoomStep / 1.2),
+        );
         const nextZoom = Math.min(
           3,
           Math.max(0.2, zoomRef.current * zoomFactor),
@@ -280,13 +273,6 @@ export default function Whiteboard({
       window.removeEventListener("pointerup", handleGlobalPointerUp);
     };
   }, []);
-
-  const handleColorChange = (newColor: string) => {
-    setCanvasColor(newColor);
-    try {
-      localStorage.setItem(COLOR_STORAGE_KEY, newColor);
-    } catch {}
-  };
 
   const isPanAction = (e: React.PointerEvent) => {
     const trigger = controlSettingsRef.current.panTrigger;
@@ -415,41 +401,6 @@ export default function Whiteboard({
     ? "rgba(255, 255, 255, 0.15)"
     : "rgba(0, 0, 0, 0.08)";
 
-  const MINIMAP_W = 160;
-  const MINIMAP_H = 112;
-  const MINIMAP_SCALE = 0.02;
-  const mmCx = MINIMAP_W / 2;
-  const mmCy = MINIMAP_H / 2;
-
-  const vpW =
-    typeof window !== "undefined" ? window.innerWidth / zoom : 1000 / zoom;
-  const vpH =
-    typeof window !== "undefined" ? window.innerHeight / zoom : 800 / zoom;
-  const vpX = -pan.x / zoom;
-  const vpY = -pan.y / zoom;
-
-  const mmVpX = mmCx + vpX * MINIMAP_SCALE;
-  const mmVpY = mmCy + vpY * MINIMAP_SCALE;
-  const mmVpW = vpW * MINIMAP_SCALE;
-  const mmVpH = vpH * MINIMAP_SCALE;
-
-  const handleMinimapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-
-    const worldX = (clickX - mmCx) / MINIMAP_SCALE;
-    const worldY = (clickY - mmCy) / MINIMAP_SCALE;
-
-    const screenCx = window.innerWidth / 2;
-    const screenCy = window.innerHeight / 2;
-
-    setPan({
-      x: screenCx - worldX * zoom,
-      y: screenCy - worldY * zoom,
-    });
-  };
-
   return (
     <div
       ref={containerRef}
@@ -498,104 +449,22 @@ export default function Whiteboard({
         })}
       </div>
 
-      <div
-        className="fixed bottom-[88px] right-5 z-50 overflow-hidden rounded-xl border border-black/10 bg-white/90 shadow-lg backdrop-blur-md cursor-pointer transition-transform hover:scale-105"
-        style={{ width: MINIMAP_W, height: MINIMAP_H }}
-        onClick={handleMinimapClick}
-        title="Minimap - Click to navigate"
-      >
-        {allNotes.map((note) => {
-          const pos = cardPositions[note.id] || { x: 0, y: 0 };
-          const mx = mmCx + pos.x * MINIMAP_SCALE;
-          const my = mmCy + pos.y * MINIMAP_SCALE;
-          const isSelected = selectedNoteId === note.id;
+      <MiniMap
+        notes={allNotes}
+        cardPositions={cardPositions}
+        selectedNoteId={selectedNoteId}
+        pan={pan}
+        zoom={zoom}
+        onPanChange={setPan}
+      />
 
-          return (
-            <div
-              key={`minimap-${note.id}`}
-              className={`absolute rounded-sm ${isSelected ? "bg-blue-500" : "bg-zinc-400"}`}
-              style={{
-                left: mx,
-                top: my,
-                width: 320 * MINIMAP_SCALE,
-                height: 160 * MINIMAP_SCALE,
-              }}
-            />
-          );
-        })}
-
-        <div
-          className="absolute border-2 border-blue-500/50 bg-blue-500/10 rounded-sm pointer-events-none"
-          style={{
-            left: mmVpX,
-            top: mmVpY,
-            width: mmVpW,
-            height: mmVpH,
-          }}
-        />
-      </div>
-
-      <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2">
-        <div className="flex h-[50px] cursor-pointer items-center gap-2 rounded-full border border-black/10 bg-white/90 px-4 shadow-lg backdrop-blur-md text-sm font-medium text-zinc-700">
-          <button
-            type="button"
-            onClick={() => handleZoomStep(1 / 1.2)}
-            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 active:scale-95 transition-transform text-lg"
-            aria-label="Zoom out"
-          >
-            -
-          </button>
-          <button
-            type="button"
-            onClick={() => setZoom(1)}
-            className="min-w-[48px] px-1 py-1 text-center hover:text-zinc-900"
-            title="Reset zoom"
-          >
-            {Math.round(zoom * 100)}%
-          </button>
-          <button
-            type="button"
-            onClick={() => handleZoomStep(1.2)}
-            className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-zinc-100 active:scale-95 transition-transform text-lg"
-            aria-label="Zoom in"
-          >
-            +
-          </button>
-        </div>
-
-        <div className="flex h-[50px] cursor-pointer items-center gap-2.5 rounded-full border border-black/10 bg-white/90 px-4 shadow-lg backdrop-blur-md">
-          {CANVAS_COLORS.map((c) => (
-            <button
-              key={c.value}
-              type="button"
-              title={c.label}
-              onClick={() => handleColorChange(c.value)}
-              className={`h-7 w-7 rounded-full border border-black/15 transition-transform hover:scale-110 active:scale-95 ${
-                canvasColor === c.value
-                  ? "ring-2 ring-blue-500 ring-offset-2"
-                  : ""
-              }`}
-              style={{ backgroundColor: c.value }}
-              aria-label={c.label}
-            />
-          ))}
-          <CustomColorPicker
-            value={canvasColor}
-            onChange={handleColorChange}
-            placement="top"
-            trigger={
-              <div
-                title="Custom Color"
-                className="relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-dashed border-zinc-400 bg-transparent transition-transform hover:scale-110 active:scale-95"
-              >
-                <span className="text-sm font-semibold leading-none text-zinc-600">
-                  +
-                </span>
-              </div>
-            }
-          />
-        </div>
-      </div>
+      <BottomToolbar
+        zoom={zoom}
+        onZoomStep={handleZoomStep}
+        onResetZoom={() => setZoom(1)}
+        canvasColor={canvasColor}
+        onCanvasColorChange={setCanvasColor}
+      />
     </div>
   );
 }

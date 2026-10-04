@@ -6,10 +6,12 @@ import React, {
   useState,
   useRef,
   useEffect,
+  useId,
   type ReactNode,
   type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { useColorPickerStore } from "@/store/useColorPickerStore";
 
 export type ColorSpace = "hsb" | "hsl" | "rgb";
 export type ColorChannel =
@@ -232,12 +234,21 @@ export function ColorPicker({
   const [internalHsb, setInternalHsb] = useState<HSBColor>(() =>
     parseToHSB(value || defaultValue),
   );
-  const [isOpen, setIsOpen] = useState(false);
+  const pickerId = useId();
+  const { activePickerId, openColorPicker, closeColorPicker } =
+    useColorPickerStore();
+  const isOpen = activePickerId === pickerId;
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   const handleSetIsOpen = (open: boolean) => {
-    setIsOpen(open);
+    if (open) {
+      openColorPicker(pickerId);
+    } else {
+      if (activePickerId === pickerId) {
+        closeColorPicker();
+      }
+    }
     onOpenChange?.(open);
   };
 
