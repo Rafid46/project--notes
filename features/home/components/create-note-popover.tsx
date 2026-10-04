@@ -1,8 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Image as ImageIcon, Tag, X } from "lucide-react";
+import { Image as ImageIcon, Tag, X, Loader2 } from "lucide-react";
 import CustomColorPicker from "@/components/ui/color-picker";
+import type { LinkPreviewMetadata } from "../types";
+import LinkPreviewCard from "@/features/notes/components/link-preview-card";
+
+import {
+  extractUrls,
+  getLinkPreview,
+} from "@/features/notes/utils/link-preview";
 
 interface CreateNotePopoverProps {
   isOpen: boolean;
@@ -13,6 +20,7 @@ interface CreateNotePopoverProps {
     color?: string;
     category?: string;
     parentId: string | null;
+    linkPreviews?: LinkPreviewMetadata[];
   }) => void;
   parentId: string | null;
   anchorRect: {
@@ -49,14 +57,16 @@ export default function CreateNotePopover({
   const [newLabel, setNewLabel] = useState("");
   const [labels, setLabels] = useState(["Work", "Personal", "Design"]);
   const [error, setError] = useState("");
+  const [linkPreviews, setLinkPreviews] = useState<LinkPreviewMetadata[]>([]);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   const popoverRef = useRef<HTMLDivElement>(null);
+  const fetchingUrlsRef = useRef<Set<string>>(new Set());
 
-  // Keep refs for the latest values so the click-outside listener can access them
-  const stateRef = useRef({ title, content, color, category });
+  const stateRef = useRef({ title, content, color, category, linkPreviews });
   useEffect(() => {
-    stateRef.current = { title, content, color, category };
-  }, [title, content, color, category]);
+    stateRef.current = { title, content, color, category, linkPreviews };
+  }, [title, content, color, category, linkPreviews]);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,6 +76,8 @@ export default function CreateNotePopover({
       setCategory("");
       setIsCategoryOpen(false);
       setError("");
+      setLinkPreviews([]);
+      setIsLoadingPreview(false);
     }
   }, [isOpen, initialTitle]);
 
@@ -78,15 +90,22 @@ export default function CreateNotePopover({
         content: currentContent,
         color: currentColor,
         category: currentCategory,
+        linkPreviews: currentLinkPreviews,
       } = stateRef.current;
 
-      if (currentTitle.trim() || currentContent.trim()) {
+      if (
+        currentTitle.trim() ||
+        currentContent.trim() ||
+        currentLinkPreviews.length > 0
+      ) {
         onSave({
           title: currentTitle.trim() || "Untitled Note",
           content: currentContent,
           color: currentColor,
           category: currentCategory.trim() || undefined,
           parentId,
+          linkPreviews:
+            currentLinkPreviews.length > 0 ? currentLinkPreviews : undefined,
         });
       }
       onClose();
@@ -105,7 +124,6 @@ export default function CreateNotePopover({
       if (e.key === "Escape") saveAndClose();
     };
 
-    // Delay attaching the mousedown listener so the click that opens the popover doesn't instantly close it
     const timeoutId = setTimeout(() => {
       document.addEventListener("mousedown", handleClickOutside);
     }, 0);
@@ -121,7 +139,7 @@ export default function CreateNotePopover({
   if (!isOpen) return null;
 
   const handleSave = () => {
-    if (!title.trim() && !content.trim()) {
+    if (!title.trim() && !content.trim() && linkPreviews.length === 0) {
       onClose();
       return;
     }
@@ -133,8 +151,81 @@ export default function CreateNotePopover({
       color,
       category: category.trim() || undefined,
       parentId,
+      linkPreviews: linkPreviews.length > 0 ? linkPreviews : undefined,
     });
     onClose();
+  };
+
+  useEffect(() => {
+    const urls = [...extractUrls(content), ...extractUrls(title)];
+    if (urls.length === 0) return;
+
+    for (const url of urls) {
+      const existing = linkPreviews.find((p) => p.url === url);
+      if ((existing && existing.image) || fetchingUrlsRef.current.has(url)) {
+        continue;
+      }
+      fetchingUrlsRef.current.add(url);
+      setIsLoadingPreview(true);
+      getLinkPreview(url)
+        .then((preview) => {
+          if (preview) {
+            setLinkPreviews((prev) =>
+              prev.some((p) => p.url === preview.url)
+                ? prev.map((p) => (p.url === preview.url ? preview : p))
+                : [...prev, preview],
+            );
+            setTitle((currentTitle) => {
+              if (!currentTitle.trim() && preview.title) {
+                return preview.title;
+              }
+              return currentTitle;
+            });
+          }
+        })
+        .finally(() => {
+          fetchingUrlsRef.current.delete(url);
+          setIsLoadingPreview(false);
+        });
+    }
+  }, [content, title]);
+
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const text = e.clipboardData.getData("text");
+    if (!text) return;
+    const urls = extractUrls(text);
+    if (urls.length === 0) return;
+
+    setIsLoadingPreview(true);
+    try {
+      for (const url of urls) {
+        const existing = linkPreviews.find((p) => p.url === url);
+        if ((existing && existing.image) || fetchingUrlsRef.current.has(url)) {
+          continue;
+        }
+        fetchingUrlsRef.current.add(url);
+        try {
+          const preview = await getLinkPreview(url);
+          if (preview) {
+            setLinkPreviews((prev) =>
+              prev.some((p) => p.url === preview.url)
+                ? prev.map((p) => (p.url === preview.url ? preview : p))
+                : [...prev, preview],
+            );
+            setTitle((currentTitle) => {
+              if (!currentTitle.trim() && preview.title) {
+                return preview.title;
+              }
+              return currentTitle;
+            });
+          }
+        } finally {
+          fetchingUrlsRef.current.delete(url);
+        }
+      }
+    } finally {
+      setIsLoadingPreview(false);
+    }
   };
 
   const handleTitleKeyDown = (e: React.KeyboardEvent) => {
@@ -187,19 +278,48 @@ export default function CreateNotePopover({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={handleTitleKeyDown}
-        // eslint-disable-next-line jsx-a11y/no-autofocus
+        onPaste={handlePaste}
         autoFocus
         className="w-full text-base font-semibold text-foreground placeholder-muted-foreground outline-none bg-transparent"
       />
 
       <textarea
-        placeholder="Take a note... (Enter to save, Shift+Enter for newline)"
+        placeholder="Take a note or paste a link... (Enter to save, Shift+Enter for newline)"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleContentKeyDown}
+        onPaste={handlePaste}
         rows={4}
         className="mt-2 w-full text-sm leading-relaxed text-muted-foreground placeholder-muted-foreground outline-none resize-none bg-transparent"
       />
+
+      {isLoadingPreview && (
+        <div className="mt-2.5 p-3 rounded-xl border border-border/60 bg-muted/20 flex items-center gap-2.5 animate-pulse">
+          <Loader2
+            size={16}
+            className="animate-spin text-muted-foreground shrink-0"
+          />
+          <span className="text-xs text-muted-foreground">
+            Loading link preview...
+          </span>
+        </div>
+      )}
+
+      {linkPreviews.length > 0 && (
+        <div className="mt-2.5 flex flex-col gap-2">
+          {linkPreviews.map((preview) => (
+            <LinkPreviewCard
+              key={preview.url}
+              preview={preview}
+              onRemove={() =>
+                setLinkPreviews((prev) =>
+                  prev.filter((p) => p.url !== preview.url),
+                )
+              }
+            />
+          ))}
+        </div>
+      )}
 
       {error && (
         <span className="mt-2 text-xs text-red-500 shrink-0">{error}</span>
@@ -244,11 +364,12 @@ export default function CreateNotePopover({
           >
             <ImageIcon size={22} />
           </button>
-          {/* add label */}
           <button
             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
             className={`rounded p-1 transition-colors cursor-pointer ${
-              isCategoryOpen ? "bg-muted text-foreground" : "hover:bg-muted hover:text-foreground"
+              isCategoryOpen
+                ? "bg-muted text-foreground"
+                : "hover:bg-muted hover:text-foreground"
             }`}
             aria-label="Add label"
           >
@@ -257,14 +378,16 @@ export default function CreateNotePopover({
         </div>
       </div>
 
-      {/* Label Section */}
       {isCategoryOpen && (
         <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3">
           <h4 className="text-sm font-medium text-foreground px-1">Labels</h4>
-          
+
           <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
-            {labels.map(label => (
-              <label key={label} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer transition-colors">
+            {labels.map((label) => (
+              <label
+                key={label}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+              >
                 <input
                   type="checkbox"
                   checked={category === label}

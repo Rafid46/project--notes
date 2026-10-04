@@ -11,6 +11,15 @@ export interface NoteFile {
   url: string;
 }
 
+export interface LinkPreviewMetadata {
+  url: string;
+  title: string;
+  description?: string;
+  image?: string;
+  favicon?: string;
+  siteName?: string;
+}
+
 export interface NoteItem {
   id: string;
   title: string;
@@ -21,6 +30,7 @@ export interface NoteItem {
   category?: string;
   subNotes?: NoteItem[];
   files?: NoteFile[];
+  linkPreviews?: LinkPreviewMetadata[];
 }
 
 export interface DockItemData {

@@ -13,6 +13,7 @@ import {
   Download,
 } from "lucide-react";
 import NoteToolbar from "./note-toolbar";
+import LinkPreviewCard from "./link-preview-card";
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -195,6 +196,31 @@ export default function Note({
             style={note.textColor ? { color: note.textColor } : undefined}
             dangerouslySetInnerHTML={{ __html: note.content }}
           />
+
+          {note.linkPreviews && note.linkPreviews.length > 0 && (
+            <div
+              className="mt-3 flex flex-col gap-2"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {note.linkPreviews.map((preview) => (
+                <LinkPreviewCard
+                  key={preview.url}
+                  preview={preview}
+                  onRemove={
+                    onUpdate
+                      ? () => {
+                          const updated = (note.linkPreviews || []).filter(
+                            (p) => p.url !== preview.url
+                          );
+                          onUpdate({ linkPreviews: updated });
+                        }
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
+          )}
 
           {note.files && note.files.length > 0 && (
             <div
