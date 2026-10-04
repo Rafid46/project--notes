@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { NoteItem } from "@/features/home/types";
 
 const MINIMAP_W = 160;
@@ -25,13 +26,25 @@ export default function MiniMap({
   onPanChange,
   className,
 }: MiniMapProps) {
+  const [viewportSize, setViewportSize] = useState({ width: 1000, height: 800 });
+
+  useEffect(() => {
+    const updateSize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
   const mmCx = MINIMAP_W / 2;
   const mmCy = MINIMAP_H / 2;
 
-  const vpW =
-    typeof window !== "undefined" ? window.innerWidth / zoom : 1000 / zoom;
-  const vpH =
-    typeof window !== "undefined" ? window.innerHeight / zoom : 800 / zoom;
+  const vpW = viewportSize.width / zoom;
+  const vpH = viewportSize.height / zoom;
   const vpX = -pan.x / zoom;
   const vpY = -pan.y / zoom;
 

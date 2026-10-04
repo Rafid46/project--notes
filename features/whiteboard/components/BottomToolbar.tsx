@@ -1,6 +1,6 @@
 "use client";
 
-import CustomColorPicker from "@/components/ui/color-picker";
+import CustomColorPicker from "@/components/ui/ColorPicker";
 
 export const COLOR_STORAGE_KEY = "project_notes_canvas_color";
 

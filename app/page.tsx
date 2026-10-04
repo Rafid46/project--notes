@@ -1,5 +1,5 @@
-import HomeShell from "@/features/home/components/home-shell";
+import HomeClient from "@/features/home/components/HomeClient";
 
 export default function Home() {
-  return <HomeShell />;
+  return <HomeClient />;
 }

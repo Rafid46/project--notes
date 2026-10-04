@@ -7,15 +7,12 @@ import {
   useSpring,
   useTransform,
   type SpringOptions,
-  AnimatePresence,
 } from "framer-motion";
 import React, {
   Children,
   cloneElement,
-  useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import type { DockItemData } from "../types";
 
@@ -115,12 +112,6 @@ function DockItem({
       )}
     </motion.div>
   );
-}
-
-interface DockLabelProps {
-  className?: string;
-  children: React.ReactNode;
-  isHovered?: MotionValue<number>;
 }
 
 interface DockIconProps {

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Presentation,
@@ -16,10 +16,11 @@ import {
   Plus,
   Settings,
 } from "lucide-react";
-import Dock from "./dock";
+
 import type { ViewMode, GridViewMode, DockItemData } from "../types";
 import ThemeToggle from "./ThemeToggle";
-import SettingsModal from "./settings-modal";
+import SettingsModal from "./SettingsModal";
+import Dock from "./dock";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -109,7 +110,8 @@ export default function Header({
     left: number;
   } | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [lastSelectedGrid, setLastSelectedGrid] = useState<GridViewMode>("grid-4");
+  const [lastSelectedGrid, setLastSelectedGrid] =
+    useState<GridViewMode>("grid-4");
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -152,7 +154,9 @@ export default function Header({
     };
   }, [isGridDropdownOpen]);
 
-  const handleGridDockItemClick = (e?: React.MouseEvent<Element> | React.KeyboardEvent<Element>) => {
+  const handleGridDockItemClick = (
+    e?: React.MouseEvent<Element> | React.KeyboardEvent<Element>,
+  ) => {
     if (e && "currentTarget" in e && e.currentTarget) {
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       setDropdownPosition({
@@ -328,7 +332,7 @@ export default function Header({
               })}
             </div>
           </div>,
-          document.body
+          document.body,
         )}
 
       <SettingsModal

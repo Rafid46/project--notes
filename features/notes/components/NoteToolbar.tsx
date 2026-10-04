@@ -22,13 +22,14 @@ import {
   Paperclip,
   Plus,
 } from "lucide-react";
-import CustomColorPicker from "@/components/ui/color-picker";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import CustomColorPicker from "@/components/ui/ColorPicker";
 
 const TEXT_COLORS: { label: string; value?: string; previewColor: string }[] = [
   { label: "Default", value: undefined, previewColor: "var(--card)" },
@@ -219,31 +220,34 @@ export default function NoteToolbar({
               <TooltipContent side="top">Italic</TooltipContent>
             </Tooltip>
 
-            <DropdownMenu open={isTextColorOpen} onOpenChange={setIsTextColorOpen}>
+            <DropdownMenu
+              open={isTextColorOpen}
+              onOpenChange={setIsTextColorOpen}
+            >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex">
-                    <DropdownMenuTrigger
-                      onClick={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
-                        isTextColorOpen
-                          ? "bg-muted text-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                      aria-label="Text color"
-                    >
-                      <div className="relative flex flex-col items-center justify-center w-3.5 h-3.5">
-                        <span className="text-xs font-bold leading-none">A</span>
-                        <span
-                          className="w-3 h-[2px] rounded-full mt-0.5"
-                          style={{
-                            backgroundColor: note.textColor || "currentColor",
-                          }}
-                        />
-                      </div>
-                    </DropdownMenuTrigger>
-                  </span>
+                  <DropdownMenuTrigger
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
+                      isTextColorOpen
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                    aria-label="Text color"
+                  >
+                    <div className="relative flex flex-col items-center justify-center w-3.5 h-3.5">
+                      <span className="text-xs font-bold leading-none">
+                        A
+                      </span>
+                      <span
+                        className="w-3 h-[2px] rounded-full mt-0.5"
+                        style={{
+                          backgroundColor: note.textColor || "currentColor",
+                        }}
+                      />
+                    </div>
+                  </DropdownMenuTrigger>
                 </TooltipTrigger>
                 <TooltipContent side="top">Text color</TooltipContent>
               </Tooltip>
@@ -368,20 +372,18 @@ export default function NoteToolbar({
         >
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <DropdownMenuTrigger
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
-                    isLabelDropdownOpen
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                  aria-label="Labels"
-                >
-                  <Tag size={14} />
-                </DropdownMenuTrigger>
-              </span>
+              <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
+                  isLabelDropdownOpen
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+                aria-label="Labels"
+              >
+                <Tag size={14} />
+              </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="top">Labels</TooltipContent>
           </Tooltip>
@@ -457,28 +459,27 @@ export default function NoteToolbar({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <CustomColorPicker
-                value={note.color || "#ffffff"}
-                onChange={(newColor) => onUpdate?.({ color: newColor })}
-                onOpenChange={setIsColorPickerOpen}
-                placement="bottom"
+            <CustomColorPicker
+              value={note.color || "#ffffff"}
+              onChange={(newColor) => onUpdate?.({ color: newColor })}
+              onOpenChange={setIsColorPickerOpen}
+              placement="bottom"
+              className="flex items-center justify-center"
+            >
+              <button
+                type="button"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
+                  isColorPickerOpen
+                    ? "bg-muted text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+                aria-label="Change card color"
               >
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
-                    isColorPickerOpen
-                      ? "bg-muted text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
-                  aria-label="Change card color"
-                >
-                  <Palette size={14} />
-                </button>
-              </CustomColorPicker>
-            </span>
+                <Palette size={14} />
+              </button>
+            </CustomColorPicker>
           </TooltipTrigger>
           <TooltipContent side="top">Note color</TooltipContent>
         </Tooltip>
@@ -486,16 +487,14 @@ export default function NoteToolbar({
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="inline-flex">
-                <DropdownMenuTrigger
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
-                  aria-label="More options"
-                >
-                  <MoreVertical size={14} />
-                </DropdownMenuTrigger>
-              </span>
+              <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
+                aria-label="More options"
+              >
+                <MoreVertical size={14} />
+              </DropdownMenuTrigger>
             </TooltipTrigger>
             <TooltipContent side="top">More options</TooltipContent>
           </Tooltip>

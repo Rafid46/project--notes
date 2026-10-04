@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Image as ImageIcon, Tag, X, Loader2 } from "lucide-react";
-import CustomColorPicker from "@/components/ui/color-picker";
+
 import type { LinkPreviewMetadata } from "../types";
-import LinkPreviewCard from "@/features/notes/components/link-preview-card";
+import LinkPreviewCard from "@/features/notes/components/LinkPreviewCard";
 
 import {
   extractUrls,
   getLinkPreview,
 } from "@/features/notes/utils/link-preview";
+import CustomColorPicker from "@/components/ui/ColorPicker";
 
 interface NotePopoverProps {
   isOpen: boolean;
@@ -136,27 +137,9 @@ export default function NotePopover({
     };
   }, [isOpen, onClose, onSave, parentId]);
 
-  if (!isOpen) return null;
-
-  const handleSave = () => {
-    if (!title.trim() && !content.trim() && linkPreviews.length === 0) {
-      onClose();
-      return;
-    }
-
-    setError("");
-    onSave({
-      title: title.trim() || "Untitled Note",
-      content,
-      color,
-      category: category.trim() || undefined,
-      parentId,
-      linkPreviews: linkPreviews.length > 0 ? linkPreviews : undefined,
-    });
-    onClose();
-  };
-
   useEffect(() => {
+    if (!isOpen) return;
+
     const urls = [...extractUrls(content), ...extractUrls(title)];
     if (urls.length === 0) return;
 
@@ -188,7 +171,27 @@ export default function NotePopover({
           setIsLoadingPreview(false);
         });
     }
-  }, [content, title]);
+  }, [isOpen, content, title]);
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    if (!title.trim() && !content.trim() && linkPreviews.length === 0) {
+      onClose();
+      return;
+    }
+
+    setError("");
+    onSave({
+      title: title.trim() || "Untitled Note",
+      content,
+      color,
+      category: category.trim() || undefined,
+      parentId,
+      linkPreviews: linkPreviews.length > 0 ? linkPreviews : undefined,
+    });
+    onClose();
+  };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
     const text = e.clipboardData.getData("text");

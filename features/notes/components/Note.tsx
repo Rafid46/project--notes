@@ -12,8 +12,8 @@ import {
   File,
   Download,
 } from "lucide-react";
-import NoteToolbar from "./note-toolbar";
-import LinkPreviewCard from "./link-preview-card";
+import NoteToolbar from "./NoteToolbar";
+import LinkPreviewCard from "./LinkPreviewCard";
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -153,7 +153,9 @@ export default function Note({
       className={`relative group ${className} hover:z-40 z-10`}
     >
       <div
-        className={`relative w-full h-full transition-all duration-200 hover:-translate-y-0.5 ${
+        className={`relative w-full h-full transition-[filter] duration-200 ${
+          disableLayoutAnimation ? "" : "hover:-translate-y-0.5"
+        } ${
           isSelected
             ? "drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]"
             : "hover:drop-shadow-md"

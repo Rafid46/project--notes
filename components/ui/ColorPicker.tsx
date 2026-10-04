@@ -61,7 +61,12 @@ export function WithFields() {
           <Select.Popover>
             <ListBox>
               {Object.keys(colorChannelsByColorSpace).map((space) => (
-                <ListBox.Item key={space} className="uppercase" id={space} textValue={space}>
+                <ListBox.Item
+                  key={space}
+                  className="uppercase"
+                  id={space}
+                  textValue={space}
+                >
                   {space}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>
@@ -141,7 +146,11 @@ export function CustomColorPicker({
           <Label>{label}</Label>
         </ColorPicker.Trigger>
       )}
-      <ColorPicker.Popover placement={placement} align={align} className="w-64 gap-2">
+      <ColorPicker.Popover
+        placement={placement}
+        align={align}
+        className="w-64 gap-2"
+      >
         <ColorArea
           className="max-w-full"
           colorSpace="hsb"
@@ -171,7 +180,12 @@ export function CustomColorPicker({
           <Select.Popover>
             <ListBox>
               {Object.keys(colorChannelsByColorSpace).map((space) => (
-                <ListBox.Item key={space} className="uppercase" id={space} textValue={space}>
+                <ListBox.Item
+                  key={space}
+                  className="uppercase"
+                  id={space}
+                  textValue={space}
+                >
                   {space}
                   <ListBox.ItemIndicator />
                 </ListBox.Item>

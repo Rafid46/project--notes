@@ -4,13 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import type { NoteItem } from "@/features/home/types";
 import Note from "@/features/notes/components/Note";
 import MiniMap from "@/components/common/MiniMap";
-
 import {
   getSavedWhiteboardSettings,
   SETTINGS_CHANGE_EVENT,
   type WhiteboardControlSettings,
-} from "@/features/home/components/settings-modal";
+} from "@/features/home/components/SettingsModal";
 import BottomToolbar, { COLOR_STORAGE_KEY } from "./BottomToolbar";
+
 const POSITIONS_STORAGE_KEY = "project_notes_card_positions";
 
 interface WhiteboardProps {
@@ -443,7 +443,7 @@ export default function Whiteboard({
                 left: `${pos.x}px`,
                 top: `${pos.y}px`,
               }}
-              disableLayoutAnimation={isPanning || isDraggingCard}
+              disableLayoutAnimation={true}
             />
           );
         })}
