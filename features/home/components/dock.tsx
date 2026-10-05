@@ -8,12 +8,7 @@ import {
   useTransform,
   type SpringOptions,
 } from "framer-motion";
-import React, {
-  Children,
-  cloneElement,
-  useMemo,
-  useRef,
-} from "react";
+import React, { Children, cloneElement, useMemo, useRef } from "react";
 import type { DockItemData } from "../types";
 
 export interface DockProps {

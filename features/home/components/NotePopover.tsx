@@ -10,7 +10,7 @@ import {
   extractUrls,
   getLinkPreview,
 } from "@/features/notes/utils/link-preview";
-import CustomColorPicker from "@/components/ui/ColorPicker";
+import CustomColorPicker from "@/components/common/ColorPicker";
 
 interface NotePopoverProps {
   isOpen: boolean;

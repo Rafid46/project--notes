@@ -135,12 +135,22 @@ export default function HomeClient() {
   }>({ isOpen: false, parentId: null, anchorRect: null });
 
   useEffect(() => {
+    if (isNoteModalOpen && popoverConfig.isOpen) {
+      setPopoverConfig((prev) => ({ ...prev, isOpen: false }));
+    }
+  }, [isNoteModalOpen, popoverConfig.isOpen]);
+
+  useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (
         popoverConfig.isOpen ||
+        isNoteModalOpen ||
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         e.target instanceof HTMLSelectElement ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable) ||
+        (e.target instanceof HTMLElement &&
+          e.target.closest('[role="dialog"]')) ||
         e.ctrlKey ||
         e.metaKey ||
         e.altKey
@@ -161,7 +171,7 @@ export default function HomeClient() {
 
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [popoverConfig.isOpen]);
+  }, [popoverConfig.isOpen, isNoteModalOpen]);
 
   useEffect(() => {
     const handleGlobalPaste = async (e: ClipboardEvent) => {
@@ -330,6 +340,7 @@ export default function HomeClient() {
   };
 
   const openPopover = (parentId: string | null, e: React.MouseEvent) => {
+    if (isNoteModalOpen) return;
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setPopoverConfig({
       isOpen: true,
@@ -412,7 +423,7 @@ export default function HomeClient() {
                 style={{
                   backgroundColor: activeNote.color || "var(--card)",
                 }}
-                className="w-full max-w-lg gap-4 border border-border bg-card p-6 shadow-2xl rounded-[26px] pointer-events-auto"
+                className="w-full max-w-lg gap-4 bg-card p-6 shadow-2xl rounded-[26px] pointer-events-auto"
               >
                 <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                   <div className="flex items-center justify-between">

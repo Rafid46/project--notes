@@ -29,7 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import CustomColorPicker from "@/components/ui/ColorPicker";
+import CustomColorPicker from "@/components/common/ColorPicker";
 
 const TEXT_COLORS: { label: string; value?: string; previewColor: string }[] = [
   { label: "Default", value: undefined, previewColor: "var(--card)" },
@@ -237,9 +237,7 @@ export default function NoteToolbar({
                     aria-label="Text color"
                   >
                     <div className="relative flex flex-col items-center justify-center w-3.5 h-3.5">
-                      <span className="text-xs font-bold leading-none">
-                        A
-                      </span>
+                      <span className="text-xs font-bold leading-none">A</span>
                       <span
                         className="w-3 h-[2px] rounded-full mt-0.5"
                         style={{

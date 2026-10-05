@@ -20,7 +20,8 @@ import {
 import type { ViewMode, GridViewMode, DockItemData } from "../types";
 import ThemeToggle from "./ThemeToggle";
 import SettingsModal from "./SettingsModal";
-import Dock from "./dock";
+import Dock from "./Dock";
+import AuthButton from "../../auth/components/AuthButton";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -276,13 +277,7 @@ export default function Header({
           >
             <Settings size={18} />
           </button>
-          <button
-            type="button"
-            aria-label="User Profile"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground focus:outline-none"
-          >
-            <User size={18} />
-          </button>
+          <AuthButton />
         </div>
       </header>
 

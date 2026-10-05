@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Inter_Tight, Geist } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import { ClerkProvider } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
@@ -21,9 +20,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("h-full", "antialiased", interTight.variable, "font-sans", geist.variable)}
+      className={cn("h-full", "antialiased", interTight.variable, "font-sans")}
     >
       <body className="min-h-full flex flex-col">
+        <ClerkProvider>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -32,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           {children}
         </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
