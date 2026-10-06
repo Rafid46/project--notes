@@ -2,9 +2,13 @@
 
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { User } from "lucide-react";
+import { useCurrentUser } from "../hooks/useCurrentUser";
 
 export default function AuthButton() {
   const { isLoaded, userId } = useAuth();
+
+  // Syncs the user with the backend when logged in
+  useCurrentUser();
 
   if (!isLoaded) {
     return (
