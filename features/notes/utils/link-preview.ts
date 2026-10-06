@@ -292,6 +292,7 @@ export function addNoteToState(
     category?: string;
     parentId: string | null;
     linkPreviews?: NoteItem["linkPreviews"];
+    files?: NoteItem["files"];
   },
 ): NoteItem[] {
   const newNote: NoteItem = {
@@ -302,6 +303,7 @@ export function addNoteToState(
     category: newNoteData.category,
     parentId: newNoteData.parentId,
     linkPreviews: newNoteData.linkPreviews,
+    files: newNoteData.files,
     subNotes: [],
   };
 

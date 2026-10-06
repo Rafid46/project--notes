@@ -31,6 +31,26 @@ export default function Whiteboard({
   const [zoom, setZoom] = useState<number>(1);
   const [isPanning, setIsPanning] = useState(false);
   const [isDraggingCard, setIsDraggingCard] = useState(false);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const markTransforming = (duration = 150) => {
+    setIsTransforming(true);
+    if (transformTimeoutRef.current) {
+      clearTimeout(transformTimeoutRef.current);
+    }
+    transformTimeoutRef.current = setTimeout(() => {
+      setIsTransforming(false);
+    }, duration);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (transformTimeoutRef.current) {
+        clearTimeout(transformTimeoutRef.current);
+      }
+    };
+  }, []);
   const [cardPositions, setCardPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
@@ -130,6 +150,7 @@ export default function Whiteboard({
   }, [notes]);
 
   const handleZoomStep = (factor: number) => {
+    markTransforming(200);
     const container = containerRef.current;
     const nextZoom = Math.min(3, Math.max(0.2, zoomRef.current * factor));
     const cx = container ? container.clientWidth / 2 : window.innerWidth / 2;
@@ -148,6 +169,7 @@ export default function Whiteboard({
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      markTransforming(120);
       const settings = controlSettingsRef.current;
       const isRightClickHeld =
         (e.buttons & 2) === 2 || isRightMouseDownRef.current;
@@ -346,6 +368,9 @@ export default function Whiteboard({
       const dy = e.clientY - dragCardRef.current.startY;
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         dragCardRef.current.moved = true;
+        if (!isDraggingCard) {
+          setIsDraggingCard(true);
+        }
       }
       const newX = dragCardRef.current.initX + dx / zoomRef.current;
       const newY = dragCardRef.current.initY + dy / zoomRef.current;
@@ -393,7 +418,6 @@ export default function Whiteboard({
       initY: pos.y,
       moved: false,
     };
-    setIsDraggingCard(true);
   };
 
   const isDarkCanvas = canvasColor === "#18181b";
@@ -429,13 +453,11 @@ export default function Whiteboard({
       >
         {allNotes.map((note) => {
           const pos = cardPositions[note.id] || { x: 0, y: 0 };
-          const isSelected = selectedNoteId === note.id;
 
           return (
             <Note
               key={note.id}
               note={note}
-              isSelected={isSelected}
               onPointerDown={(e) => handleCardPointerDown(e, note.id)}
               onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
               className="absolute w-80 cursor-grab active:cursor-grabbing pointer-events-auto"
@@ -443,7 +465,9 @@ export default function Whiteboard({
                 left: `${pos.x}px`,
                 top: `${pos.y}px`,
               }}
-              disableLayoutAnimation={true}
+              disableLayoutAnimation={
+                isDraggingCard || isPanning || isTransforming
+              }
             />
           );
         })}
@@ -455,13 +479,19 @@ export default function Whiteboard({
         selectedNoteId={selectedNoteId}
         pan={pan}
         zoom={zoom}
-        onPanChange={setPan}
+        onPanChange={(newPan) => {
+          markTransforming(120);
+          setPan(newPan);
+        }}
       />
 
       <BottomToolbar
         zoom={zoom}
         onZoomStep={handleZoomStep}
-        onResetZoom={() => setZoom(1)}
+        onResetZoom={() => {
+          markTransforming(200);
+          setZoom(1);
+        }}
         canvasColor={canvasColor}
         onCanvasColorChange={setCanvasColor}
       />

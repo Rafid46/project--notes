@@ -213,7 +213,7 @@ export default function Note({
                     onUpdate
                       ? () => {
                           const updated = (note.linkPreviews || []).filter(
-                            (p) => p.url !== preview.url
+                            (p) => p.url !== preview.url,
                           );
                           onUpdate({ linkPreviews: updated });
                         }

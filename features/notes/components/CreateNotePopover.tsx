@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Image as ImageIcon, Tag, X, Loader2 } from "lucide-react";
-
-import type { LinkPreviewMetadata } from "../types";
+import { Image as ImageIcon, Tag, X, Loader2, Paperclip } from "lucide-react";
+import type { LinkPreviewMetadata, NoteFile } from "../../home/types";
 import LinkPreviewCard from "@/features/notes/components/LinkPreviewCard";
-
 import {
   extractUrls,
   getLinkPreview,
 } from "@/features/notes/utils/link-preview";
+import { processDroppedFiles } from "@/features/notes/utils/file-handler";
 import CustomColorPicker from "@/components/common/ColorPicker";
 
 interface NotePopoverProps {
@@ -22,6 +21,7 @@ interface NotePopoverProps {
     category?: string;
     parentId: string | null;
     linkPreviews?: LinkPreviewMetadata[];
+    files?: NoteFile[];
   }) => void;
   parentId: string | null;
   anchorRect: {
@@ -31,6 +31,8 @@ interface NotePopoverProps {
     bottom: number;
   } | null;
   initialTitle?: string;
+  initialContent?: string;
+  initialFiles?: NoteFile[];
 }
 
 const COLORS = [
@@ -42,13 +44,14 @@ const COLORS = [
   "#ef4444",
 ];
 
-export default function NotePopover({
+export default function CreateNotePopover({
   isOpen,
   onClose,
   onSave,
   parentId,
-  anchorRect,
   initialTitle = "",
+  initialContent = "",
+  initialFiles,
 }: NotePopoverProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -59,28 +62,40 @@ export default function NotePopover({
   const [labels, setLabels] = useState(["Work", "Personal", "Design"]);
   const [error, setError] = useState("");
   const [linkPreviews, setLinkPreviews] = useState<LinkPreviewMetadata[]>([]);
+  const [files, setFiles] = useState<NoteFile[]>([]);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
   const popoverRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const fetchingUrlsRef = useRef<Set<string>>(new Set());
+  const prevIsOpenRef = useRef(false);
 
-  const stateRef = useRef({ title, content, color, category, linkPreviews });
+  const stateRef = useRef({
+    title,
+    content,
+    color,
+    category,
+    linkPreviews,
+    files,
+  });
   useEffect(() => {
-    stateRef.current = { title, content, color, category, linkPreviews };
-  }, [title, content, color, category, linkPreviews]);
+    stateRef.current = { title, content, color, category, linkPreviews, files };
+  }, [title, content, color, category, linkPreviews, files]);
 
   useEffect(() => {
-    if (isOpen) {
-      setTitle(initialTitle);
-      setContent("");
+    if (isOpen && !prevIsOpenRef.current) {
+      setTitle(initialTitle || "");
+      setContent(initialContent || "");
       setColor(COLORS[0]);
       setCategory("");
       setIsCategoryOpen(false);
       setError("");
       setLinkPreviews([]);
+      setFiles(initialFiles || []);
       setIsLoadingPreview(false);
     }
-  }, [isOpen, initialTitle]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, initialTitle, initialContent, initialFiles]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -92,12 +107,14 @@ export default function NotePopover({
         color: currentColor,
         category: currentCategory,
         linkPreviews: currentLinkPreviews,
+        files: currentFiles,
       } = stateRef.current;
 
       if (
         currentTitle.trim() ||
         currentContent.trim() ||
-        currentLinkPreviews.length > 0
+        currentLinkPreviews.length > 0 ||
+        currentFiles.length > 0
       ) {
         onSave({
           title: currentTitle.trim() || "Untitled Note",
@@ -107,6 +124,7 @@ export default function NotePopover({
           parentId,
           linkPreviews:
             currentLinkPreviews.length > 0 ? currentLinkPreviews : undefined,
+          files: currentFiles.length > 0 ? currentFiles : undefined,
         });
       }
       onClose();
@@ -171,12 +189,17 @@ export default function NotePopover({
           setIsLoadingPreview(false);
         });
     }
-  }, [isOpen, content, title]);
+  }, [isOpen, content, title, linkPreviews]);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    if (!title.trim() && !content.trim() && linkPreviews.length === 0) {
+    if (
+      !title.trim() &&
+      !content.trim() &&
+      linkPreviews.length === 0 &&
+      files.length === 0
+    ) {
       onClose();
       return;
     }
@@ -189,11 +212,33 @@ export default function NotePopover({
       category: category.trim() || undefined,
       parentId,
       linkPreviews: linkPreviews.length > 0 ? linkPreviews : undefined,
+      files: files.length > 0 ? files : undefined,
     });
     onClose();
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
+    if (e.clipboardData?.files && e.clipboardData.files.length > 0) {
+      e.preventDefault();
+      const {
+        title: fileTitle,
+        content: fileContent,
+        files: newFiles,
+      } = await processDroppedFiles(e.clipboardData.files);
+      if (!title.trim() && fileTitle) {
+        setTitle(fileTitle);
+      }
+      if (fileContent) {
+        setContent((prev) =>
+          prev ? `${prev}\n\n${fileContent}` : fileContent,
+        );
+      }
+      if (newFiles.length > 0) {
+        setFiles((prev) => [...prev, ...newFiles]);
+      }
+      return;
+    }
+
     const text = e.clipboardData.getData("text");
     if (!text) return;
     const urls = extractUrls(text);
@@ -238,18 +283,66 @@ export default function NotePopover({
     }
   };
 
-  const handleContentKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+  const handleFileInputChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selected = e.target.files;
+    if (!selected || selected.length === 0) return;
+    const {
+      title: fileTitle,
+      content: fileContent,
+      files: newFiles,
+    } = await processDroppedFiles(selected);
+    if (!title.trim() && fileTitle) {
+      setTitle(fileTitle);
+    }
+    if (fileContent) {
+      setContent((prev) => (prev ? `${prev}\n\n${fileContent}` : fileContent));
+    }
+    if (newFiles.length > 0) {
+      setFiles((prev) => [...prev, ...newFiles]);
+    }
+    e.target.value = "";
+  };
+
+  const handlePopoverDrop = async (e: React.DragEvent) => {
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
       e.preventDefault();
-      handleSave();
+      e.stopPropagation();
+      const {
+        title: fileTitle,
+        content: fileContent,
+        files: newFiles,
+      } = await processDroppedFiles(e.dataTransfer.files);
+      if (!title.trim() && fileTitle) {
+        setTitle(fileTitle);
+      }
+      if (fileContent) {
+        setContent((prev) =>
+          prev ? `${prev}\n\n${fileContent}` : fileContent,
+        );
+      }
+      if (newFiles.length > 0) {
+        setFiles((prev) => [...prev, ...newFiles]);
+      }
     }
   };
 
   return (
     <div
       ref={popoverRef}
-      className="absolute top-[96px] left-1/2 z-50 -translate-x-1/2 flex w-[600px] flex-col rounded-2xl bg-popover p-5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10"
+      onDrop={handlePopoverDrop}
+      onDragOver={(e) => e.preventDefault()}
+      className="absolute top-[96px] left-1/2 z-50 -translate-x-1/2 flex w-[600px] max-h-[85vh] flex-col rounded-2xl bg-popover p-5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10"
     >
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        onChange={handleFileInputChange}
+        className="hidden"
+      />
+
       {category && (
         <div className="absolute -top-3 right-6 bg-blue-500 px-4 py-1.5 rounded-2xl text-xs font-bold text-white flex items-center gap-2 z-20 shadow-md">
           {category}
@@ -263,7 +356,7 @@ export default function NotePopover({
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-2.5">
+      <div className="flex items-center gap-2 mb-2.5 shrink-0">
         <span
           className="h-2.5 w-2.5 rounded-full shrink-0 transition-colors"
           style={{ backgroundColor: color }}
@@ -283,46 +376,110 @@ export default function NotePopover({
         onKeyDown={handleTitleKeyDown}
         onPaste={handlePaste}
         autoFocus
-        className="w-full text-base font-semibold text-foreground placeholder-muted-foreground outline-none bg-transparent"
+        className="w-full text-base font-semibold text-foreground placeholder-muted-foreground outline-none bg-transparent shrink-0"
       />
 
-      <textarea
-        placeholder="Take a note or paste a link... (Enter to save, Shift+Enter for newline)"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        onKeyDown={handleContentKeyDown}
-        onPaste={handlePaste}
-        rows={4}
-        className="mt-2 w-full text-sm leading-relaxed text-muted-foreground placeholder-muted-foreground outline-none resize-none bg-transparent"
-      />
+      <div className="flex-1 overflow-y-auto min-h-0 pr-1 mt-2 custom-scrollbar flex flex-col">
+        <textarea
+          placeholder="Take a note or paste a link..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onPaste={handlePaste}
+          rows={5}
+          className="w-full text-sm leading-relaxed text-muted-foreground placeholder-muted-foreground outline-none resize-none bg-transparent"
+        />
 
-      {isLoadingPreview && (
-        <div className="mt-2.5 p-3 rounded-xl border border-border/60 bg-muted/20 flex items-center gap-2.5 animate-pulse">
-          <Loader2
-            size={16}
-            className="animate-spin text-muted-foreground shrink-0"
-          />
-          <span className="text-xs text-muted-foreground">
-            Loading link preview...
-          </span>
-        </div>
-      )}
-
-      {linkPreviews.length > 0 && (
-        <div className="mt-2.5 flex flex-col gap-2">
-          {linkPreviews.map((preview) => (
-            <LinkPreviewCard
-              key={preview.url}
-              preview={preview}
-              onRemove={() =>
-                setLinkPreviews((prev) =>
-                  prev.filter((p) => p.url !== preview.url),
-                )
-              }
+        {isLoadingPreview && (
+          <div className="mt-2.5 p-3 rounded-xl border border-border/60 bg-muted/20 flex items-center gap-2.5 animate-pulse shrink-0">
+            <Loader2
+              size={16}
+              className="animate-spin text-muted-foreground shrink-0"
             />
-          ))}
-        </div>
-      )}
+            <span className="text-xs text-muted-foreground">
+              Loading link preview...
+            </span>
+          </div>
+        )}
+
+        {linkPreviews.length > 0 && (
+          <div className="mt-2.5 flex flex-col gap-2 shrink-0">
+            {linkPreviews.map((preview) => (
+              <LinkPreviewCard
+                key={preview.url}
+                preview={preview}
+                onRemove={() =>
+                  setLinkPreviews((prev) =>
+                    prev.filter((p) => p.url !== preview.url),
+                  )
+                }
+              />
+            ))}
+          </div>
+        )}
+
+        {files.length > 0 && (
+          <div className="mt-3 border-t border-border pt-3 shrink-0">
+            {files.some((f) => f.type.startsWith("image/")) && (
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {files
+                  .filter((f) => f.type.startsWith("image/"))
+                  .map((file) => (
+                    <div
+                      key={file.id}
+                      className="relative group/file rounded-lg overflow-hidden border border-border bg-muted/30 aspect-video"
+                    >
+                      <img
+                        src={file.url}
+                        alt={file.name}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/file:opacity-100 transition-opacity flex items-center justify-between p-1 text-white">
+                        <span className="text-[10px] truncate max-w-[70%] font-medium">
+                          {file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFiles((prev) =>
+                              prev.filter((f) => f.id !== file.id),
+                            )
+                          }
+                          className="p-1 hover:bg-white/20 rounded cursor-pointer text-white"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-1.5">
+              {files
+                .filter((f) => !f.type.startsWith("image/"))
+                .map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-muted/40 text-xs"
+                  >
+                    <Paperclip size={12} className="text-muted-foreground" />
+                    <span className="font-medium truncate max-w-[150px]">
+                      {file.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFiles((prev) => prev.filter((f) => f.id !== file.id))
+                      }
+                      className="p-0.5 text-muted-foreground hover:text-destructive cursor-pointer"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {error && (
         <span className="mt-2 text-xs text-red-500 shrink-0">{error}</span>
@@ -362,8 +519,9 @@ export default function NotePopover({
 
         <div className="flex items-center gap-2 text-zinc-400">
           <button
+            onClick={() => fileInputRef.current?.click()}
             className="rounded p-1 hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
-            aria-label="Add image"
+            aria-label="Add file or image"
           >
             <ImageIcon size={22} />
           </button>
@@ -382,10 +540,10 @@ export default function NotePopover({
       </div>
 
       {isCategoryOpen && (
-        <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3">
+        <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3 shrink-0">
           <h4 className="text-sm font-medium text-foreground px-1">Labels</h4>
 
-          <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+          <div className="flex flex-col gap-1 max-h-40 overflow-y-auto custom-scrollbar">
             {labels.map((label) => (
               <label
                 key={label}
