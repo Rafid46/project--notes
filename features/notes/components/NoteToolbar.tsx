@@ -42,6 +42,44 @@ const TEXT_COLORS: { label: string; value?: string; previewColor: string }[] = [
   { label: "Red", value: "#dc2626", previewColor: "#dc2626" },
 ];
 
+interface ToolbarButtonConfig {
+  label: string;
+  icon: typeof Bold;
+  format?: string;
+}
+
+const TOOLBAR_BUTTONS: {
+  text: ToolbarButtonConfig[];
+  lists: ToolbarButtonConfig[];
+  actions: {
+    attach: ToolbarButtonConfig;
+    labels: ToolbarButtonConfig;
+    color: ToolbarButtonConfig;
+    more: ToolbarButtonConfig;
+  };
+  moreMenu: ToolbarButtonConfig[];
+} = {
+  text: [
+    { label: "Bold", format: "bold", icon: Bold },
+    { label: "Italic", format: "italic", icon: Italic },
+  ],
+  lists: [
+    { label: "Bullet list", format: "insertUnorderedList", icon: List },
+    { label: "Numbered list", format: "insertOrderedList", icon: ListOrdered },
+  ],
+  actions: {
+    attach: { label: "Attach files", icon: Paperclip },
+    labels: { label: "Labels", icon: Tag },
+    color: { label: "Note color", icon: Palette },
+    more: { label: "More options", icon: MoreVertical },
+  },
+  moreMenu: [
+    { label: "Delete", icon: Trash },
+    { label: "Copy", icon: Copy },
+    { label: "Export", icon: Download },
+  ],
+};
+
 export interface NoteToolbarProps {
   note: NoteItem;
   onUpdate?: (updates: Partial<NoteItem>) => void;
@@ -96,6 +134,29 @@ export default function NoteToolbar({
       onUpdate?.({ content: contentRef.current.innerHTML });
     }
     onActionClick?.(command);
+  };
+
+  const renderFormatButton = (btn: ToolbarButtonConfig) => {
+    const Icon = btn.icon;
+    return (
+      <Tooltip key={btn.format}>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={btn.label}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (btn.format) applyFormat(btn.format);
+            }}
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
+          >
+            <Icon size={14} />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{btn.label}</TooltipContent>
+      </Tooltip>
+    );
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,41 +245,7 @@ export default function NoteToolbar({
 
         {showFormatting && (
           <>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Bold"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    applyFormat("bold");
-                  }}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
-                >
-                  <Bold size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Bold</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Italic"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    applyFormat("italic");
-                  }}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
-                >
-                  <Italic size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Italic</TooltipContent>
-            </Tooltip>
+            {TOOLBAR_BUTTONS.text.map(renderFormatButton)}
 
             <DropdownMenu
               open={isTextColorOpen}
@@ -229,7 +256,7 @@ export default function NoteToolbar({
                   <DropdownMenuTrigger
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
-                    className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
+                    className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
                       isTextColorOpen
                         ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -304,41 +331,7 @@ export default function NoteToolbar({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Bullet list"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    applyFormat("insertUnorderedList");
-                  }}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
-                >
-                  <List size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Bullet list</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Numbered list"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    applyFormat("insertOrderedList");
-                  }}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
-                >
-                  <ListOrdered size={14} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Numbered list</TooltipContent>
-            </Tooltip>
+            {TOOLBAR_BUTTONS.lists.map(renderFormatButton)}
 
             <div className="w-[1px] h-3.5 bg-border mx-0.5" />
           </>
@@ -354,7 +347,7 @@ export default function NoteToolbar({
                 fileInputRef.current?.click();
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
             >
               <Paperclip size={14} />
             </button>
@@ -373,7 +366,7 @@ export default function NoteToolbar({
               <DropdownMenuTrigger
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
+                className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
                   isLabelDropdownOpen
                     ? "bg-muted text-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -468,7 +461,7 @@ export default function NoteToolbar({
                 type="button"
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className={`p-1.5 rounded-full transition-colors cursor-pointer outline-none ${
+                className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
                   isColorPickerOpen
                     ? "bg-muted text-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -488,7 +481,7 @@ export default function NoteToolbar({
               <DropdownMenuTrigger
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
                 aria-label="More options"
               >
                 <MoreVertical size={14} />
@@ -502,36 +495,22 @@ export default function NoteToolbar({
             align="start"
             className="w-36 py-1"
           >
-            <DropdownMenuItem
-              className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDropdownOpen(false);
-              }}
-            >
-              <Trash size={14} />
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDropdownOpen(false);
-              }}
-            >
-              <Copy size={14} />
-              Copy
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDropdownOpen(false);
-              }}
-            >
-              <Download size={14} />
-              Export
-            </DropdownMenuItem>
+            {TOOLBAR_BUTTONS.moreMenu.map((item) => {
+              const Icon = item.icon;
+              return (
+                <DropdownMenuItem
+                  key={item.label}
+                  className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDropdownOpen(false);
+                  }}
+                >
+                  <Icon size={14} />
+                  {item.label}
+                </DropdownMenuItem>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -194,21 +194,18 @@ export default function Note({
           <div
             className={`mt-2 text-sm leading-relaxed line-clamp-4 ${
               note.textColor ? "" : textColor.body
-            } [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_img]:rounded-lg`}
+            } [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_img]:rounded-lg [&_a]:pointer-events-none`}
             style={note.textColor ? { color: note.textColor } : undefined}
             dangerouslySetInnerHTML={{ __html: note.content }}
           />
 
           {note.linkPreviews && note.linkPreviews.length > 0 && (
-            <div
-              className="mt-3 flex flex-col gap-2"
-              onClick={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
+            <div className="mt-3 flex flex-col gap-2">
               {note.linkPreviews.map((preview) => (
                 <LinkPreviewCard
                   key={preview.url}
                   preview={preview}
+                  isLink={false}
                   onRemove={
                     onUpdate
                       ? () => {
