@@ -11,12 +11,22 @@ export const useCurrentUser = () => {
 
   const mutation = useMutation({
     mutationFn: async (userData: UserData) => {
-      const response = await api.post(USERS.login, userData);
-      return response.data;
+      try {
+        // Try to login first (for existing users)
+        const response = await api.post(USERS.login, userData);
+        return response.data;
+      } catch (error: any) {
+        // If user is not found (404), this is a new user registering
+        if (error.response && error.response.status === 404) {
+          const createResponse = await api.post(USERS.createUser, userData);
+          return createResponse.data;
+        }
+        throw error;
+      }
     },
     retry: 1,
     onError: (error) => {
-      console.error("Failed to save user to backend", error);
+      console.error("Failed to sync user to backend:", error);
     },
   });
 

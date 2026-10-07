@@ -20,11 +20,22 @@ export interface LinkPreviewMetadata {
   siteName?: string;
 }
 
+export interface Label {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  color?: string;
+  notes?: NoteItem[];
+}
+
 export interface NoteItem {
   id: string;
   title: string;
   content: string;
   parentId: string | null;
+  labelId?: string;
   color?: string;
   textColor?: string;
   category?: string;
