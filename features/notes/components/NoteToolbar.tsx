@@ -286,47 +286,54 @@ export default function NoteToolbar({
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {TEXT_COLORS.map((c) => (
-                    <button
-                      key={c.label}
-                      type="button"
-                      title={c.label}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTextColorChange(c.value);
-                        setIsTextColorOpen(false);
-                      }}
-                      className={`w-6 h-6 rounded-full border transition-all hover:scale-110 flex items-center justify-center cursor-pointer ${
-                        (note.textColor || "") === (c.value || "")
-                          ? "border border-primary"
-                          : "border-border/80"
-                      }`}
-                      style={{ backgroundColor: c.previewColor }}
-                    >
-                      {!c.value && (
-                        <span className="text-[10px] font-bold text-foreground">
-                          A
-                        </span>
-                      )}
-                    </button>
+                    <Tooltip key={c.label}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTextColorChange(c.value);
+                            setIsTextColorOpen(false);
+                          }}
+                          className={`w-6 h-6 rounded-full border transition-all hover:scale-110 flex items-center justify-center cursor-pointer ${
+                            (note.textColor || "") === (c.value || "")
+                              ? "border border-primary"
+                              : "border-border/80"
+                          }`}
+                          style={{ backgroundColor: c.previewColor }}
+                        >
+                          {!c.value && (
+                            <span className="text-[10px] font-bold text-foreground">
+                              A
+                            </span>
+                          )}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{c.label}</TooltipContent>
+                    </Tooltip>
                   ))}
-                  <label
-                    title="Custom color"
-                    onClick={(e) => e.stopPropagation()}
-                    className="relative w-6 h-6 rounded-full border border-border/80 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform overflow-hidden hover:bg-muted"
-                  >
-                    <Palette
-                      size={13}
-                      className="text-muted-foreground pointer-events-none"
-                    />
-                    <input
-                      type="color"
-                      value={note.textColor || "#000000"}
-                      onChange={(e) => {
-                        handleTextColorChange(e.target.value);
-                      }}
-                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    />
-                  </label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <label
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative w-6 h-6 rounded-full border border-border/80 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform overflow-hidden hover:bg-muted"
+                      >
+                        <Palette
+                          size={13}
+                          className="text-muted-foreground pointer-events-none"
+                        />
+                        <input
+                          type="color"
+                          value={note.textColor || "#000000"}
+                          onChange={(e) => {
+                            handleTextColorChange(e.target.value);
+                          }}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        />
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent>Custom color</TooltipContent>
+                  </Tooltip>
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -454,7 +461,7 @@ export default function NoteToolbar({
               value={note.color || "#ffffff"}
               onChange={(newColor) => onUpdate?.({ color: newColor })}
               onOpenChange={setIsColorPickerOpen}
-              placement="bottom"
+              placement="top"
               className="flex items-center justify-center"
             >
               <button

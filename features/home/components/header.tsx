@@ -15,6 +15,8 @@ import {
   Search,
   Plus,
   Settings,
+  Tag,
+  PenLine,
 } from "lucide-react";
 
 import type { ViewMode, GridViewMode, DockItemData } from "../types";
@@ -22,6 +24,8 @@ import ThemeToggle from "./ThemeToggle";
 import SettingsModal from "./SettingsModal";
 import Dock from "./Dock";
 import AuthButton from "../../auth/components/AuthButton";
+import LabelManagerModal from "../../notes/components/LabelManagerModal";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -111,6 +115,7 @@ export default function Header({
     left: number;
   } | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isLabelManagerOpen, setIsLabelManagerOpen] = useState(false);
   const [lastSelectedGrid, setLastSelectedGrid] =
     useState<GridViewMode>("grid-4");
   const [isMounted, setIsMounted] = useState(false);
@@ -233,7 +238,7 @@ export default function Header({
               alt="Logo"
               width={104}
               height={44}
-              className="object-contain rounded-lg"
+              className="object-contain w-auto h-auto rounded-lg"
             />
           </div>
         </div>
@@ -256,15 +261,25 @@ export default function Header({
 
           <Dock items={dockItems} />
 
-          <button
+          <Button
             type="button"
             onClick={onOpenAddNote}
             aria-label="Add Note"
-            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-primary text-primary-foreground shadow-xs transition-colors hover:opacity-80 focus:outline-none cursor-pointer"
+            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-primary text-primary-foreground hover:opacity-90 shadow-xs transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
           >
-            <Plus size={18} />
+            <PenLine size={18} />
             <span className="text-sm font-semibold">Note</span>
-          </button>
+          </Button>
+
+          <Button
+            type="button"
+            onClick={() => setIsLabelManagerOpen(true)}
+            aria-label="Manage Labels"
+            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-primary text-primary-foreground hover:opacity-90 shadow-xs transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
+          >
+            <Tag size={18} />
+            <span className="text-sm font-semibold">Label</span>
+          </Button>
         </div>
 
         <div className="flex items-center gap-2 pointer-events-auto">
@@ -334,6 +349,11 @@ export default function Header({
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onDefaultViewChange={onSelectView}
+      />
+
+      <LabelManagerModal
+        isOpen={isLabelManagerOpen}
+        onClose={() => setIsLabelManagerOpen(false)}
       />
     </>
   );

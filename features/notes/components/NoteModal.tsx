@@ -73,7 +73,14 @@ export default function NoteModal({
           setIsLoadingPreview(false);
         });
     }
-  }, [note?.content, note?.title, note?.id, isOpen, onUpdateNote, note?.linkPreviews]);
+  }, [
+    note?.content,
+    note?.title,
+    note?.id,
+    isOpen,
+    onUpdateNote,
+    note?.linkPreviews,
+  ]);
 
   const handleModalPaste = async (
     e: React.ClipboardEvent<HTMLInputElement | HTMLDivElement>,
@@ -121,16 +128,18 @@ export default function NoteModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity"
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
             onClick={onClose}
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4">
             <motion.div
               layoutId={`note-${note.id}`}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
               style={{
                 backgroundColor: note.color || "var(--card)",
               }}
-              className="w-full max-w-lg h-[580px] max-h-[90vh] flex flex-col bg-card p-6 shadow-2xl rounded-[26px] pointer-events-auto"
+              className="relative w-full max-w-lg h-[580px] max-h-[90vh] flex flex-col bg-card p-6 shadow-2xl rounded-[26px] pointer-events-auto"
             >
               <div className="flex flex-col space-y-1.5 text-center sm:text-left shrink-0">
                 <div className="flex items-center justify-between">
@@ -150,9 +159,9 @@ export default function NoteModal({
                     className="w-full bg-transparent border-none outline-none text-lg font-semibold leading-none mr-2"
                   />
                   {note.category && (
-                    <span className="bg-blue-400 px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase shrink-0">
+                    <div className="absolute top-0 right-[20px] px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold z-20 shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]">
                       {note.category}
-                    </span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -169,9 +178,7 @@ export default function NoteModal({
                     })
                   }
                   data-placeholder="Take a note..."
-                  style={
-                    note.textColor ? { color: note.textColor } : undefined
-                  }
+                  style={note.textColor ? { color: note.textColor } : undefined}
                   className="text-sm whitespace-pre-wrap min-h-[6rem] outline-none cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60 empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_img]:rounded-lg"
                 />
                 {isLoadingPreview && (
@@ -240,9 +247,9 @@ export default function NoteModal({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      const updated = (
-                                        note.files || []
-                                      ).filter((f) => f.id !== file.id);
+                                      const updated = (note.files || []).filter(
+                                        (f) => f.id !== file.id,
+                                      );
                                       onUpdateNote(note.id, {
                                         files: updated,
                                       });

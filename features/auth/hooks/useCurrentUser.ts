@@ -14,11 +14,19 @@ export const useCurrentUser = () => {
       try {
         // Try to login first (for existing users)
         const response = await api.post(USERS.login, userData);
+        if (response.data.accessToken && response.data.refreshToken) {
+          localStorage.setItem("accessToken", response.data.accessToken);
+          localStorage.setItem("refreshToken", response.data.refreshToken);
+        }
         return response.data;
       } catch (error: any) {
         // If user is not found (404), this is a new user registering
         if (error.response && error.response.status === 404) {
           const createResponse = await api.post(USERS.createUser, userData);
+          if (createResponse.data.accessToken && createResponse.data.refreshToken) {
+            localStorage.setItem("accessToken", createResponse.data.accessToken);
+            localStorage.setItem("refreshToken", createResponse.data.refreshToken);
+          }
           return createResponse.data;
         }
         throw error;

@@ -11,7 +11,9 @@ import {
   Music,
   File,
   Download,
+  Fullscreen,
 } from "lucide-react";
+import Link from "next/link";
 import NoteToolbar from "./NoteToolbar";
 import LinkPreviewCard from "./LinkPreviewCard";
 
@@ -174,7 +176,18 @@ export default function Note({
               {note.category}
             </div>
           )}
-          <div className="flex items-center justify-between gap-2 mb-2.5">
+
+          <Link
+            href={`/notes/${note.id}`}
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="absolute top-3 right-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 bg-black/10 p-2 hover:bg-black/30 dark:hover:bg-white/10 z-30"
+            title="Open in full page"
+          >
+            <Fullscreen size={18} />
+          </Link>
+
+          <div className="flex items-center justify-between gap-2 mb-2.5 mt-1">
             {note.parentId && (
               <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                 Subnote
