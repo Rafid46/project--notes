@@ -17,4 +17,7 @@ export const LABELS = {
 export const NOTES = {
   create: "/api/notes/create-note",
   getAll: "/api/notes/get-notes",
+  getById: (id: string) => `/api/notes/get-by-id/${id}`,
+  update: (id: string) => `/api/notes/update-note/${id}`,
+  delete: (id: string) => `/api/notes/delete-note/${id}`,
 };

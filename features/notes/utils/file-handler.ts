@@ -34,7 +34,7 @@ function isBinaryContent(text: string): boolean {
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve) => {
     if (
-      file.type.startsWith("image/") ||
+      file.type?.startsWith("image/") ||
       file.type.startsWith("video/") ||
       file.type.startsWith("audio/") ||
       file.type === "application/pdf" ||

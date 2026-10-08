@@ -188,17 +188,15 @@ export default function SettingsModal({
           />
 
           <motion.div
-            initial={{ x: "100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 220 }}
-            className="fixed top-6 right-6 z-50 h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)] rounded-2xl border border-border bg-popover p-6 text-popover-foreground shadow-2xl flex flex-col overflow-hidden"
+            layoutId="settings-drawer-container"
+            className="fixed top-6 right-6 z-50 h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)] rounded-2xl border border-border bg-popover p-6 text-popover-foreground shadow-2xl flex flex-col overflow-hidden origin-top-right"
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
           >
             <div className="flex items-center justify-between pb-4 border-b border-border/60">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+                <motion.div layoutId="settings-icon" className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
                   <Sliders size={16} />
-                </div>
+                </motion.div>
                 <div>
                   <h2 className="text-sm font-semibold leading-none text-foreground">settings</h2>
                   <p className="mt-1 text-[11px] text-muted-foreground">

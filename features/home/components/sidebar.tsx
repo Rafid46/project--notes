@@ -52,7 +52,9 @@ export default function Sidebar({ onOpenAddSubnote }: SidebarProps) {
                           backgroundColor: label.color || "currentColor",
                         }}
                       />
-                      <span className="truncate">{label.name}</span>
+                      <span className="truncate text-primary">
+                        {label.name}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -87,7 +89,7 @@ export default function Sidebar({ onOpenAddSubnote }: SidebarProps) {
       </div>
 
       {/* Bottom Section - Edit labels, Archive, Bin */}
-      <div className="mx-3 mt-2 mb-1 p-2 flex flex-col gap-1 bg-background/50 rounded-2xl">
+      <div className="mx-3 mt-2 mb-1 p-2 flex flex-col gap-1 bg-background/50 rounded-[10px]">
         <div className="flex h-[48px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer font-medium">
           <Archive size={20} />
           <span className="text-sm">Archive</span>

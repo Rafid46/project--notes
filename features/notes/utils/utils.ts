@@ -53,7 +53,7 @@ export function useCreateNoteForm({
             setLinkPreviews((prev) =>
               prev.some((p) => p.url === preview.url)
                 ? prev.map((p) => (p.url === preview.url ? preview : p))
-                : [...prev, preview]
+                : [...prev, preview],
             );
             setTitle((currentTitle) => {
               if (!currentTitle.trim() && preview.title) {
@@ -76,7 +76,7 @@ export function useCreateNoteForm({
       content: fileContent,
       files: newFiles,
     } = await processDroppedFiles(newFilesList);
-    
+
     if (!title.trim() && fileTitle) {
       setTitle(fileTitle);
     }
@@ -114,7 +114,7 @@ export function useCreateNoteForm({
             setLinkPreviews((prev) =>
               prev.some((p) => p.url === preview.url)
                 ? prev.map((p) => (p.url === preview.url ? preview : p))
-                : [...prev, preview]
+                : [...prev, preview],
             );
             setTitle((currentTitle) => {
               if (!currentTitle.trim() && preview.title) {
@@ -133,7 +133,7 @@ export function useCreateNoteForm({
   };
 
   const handleFileInputChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const selected = e.target.files;
     if (!selected || selected.length === 0) return;

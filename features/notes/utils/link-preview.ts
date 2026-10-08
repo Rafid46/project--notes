@@ -129,7 +129,9 @@ export async function getLinkPreview(
           const data = (await res.json()) as YouTubeOEmbedResponse;
           return {
             url,
-            title: data.title ? decodeHtmlEntities(data.title) : fallbackYt.title,
+            title: data.title
+              ? decodeHtmlEntities(data.title)
+              : fallbackYt.title,
             description: data.author_name
               ? `${data.author_name} · YouTube`
               : fallbackYt.description,
@@ -159,7 +161,9 @@ export async function getLinkPreview(
     return {
       url,
       title: path ? `${path} · GitHub` : "GitHub",
-      description: path ? `View ${path} on GitHub` : "Where the world builds software",
+      description: path
+        ? `View ${path} on GitHub`
+        : "Where the world builds software",
       image: path
         ? `https://opengraph.githubassets.com/1/${path}`
         : "https://github.githubassets.com/images/modules/open_graph/github-logo.png",
@@ -236,9 +240,7 @@ export async function getLinkPreview(
       extractMetaTag(html, "twitter:image") ||
       extractMetaTag(html, "twitter:image:src");
 
-    const image = rawImage
-      ? resolveUrl(rawImage, url)
-      : defaultFallback.image;
+    const image = rawImage ? resolveUrl(rawImage, url) : defaultFallback.image;
 
     const siteName =
       extractMetaTag(html, "og:site_name") || defaultFallback.siteName;

@@ -19,6 +19,7 @@ import {
   PenLine,
 } from "lucide-react";
 
+import { motion } from "framer-motion";
 import type { ViewMode, GridViewMode, DockItemData } from "../types";
 import ThemeToggle from "./ThemeToggle";
 import SettingsModal from "./SettingsModal";
@@ -284,14 +285,17 @@ export default function Header({
 
         <div className="flex items-center gap-2 pointer-events-auto">
           <ThemeToggle />
-          <button
+          <motion.button
+            layoutId="settings-drawer-container"
             type="button"
             onClick={() => setIsSettingsOpen(true)}
             aria-label="Settings"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground focus:outline-none cursor-pointer"
           >
-            <Settings size={18} />
-          </button>
+            <motion.div layoutId="settings-icon">
+              <Settings size={18} />
+            </motion.div>
+          </motion.button>
           <AuthButton />
         </div>
       </header>

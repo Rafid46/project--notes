@@ -137,7 +137,7 @@ export default function NoteModal({
               layoutId={`note-${note.id}`}
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
               style={{
-                backgroundColor: note.color || "var(--card)",
+                backgroundColor: note.color || "#171717",
               }}
               className="relative w-full max-w-lg h-[580px] max-h-[90vh] flex flex-col bg-card p-6 shadow-2xl rounded-[26px] pointer-events-auto"
             >
@@ -353,3 +353,4 @@ export default function NoteModal({
     </AnimatePresence>
   );
 }
+

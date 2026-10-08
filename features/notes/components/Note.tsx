@@ -168,7 +168,7 @@ export default function Note({
           layoutId={disableLayoutAnimation ? undefined : `note-${note.id}`}
           className={`relative rounded-2xl p-5 pb-14 z-0 transition-colors shadow-xs`}
           style={{
-            backgroundColor: note.color || "var(--card)",
+            backgroundColor: note.color || "#171717",
           }}
         >
           {note.category && (
@@ -337,3 +337,4 @@ export default function Note({
     </div>
   );
 }
+

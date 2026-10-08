@@ -24,82 +24,8 @@ import { useNoteModalStore } from "@/store/useNoteModalStore";
 import Header from "./Header";
 import Whiteboard from "@/features/whiteboard/components/Whiteboard";
 
-const INITIAL_NOTES: NoteItem[] = [
-  {
-    id: "note-1",
-    title: "Designs",
-    content:
-      "Design systems, branding guidelines, and component mockups for web and mobile.",
-    parentId: null,
-    color: "#f59e0b",
-    subNotes: [
-      {
-        id: "note-1-1",
-        title: "Website Design",
-        content:
-          "Landing page wireframes, hero banner layout, and mobile navigation drawer.",
-        parentId: "note-1",
-        color: "#0284c7",
-      },
-      {
-        id: "note-1-2",
-        title: "Logo Design",
-        content:
-          "Minimalist vector logo variants, typography exploration, and app icons.",
-        parentId: "note-1",
-        color: "#9333ea",
-      },
-    ],
-  },
-  {
-    id: "note-2",
-    title: "Project Notes",
-    content:
-      "Architecture choices, PostgreSQL schema design, and session sync workflows.",
-    parentId: null,
-    color: "#10b981",
-    subNotes: [
-      {
-        id: "note-2-1",
-        title: "Database Architecture",
-        content:
-          "Prisma data models, tree structure with parentId, and user ownership isolation.",
-        parentId: "note-2",
-        color: "#eab308",
-      },
-    ],
-  },
-  {
-    id: "note-3",
-    title: "Ideas & Research",
-    content:
-      "Brainstorming canvas interactions, whiteboard tools, and real-time syncing.",
-    parentId: null,
-    color: "#ef4444",
-  },
-  {
-    id: "note-4",
-    title: "YouTube Video & Resources",
-    content:
-      "Watch the video report on online scam awareness:\nhttps://www.youtube.com/watch?v=Pm9_6zbtvM4",
-    parentId: null,
-    color: "#0284c7",
-    linkPreviews: [
-      {
-        url: "https://www.youtube.com/watch?v=Pm9_6zbtvM4",
-        title:
-          "ক্যাশ অন ডেলিভারির নামে ভয়াবহ প্রতারণা, সতর্ক করল পুলিশ | Cash On Delivery | Online Scam | Jugantor",
-        description: "Daily Jugantor · YouTube",
-        image: "https://i.ytimg.com/vi/Pm9_6zbtvM4/hqdefault.jpg",
-        favicon: "https://www.youtube.com/s/desktop/f17255be/img/favicon.ico",
-        siteName: "YouTube",
-      },
-    ],
-  },
-];
-
 export default function HomeClient() {
-  const [notes, setNotes] = useState<NoteItem[]>(INITIAL_NOTES);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string>("note-1");
   const [viewMode, setViewMode] = useState<ViewMode>("whiteboard");
   const {
