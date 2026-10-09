@@ -15,7 +15,6 @@ export interface NotePayload {
   boardY?: number;
   sortOrder?: number;
   parentId?: string | null;
-  labelId?: string;
+  labelId?: string | null;
   attachments?: NoteAttachmentPayload[];
 }
-

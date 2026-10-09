@@ -35,10 +35,10 @@ export interface NoteItem {
   title: string;
   content: string;
   parentId: string | null;
-  labelId?: string;
+  labelId?: string | null;
   color?: string;
   textColor?: string;
-  category?: string;
+  category?: string | null;
   subNotes?: NoteItem[];
   files?: NoteFile[];
   linkPreviews?: LinkPreviewMetadata[];

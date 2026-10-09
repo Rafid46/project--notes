@@ -17,6 +17,7 @@ export const useCurrentUser = () => {
         if (response.data.accessToken && response.data.refreshToken) {
           localStorage.setItem("accessToken", response.data.accessToken);
           localStorage.setItem("refreshToken", response.data.refreshToken);
+          localStorage.setItem("clerkUserId", userData.data.id);
         }
         return response.data;
       } catch (error: any) {
@@ -26,6 +27,7 @@ export const useCurrentUser = () => {
           if (createResponse.data.accessToken && createResponse.data.refreshToken) {
             localStorage.setItem("accessToken", createResponse.data.accessToken);
             localStorage.setItem("refreshToken", createResponse.data.refreshToken);
+            localStorage.setItem("clerkUserId", userData.data.id);
           }
           return createResponse.data;
         }
@@ -45,10 +47,28 @@ export const useCurrentUser = () => {
 
     if (!isSignedIn) {
       attemptedUserId.current = null;
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("clerkUserId");
       return;
     }
 
     if (!user || attemptedUserId.current === user.id) return;
+
+    // Prevent redundant login hits on reload if we already have valid tokens for this user
+    const savedUserId = localStorage.getItem("clerkUserId");
+    const hasTokens = !!localStorage.getItem("accessToken");
+    
+    if (savedUserId === user.id && hasTokens) {
+      attemptedUserId.current = user.id;
+      return;
+    }
+
+    if (savedUserId && savedUserId !== user.id) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("clerkUserId");
+    }
 
     const email = user.primaryEmailAddress?.emailAddress;
     if (!email) return;

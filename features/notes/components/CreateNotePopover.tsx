@@ -13,6 +13,7 @@ import type { LinkPreviewMetadata, NoteFile } from "../../home/types";
 import LinkPreviewCard from "@/features/notes/components/LinkPreviewCard";
 import CustomColorPicker from "@/components/common/ColorPicker";
 import { useCreateNoteForm } from "@/features/notes/utils/utils";
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -20,6 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCreateLabel, useLabels } from "../hooks/useLabels";
 
 interface NotePopoverProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ interface NotePopoverProps {
     content: string;
     color?: string;
     category?: string;
+    labelId?: string | null;
     parentId: string | null;
     linkPreviews?: LinkPreviewMetadata[];
     files?: NoteFile[];
@@ -43,6 +46,8 @@ interface NotePopoverProps {
   initialTitle?: string;
   initialContent?: string;
   initialFiles?: NoteFile[];
+  initialLabelId?: string;
+  initialCategory?: string;
 }
 
 const COLORS = [
@@ -63,6 +68,8 @@ export default function CreateNotePopover({
   initialTitle = "",
   initialContent = "",
   initialFiles,
+  initialLabelId,
+  initialCategory,
 }: NotePopoverProps) {
   const {
     title,
@@ -85,10 +92,12 @@ export default function CreateNotePopover({
   });
 
   const [color, setColor] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(initialCategory || "");
+  const [labelId, setLabelId] = useState<string | null>(initialLabelId || null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [newLabel, setNewLabel] = useState("");
-  const [labels, setLabels] = useState(["Work", "Personal", "Design"]);
+  const { data: serverLabels = [] } = useLabels();
+  const createLabelMutation = useCreateLabel();
   const [error, setError] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -110,12 +119,13 @@ export default function CreateNotePopover({
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
       setColor("");
-      setCategory("");
+      setCategory(initialCategory || "");
+      setLabelId(initialLabelId || null);
       setIsCategoryOpen(false);
       setError("");
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, initialCategory, initialLabelId]);
 
   const handleSave = () => {
     if (
@@ -134,6 +144,7 @@ export default function CreateNotePopover({
       content,
       color,
       category: category.trim() || undefined,
+      labelId,
       parentId,
       linkPreviews: linkPreviews.length > 0 ? linkPreviews : undefined,
       files: files.length > 0 ? files : undefined,
@@ -195,7 +206,10 @@ export default function CreateNotePopover({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => setCategory("")}
+                    onClick={() => {
+                      setCategory("");
+                      setLabelId(null);
+                    }}
                     className="hover:bg-blue-600 rounded-full p-0.5 transition-colors"
                   >
                     <X size={14} />
@@ -408,20 +422,28 @@ export default function CreateNotePopover({
               </h4>
 
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto custom-scrollbar">
-                {labels.map((label) => (
+                {serverLabels.map((label) => (
                   <label
-                    key={label}
+                    key={label.id}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
-                      checked={category === label}
-                      onChange={() =>
-                        setCategory(category === label ? "" : label)
-                      }
+                      checked={category === label.name}
+                      onChange={() => {
+                        if (category === label.name) {
+                          setCategory("");
+                          setLabelId(null);
+                        } else {
+                          setCategory(label.name);
+                          setLabelId(label.id);
+                        }
+                      }}
                       className="rounded border-zinc-500 text-blue-500 focus:ring-blue-500 bg-transparent cursor-pointer"
                     />
-                    <span className="text-sm text-foreground">{label}</span>
+                    <span className="text-sm text-foreground">
+                      {label.name}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -435,10 +457,28 @@ export default function CreateNotePopover({
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && newLabel.trim()) {
                       e.preventDefault();
-                      if (!labels.includes(newLabel.trim())) {
-                        setLabels([...labels, newLabel.trim()]);
+                      if (
+                        !serverLabels.find((l) => l.name === newLabel.trim())
+                      ) {
+                        createLabelMutation.mutate(
+                          { name: newLabel.trim() },
+                          {
+                            onSuccess: (data) => {
+                              const createdLabel = data.label || data;
+                              setCategory(newLabel.trim());
+                              setLabelId(createdLabel.id);
+                            },
+                          },
+                        );
+                      } else {
+                        const existingLabel = serverLabels.find(
+                          (l) => l.name === newLabel.trim(),
+                        );
+                        if (existingLabel) {
+                          setCategory(existingLabel.name);
+                          setLabelId(existingLabel.id);
+                        }
                       }
-                      setCategory(newLabel.trim());
                       setNewLabel("");
                     }
                   }}
@@ -447,10 +487,28 @@ export default function CreateNotePopover({
                 <button
                   onClick={() => {
                     if (newLabel.trim()) {
-                      if (!labels.includes(newLabel.trim())) {
-                        setLabels([...labels, newLabel.trim()]);
+                      if (
+                        !serverLabels.find((l) => l.name === newLabel.trim())
+                      ) {
+                        createLabelMutation.mutate(
+                          { name: newLabel.trim() },
+                          {
+                            onSuccess: (data) => {
+                              const createdLabel = data.label || data;
+                              setCategory(newLabel.trim());
+                              setLabelId(createdLabel.id);
+                            },
+                          },
+                        );
+                      } else {
+                        const existingLabel = serverLabels.find(
+                          (l) => l.name === newLabel.trim(),
+                        );
+                        if (existingLabel) {
+                          setCategory(existingLabel.name);
+                          setLabelId(existingLabel.id);
+                        }
                       }
-                      setCategory(newLabel.trim());
                       setNewLabel("");
                     }
                   }}
@@ -466,4 +524,3 @@ export default function CreateNotePopover({
     </Dialog>
   );
 }
-

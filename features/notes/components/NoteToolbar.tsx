@@ -30,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import CustomColorPicker from "@/components/common/ColorPicker";
+import { useLabels, useCreateLabel } from "@/features/notes/hooks/useLabels";
 
 const TEXT_COLORS: { label: string; value?: string; previewColor: string }[] = [
   { label: "Default", value: undefined, previewColor: "var(--card)" },
@@ -102,7 +103,8 @@ export default function NoteToolbar({
   const [isLabelDropdownOpen, setIsLabelDropdownOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isTextColorOpen, setIsTextColorOpen] = useState(false);
-  const [labels, setLabels] = useState(["Work", "Personal", "Design"]);
+  const { data: serverLabels = [] } = useLabels();
+  const createLabelMutation = useCreateLabel();
   const [newLabel, setNewLabel] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -394,22 +396,25 @@ export default function NoteToolbar({
               Labels
             </div>
             <div className="max-h-40 overflow-y-auto py-1">
-              {labels.map((label) => (
+              {serverLabels.map((label) => (
                 <DropdownMenuItem
-                  key={label}
+                  key={label.id}
                   className="cursor-pointer w-full flex items-center justify-between px-4 py-1.5 text-sm rounded-none border-0"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (note.category === label) {
-                      onUpdate?.({ category: undefined });
+                    if (note.category === label.name) {
+                      onUpdate?.({
+                        category: null as any,
+                        labelId: null as any,
+                      });
                     } else {
-                      onUpdate?.({ category: label });
+                      onUpdate?.({ category: label.name, labelId: label.id });
                     }
                     setIsLabelDropdownOpen(false);
                   }}
                 >
-                  {label}
-                  {note.category === label && (
+                  {label.name}
+                  {note.category === label.name && (
                     <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
                   )}
                 </DropdownMenuItem>
@@ -426,8 +431,29 @@ export default function NoteToolbar({
                   e.stopPropagation();
                   if (e.key === "Enter" && newLabel.trim()) {
                     e.preventDefault();
-                    if (!labels.includes(newLabel.trim())) {
-                      setLabels([...labels, newLabel.trim()]);
+                    if (!serverLabels.find((l) => l.name === newLabel.trim())) {
+                      createLabelMutation.mutate(
+                        { name: newLabel.trim() },
+                        {
+                          onSuccess: (data) => {
+                            const createdLabel = data.label || data;
+                            onUpdate?.({
+                              category: newLabel.trim(),
+                              labelId: createdLabel.id,
+                            });
+                          },
+                        },
+                      );
+                    } else {
+                      const existingLabel = serverLabels.find(
+                        (l) => l.name === newLabel.trim(),
+                      );
+                      if (existingLabel) {
+                        onUpdate?.({
+                          category: existingLabel.name,
+                          labelId: existingLabel.id,
+                        });
+                      }
                     }
                     setNewLabel("");
                   }
@@ -438,10 +464,30 @@ export default function NoteToolbar({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (newLabel.trim()) {
-                    if (!labels.includes(newLabel.trim())) {
-                      setLabels([...labels, newLabel.trim()]);
+                    if (!serverLabels.find((l) => l.name === newLabel.trim())) {
+                      createLabelMutation.mutate(
+                        { name: newLabel.trim() },
+                        {
+                          onSuccess: (data) => {
+                            const createdLabel = data.label || data;
+                            onUpdate?.({
+                              category: newLabel.trim(),
+                              labelId: createdLabel.id,
+                            });
+                          },
+                        },
+                      );
+                    } else {
+                      const existingLabel = serverLabels.find(
+                        (l) => l.name === newLabel.trim(),
+                      );
+                      if (existingLabel) {
+                        onUpdate?.({
+                          category: existingLabel.name,
+                          labelId: existingLabel.id,
+                        });
+                      }
                     }
-                    onUpdate?.({ category: newLabel.trim() });
                     setNewLabel("");
                     setIsLabelDropdownOpen(false);
                   }

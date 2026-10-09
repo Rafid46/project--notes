@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { FileUp } from "lucide-react";
 import NoteModal from "@/features/notes/components/NoteModal";
+import { useAutosave } from "@/features/notes/hooks/useAutosave";
+import { useNotes } from "@/features/notes/hooks/useNotes";
 
 import NotesGrid from "./NotesGrid";
 import CreateNotePopover from "../../notes/components/CreateNotePopover";
@@ -35,6 +37,26 @@ export default function HomeClient() {
   } = useNoteModalStore();
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragCounterRef = useRef<number>(0);
+
+  const { data: fetchedNotes } = useNotes();
+
+  useEffect(() => {
+    if (fetchedNotes && fetchedNotes.length > 0) {
+      // Map children to subNotes if needed based on backend
+      const mappedNotes = fetchedNotes.map((note: any) => ({
+        ...note,
+        subNotes: note.children || [],
+        content:
+          typeof note.content === "string"
+            ? note.content
+            : note.content
+              ? JSON.stringify(note.content)
+              : "",
+        category: note.label?.name || note.category,
+      }));
+      setNotes(mappedNotes);
+    }
+  }, [fetchedNotes]);
 
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
@@ -121,6 +143,8 @@ export default function HomeClient() {
     initialTitle?: string;
     initialContent?: string;
     initialFiles?: NoteItem["files"];
+    initialLabelId?: string;
+    initialCategory?: string;
   }>({ isOpen: false, parentId: null, anchorRect: null });
 
   useEffect(() => {
@@ -215,6 +239,55 @@ export default function HomeClient() {
     return () => window.removeEventListener("paste", handleGlobalPaste);
   }, [popoverConfig.isOpen, isNoteModalOpen, closeNoteModal]);
 
+  const prevIsNoteModalOpen = useRef(isNoteModalOpen);
+  useEffect(() => {
+    if (prevIsNoteModalOpen.current && !isNoteModalOpen) {
+      const note = getActiveNote(notes, selectedNoteId);
+      if (
+        note &&
+        note.id.startsWith("temp-") &&
+        !note.title.trim() &&
+        !note.content.trim()
+      ) {
+        setNotes((prev) => {
+          // Remove from parent subNotes if needed, or from main list
+          const filterEmpty = (items: NoteItem[]): NoteItem[] => {
+            return items
+              .filter((n) => n.id !== note.id)
+              .map((n) => ({
+                ...n,
+                subNotes: n.subNotes ? filterEmpty(n.subNotes) : undefined,
+              }));
+          };
+          return filterEmpty(prev);
+        });
+      }
+    }
+    prevIsNoteModalOpen.current = isNoteModalOpen;
+  }, [isNoteModalOpen, notes, selectedNoteId]);
+
+  const handleUpdateNoteState = useCallback(
+    (noteId: string, updates: Partial<NoteItem>) => {
+      if (updates.id && noteId !== updates.id) {
+        setSelectedNoteId((prev) => (prev === noteId ? updates.id! : prev));
+        const modalState = useNoteModalStore.getState();
+        if (modalState.selectedNoteId === noteId) {
+          modalState.setSelectedNoteId(updates.id);
+        }
+      }
+      setNotes((prev) => updateNoteInState(prev, noteId, updates));
+    },
+    [],
+  );
+
+  const { registerChange, restoreBackups } = useAutosave({
+    onUpdateNoteState: handleUpdateNoteState,
+  });
+
+  useEffect(() => {
+    restoreBackups();
+  }, [restoreBackups]);
+
   const activeNote = getActiveNote(notes, selectedNoteId);
 
   const handleAddNote = (newNoteData: {
@@ -226,26 +299,51 @@ export default function HomeClient() {
     linkPreviews?: NoteItem["linkPreviews"];
     files?: NoteItem["files"];
   }) => {
-    setNotes((prev) => addNoteToState(prev, newNoteData));
+    const tempId = `temp-${Date.now()}`;
+    const newNote: NoteItem = {
+      id: tempId,
+      ...newNoteData,
+    };
+    setNotes((prev) => addNoteToState(prev, newNote));
+    registerChange(
+      tempId,
+      {
+        title: newNoteData.title,
+        content: newNoteData.content,
+        category: newNoteData.category,
+        labelId: (newNoteData as any).labelId,
+      },
+      { isCreating: true, parentId: newNoteData.parentId },
+    );
   };
 
   const handleUpdateNote = (noteId: string, updates: Partial<NoteItem>) => {
-    setNotes((prev) => updateNoteInState(prev, noteId, updates));
+    if (
+      updates.title !== undefined ||
+      updates.content !== undefined ||
+      updates.labelId !== undefined ||
+      updates.category !== undefined
+    ) {
+      registerChange(noteId, updates);
+    }
+    handleUpdateNoteState(noteId, updates);
   };
 
-  const openPopover = (parentId: string | null, e: React.MouseEvent) => {
+  const openPopover = (
+    parentId: string | null,
+    e: React.MouseEvent,
+    labelId?: string,
+    category?: string,
+  ) => {
     if (isNoteModalOpen) return;
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const target = e.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
     setPopoverConfig({
       isOpen: true,
       parentId,
-      anchorRect: {
-        top: rect.top,
-        left: rect.left,
-        right: rect.right,
-        bottom: rect.bottom,
-      },
-      initialTitle: "",
+      anchorRect: rect,
+      initialLabelId: labelId,
+      initialCategory: category,
     });
   };
 
@@ -298,6 +396,9 @@ export default function HomeClient() {
           openNoteModal(id);
         }}
         onOpenAddSubnote={openPopover}
+        onOpenAddNoteWithLabel={(labelId, labelName, e) =>
+          openPopover(null, e, labelId, labelName)
+        }
       />
 
       <Header
@@ -316,6 +417,8 @@ export default function HomeClient() {
         initialTitle={popoverConfig.initialTitle}
         initialContent={popoverConfig.initialContent}
         initialFiles={popoverConfig.initialFiles}
+        initialLabelId={popoverConfig.initialLabelId}
+        initialCategory={popoverConfig.initialCategory}
       />
 
       <NoteModal

@@ -14,11 +14,12 @@ interface SidebarProps {
   selectedNoteId: string | null;
   onSelectNote: (noteId: string) => void;
   onOpenAddSubnote?: (parentId: string, e: React.MouseEvent) => void;
+  onOpenAddNoteWithLabel?: (labelId: string, labelName: string, e: React.MouseEvent) => void;
   isOpen?: boolean;
   onToggle?: () => void;
 }
 
-export default function Sidebar({ onOpenAddSubnote }: SidebarProps) {
+export default function Sidebar({ onOpenAddSubnote, onOpenAddNoteWithLabel }: SidebarProps) {
   const { data: labels = [], isLoading } = useLabels();
 
   return (
@@ -64,7 +65,7 @@ export default function Sidebar({ onOpenAddSubnote }: SidebarProps) {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onOpenAddSubnote?.(labelId, e);
+                              onOpenAddNoteWithLabel?.(labelId, label.name, e);
                             }}
                             className="transition-all duration-200 ease-in-out hover:scale-105 hover:bg-primary/90 active:scale-95 bg-primary rounded-xl text-primary-foreground flex h-10 w-10 items-center justify-center cursor-pointer shadow-sm"
                           >

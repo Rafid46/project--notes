@@ -287,18 +287,10 @@ export function getActiveNote(
 
 export function addNoteToState(
   prevNotes: NoteItem[],
-  newNoteData: {
-    title: string;
-    content: string;
-    color?: string;
-    category?: string;
-    parentId: string | null;
-    linkPreviews?: NoteItem["linkPreviews"];
-    files?: NoteItem["files"];
-  },
+  newNoteData: Omit<NoteItem, "id"> & { id?: string },
 ): NoteItem[] {
   const newNote: NoteItem = {
-    id: `note-${Date.now()}`,
+    id: newNoteData.id || `note-${Date.now()}`,
     title: newNoteData.title,
     content: newNoteData.content,
     color: newNoteData.color,
