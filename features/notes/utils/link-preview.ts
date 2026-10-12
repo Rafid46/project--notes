@@ -272,6 +272,20 @@ export async function getLinkPreview(
   }
 }
 
+export function findNoteById(
+  notes: NoteItem[],
+  noteId: string,
+): NoteItem | undefined {
+  for (const n of notes) {
+    if (n.id === noteId) return n;
+    if (n.subNotes && n.subNotes.length > 0) {
+      const found = findNoteById(n.subNotes, noteId);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
 export function getActiveNote(
   notes: NoteItem[],
   selectedNoteId: string,

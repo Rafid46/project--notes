@@ -36,9 +36,12 @@ export interface NoteItem {
   content: string;
   parentId: string | null;
   labelId?: string | null;
+  boardX?: number | null;
+  boardY?: number | null;
   color?: string;
   textColor?: string;
   category?: string | null;
+  labels?: string[];
   subNotes?: NoteItem[];
   files?: NoteFile[];
   linkPreviews?: LinkPreviewMetadata[];

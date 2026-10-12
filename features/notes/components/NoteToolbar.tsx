@@ -108,6 +108,76 @@ export default function NoteToolbar({
   const [newLabel, setNewLabel] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const activeLabels = Array.from(
+    new Set([
+      ...(note.labels || []),
+      ...(note.category ? [note.category] : []),
+    ].filter(Boolean))
+  );
+
+  const handleToggleLabel = (labelName: string, labelId: string) => {
+    const exists = activeLabels.includes(labelName);
+    const nextLabels = exists
+      ? activeLabels.filter((l) => l !== labelName)
+      : [...activeLabels, labelName];
+
+    onUpdate?.({
+      title: note.title,
+      content: contentRef?.current ? contentRef.current.innerHTML : note.content,
+      labels: nextLabels,
+      category: nextLabels[0] || null,
+      labelId:
+        nextLabels.length > 0
+          ? serverLabels.find((l) => l.name === nextLabels[0])?.id || labelId
+          : null,
+    });
+  };
+
+  const handleAddLabel = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+
+    const currentContent = contentRef?.current
+      ? contentRef.current.innerHTML
+      : note.content;
+
+    const existingLabel = serverLabels.find(
+      (l) => l.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+
+    if (!existingLabel) {
+      createLabelMutation.mutate(
+        { name: trimmed },
+        {
+          onSuccess: (data) => {
+            const createdLabel = data.label || data;
+            const nextLabels = Array.from(new Set([...activeLabels, trimmed]));
+            onUpdate?.({
+              title: note.title,
+              content: currentContent,
+              labels: nextLabels,
+              category: nextLabels[0] || null,
+              labelId: createdLabel.id || null,
+            });
+            setNewLabel("");
+          },
+        },
+      );
+    } else {
+      const nextLabels = Array.from(
+        new Set([...activeLabels, existingLabel.name]),
+      );
+      onUpdate?.({
+        title: note.title,
+        content: currentContent,
+        labels: nextLabels,
+        category: nextLabels[0] || null,
+        labelId: existingLabel.id,
+      });
+      setNewLabel("");
+    }
+  };
+
   const handleTextColorChange = (color?: string) => {
     if (contentRef?.current) {
       const selection = window.getSelection();
@@ -392,33 +462,58 @@ export default function NoteToolbar({
             align="start"
             className="w-76 p-0 flex flex-col overflow-hidden rounded-2xl"
           >
-            <div className="px-4 py-2 pt-4 text-xs font-semibold text-muted-foreground border-b border-border shrink-0">
-              Labels
+            <div className="px-4 py-2 pt-4 text-xs font-semibold text-muted-foreground border-b border-border shrink-0 flex items-center justify-between">
+              <span>Labels</span>
+              {activeLabels.length > 0 && (
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  {activeLabels.length} selected
+                </span>
+              )}
             </div>
-            <div className="max-h-40 overflow-y-auto py-1">
-              {serverLabels.map((label) => (
-                <DropdownMenuItem
-                  key={label.id}
-                  className="cursor-pointer w-full flex items-center justify-between px-4 py-1.5 text-sm rounded-none border-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (note.category === label.name) {
-                      onUpdate?.({
-                        category: null as any,
-                        labelId: null as any,
-                      });
-                    } else {
-                      onUpdate?.({ category: label.name, labelId: label.id });
-                    }
-                    setIsLabelDropdownOpen(false);
-                  }}
-                >
-                  {label.name}
-                  {note.category === label.name && (
-                    <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
-                  )}
-                </DropdownMenuItem>
-              ))}
+            <div className="max-h-48 overflow-y-auto py-1">
+              {serverLabels.length === 0 ? (
+                <div className="px-4 py-3 text-xs text-muted-foreground text-center">
+                  No labels yet
+                </div>
+              ) : (
+                serverLabels.map((label) => {
+                  const isChecked = activeLabels.includes(label.name);
+                  return (
+                    <div
+                      key={label.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleLabel(label.name, label.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleToggleLabel(label.name, label.id);
+                        }
+                      }}
+                      className="cursor-pointer w-full flex items-center justify-between px-4 py-1.5 text-sm hover:bg-muted transition-colors outline-none select-none"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="rounded border-border text-primary focus:ring-primary pointer-events-none h-3.5 w-3.5"
+                        />
+                        <span className="truncate text-foreground">
+                          {label.name}
+                        </span>
+                      </div>
+                      {isChecked && (
+                        <div className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
             <div className="p-2 border-t border-border flex items-center gap-2 shrink-0 bg-muted/30">
               <input
@@ -431,68 +526,20 @@ export default function NoteToolbar({
                   e.stopPropagation();
                   if (e.key === "Enter" && newLabel.trim()) {
                     e.preventDefault();
-                    if (!serverLabels.find((l) => l.name === newLabel.trim())) {
-                      createLabelMutation.mutate(
-                        { name: newLabel.trim() },
-                        {
-                          onSuccess: (data) => {
-                            const createdLabel = data.label || data;
-                            onUpdate?.({
-                              category: newLabel.trim(),
-                              labelId: createdLabel.id,
-                            });
-                          },
-                        },
-                      );
-                    } else {
-                      const existingLabel = serverLabels.find(
-                        (l) => l.name === newLabel.trim(),
-                      );
-                      if (existingLabel) {
-                        onUpdate?.({
-                          category: existingLabel.name,
-                          labelId: existingLabel.id,
-                        });
-                      }
-                    }
-                    setNewLabel("");
+                    handleAddLabel(newLabel);
                   }
                 }}
                 className="flex-1 min-w-0 text-sm px-4 py-2 bg-background rounded-lg outline-none text-foreground border border-border focus:border-blue-500 transition-colors"
               />
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   if (newLabel.trim()) {
-                    if (!serverLabels.find((l) => l.name === newLabel.trim())) {
-                      createLabelMutation.mutate(
-                        { name: newLabel.trim() },
-                        {
-                          onSuccess: (data) => {
-                            const createdLabel = data.label || data;
-                            onUpdate?.({
-                              category: newLabel.trim(),
-                              labelId: createdLabel.id,
-                            });
-                          },
-                        },
-                      );
-                    } else {
-                      const existingLabel = serverLabels.find(
-                        (l) => l.name === newLabel.trim(),
-                      );
-                      if (existingLabel) {
-                        onUpdate?.({
-                          category: existingLabel.name,
-                          labelId: existingLabel.id,
-                        });
-                      }
-                    }
-                    setNewLabel("");
-                    setIsLabelDropdownOpen(false);
+                    handleAddLabel(newLabel);
                   }
                 }}
-                className="flex items-center gap-2 cursor-pointer text-sm font-medium bg-primary/60 text-white px-4 py-2 rounded-lg hover:bg-primary/55  transition-colors shrink-0 outline-none"
+                className="flex items-center gap-2 cursor-pointer text-sm font-medium bg-primary/60 text-white px-4 py-2 rounded-lg hover:bg-primary/55 transition-colors shrink-0 outline-none"
               >
                 <Plus size={14} />
                 Create

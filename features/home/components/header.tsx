@@ -11,12 +11,11 @@ import {
   Columns4,
   Check,
   ChevronDown,
-  User,
   Search,
-  Plus,
   Settings,
   Tag,
   PenLine,
+  X,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
@@ -33,6 +32,8 @@ interface HeaderProps {
   onSelectView: (view: ViewMode) => void;
   activeNoteTitle?: string;
   onOpenAddNote?: (e: React.MouseEvent) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 const GRID_OPTIONS: {
@@ -42,22 +43,22 @@ const GRID_OPTIONS: {
 }[] = [
   {
     id: "grid-2",
-    label: "Grid 2",
+    label: "2 Columns",
     icon: <Columns2 size={15} />,
   },
   {
     id: "grid-3",
-    label: "Grid 3",
+    label: "3 Columns",
     icon: <Columns3 size={15} />,
   },
   {
     id: "grid-4",
-    label: "Grid 4",
+    label: "4 Columns",
     icon: <Columns4 size={15} />,
   },
   {
     id: "grid-5",
-    label: "Grid 5",
+    label: "5 Columns",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -74,13 +75,13 @@ const GRID_OPTIONS: {
         <rect width="3" height="18" x="6.5" y="3" rx="1" />
         <rect width="3" height="18" x="11" y="3" rx="1" />
         <rect width="3" height="18" x="15.5" y="3" rx="1" />
-        <rect width="3" height="18" x="20" y="3" rx="1" />
+        <rect width="3" height="20" x="20" y="3" rx="1" />
       </svg>
     ),
   },
   {
     id: "grid-6",
-    label: "Grid 6",
+    label: "6 Columns",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -107,8 +108,9 @@ const GRID_OPTIONS: {
 export default function Header({
   currentView,
   onSelectView,
-  activeNoteTitle = "All Notes",
   onOpenAddNote,
+  searchQuery = "",
+  onSearchChange,
 }: HeaderProps) {
   const [isGridDropdownOpen, setIsGridDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<{
@@ -185,8 +187,8 @@ export default function Header({
   };
 
   const currentGridLabel = isGridActive
-    ? currentView.replace("grid-", "Grid ")
-    : "Grid";
+    ? currentView.replace("grid-", "List View ")
+    : "List View";
 
   const dockItems: DockItemData[] = [
     {
@@ -200,7 +202,7 @@ export default function Header({
     },
     {
       icon: <LayoutGrid size={16} />,
-      label: "Masonry",
+      label: "Gallery",
       onClick: () => {
         setIsGridDropdownOpen(false);
         onSelectView("masonry");
@@ -245,7 +247,11 @@ export default function Header({
         </div>
 
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <div className="group relative flex h-[52px] items-center justify-start rounded-full bg-secondary shadow-xs transition-all duration-300 hover:w-64 focus-within:w-64 w-[52px] overflow-hidden">
+          <div
+            className={`group relative flex h-[52px] items-center justify-start rounded-full bg-secondary shadow-xs transition-all duration-300 ${
+              searchQuery ? "w-64" : "hover:w-64 focus-within:w-64 w-[52px]"
+            } overflow-hidden`}
+          >
             <button
               type="button"
               aria-label="Search"
@@ -255,9 +261,25 @@ export default function Header({
             </button>
             <input
               type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
               placeholder="Search notes..."
-              className="h-full w-full bg-transparent px-2 text-sm text-foreground placeholder-muted-foreground outline-none opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100"
+              className={`h-full w-full bg-transparent px-2 pr-8 text-sm text-foreground placeholder-muted-foreground outline-none transition-opacity duration-300 ${
+                searchQuery
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+              }`}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange?.("")}
+                aria-label="Clear search"
+                className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
 
           <Dock items={dockItems} />
@@ -286,15 +308,14 @@ export default function Header({
         <div className="flex items-center gap-2 pointer-events-auto">
           <ThemeToggle />
           <motion.button
-            layoutId="settings-drawer-container"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
             type="button"
             onClick={() => setIsSettingsOpen(true)}
             aria-label="Settings"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground focus:outline-none cursor-pointer"
           >
-            <motion.div layoutId="settings-icon">
-              <Settings size={18} />
-            </motion.div>
+            <Settings size={18} />
           </motion.button>
           <AuthButton />
         </div>

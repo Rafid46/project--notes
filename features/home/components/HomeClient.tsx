@@ -4,16 +4,17 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { FileUp } from "lucide-react";
 import NoteModal from "@/features/notes/components/NoteModal";
 import { useAutosave } from "@/features/notes/hooks/useAutosave";
-import { useNotes } from "@/features/notes/hooks/useNotes";
+import { useInfiniteNotes } from "@/features/notes/hooks/useNotes";
 
 import NotesGrid from "./NotesGrid";
 import CreateNotePopover from "../../notes/components/CreateNotePopover";
-import type { NoteItem, ViewMode } from "../types";
+import type { NoteItem, ViewMode, NoteFile, LinkPreviewMetadata } from "../types";
 
 import { getSavedDefaultView, SETTINGS_CHANGE_EVENT } from "./SettingsModal";
 import {
   addNoteToState,
   extractUrls,
+  findNoteById,
   getActiveNote,
   getLinkPreview,
   updateNoteInState,
@@ -26,6 +27,26 @@ import { useNoteModalStore } from "@/store/useNoteModalStore";
 import Header from "./Header";
 import Whiteboard from "@/features/whiteboard/components/Whiteboard";
 
+interface BackendNoteItem {
+  id: string;
+  title: string;
+  content: unknown;
+  plainText?: string;
+  parentId?: string | null;
+  labelId?: string | null;
+  boardX?: number | null;
+  boardY?: number | null;
+  labels?: string[];
+  color?: string;
+  textColor?: string;
+  category?: string | null;
+  children?: NoteItem[];
+  label?: { id: string; name: string };
+  attachments?: NoteFile[];
+  files?: NoteFile[];
+  linkPreviews?: LinkPreviewMetadata[];
+}
+
 export default function HomeClient() {
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string>("note-1");
@@ -37,15 +58,43 @@ export default function HomeClient() {
   } = useNoteModalStore();
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const dragCounterRef = useRef<number>(0);
-
-  const { data: fetchedNotes } = useNotes();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
   useEffect(() => {
-    if (fetchedNotes && fetchedNotes.length > 0) {
-      // Map children to subNotes if needed based on backend
-      const mappedNotes = fetchedNotes.map((note: any) => ({
-        ...note,
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  const {
+    data: notesData,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteNotes({ keyword: debouncedQuery, limit: 15 });
+
+  useEffect(() => {
+    if (notesData?.pages) {
+      const allFetchedNotes = notesData.pages.flatMap((page) => page.notes as unknown as BackendNoteItem[]);
+      const mappedNotes: NoteItem[] = allFetchedNotes.map((note) => ({
+        id: note.id,
+        title: note.title,
+        parentId: note.parentId ?? null,
+        labelId: note.labelId ?? null,
+        boardX: typeof note.boardX === "number" ? note.boardX : null,
+        boardY: typeof note.boardY === "number" ? note.boardY : null,
+        labels: Array.isArray(note.labels)
+          ? note.labels
+          : note.category
+            ? [note.category]
+            : [],
+        color: note.color,
+        textColor: note.textColor,
         subNotes: note.children || [],
+        files: note.files || note.attachments || [],
+        linkPreviews: note.linkPreviews || [],
         content:
           typeof note.content === "string"
             ? note.content
@@ -56,7 +105,7 @@ export default function HomeClient() {
       }));
       setNotes(mappedNotes);
     }
-  }, [fetchedNotes]);
+  }, [notesData]);
 
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
@@ -145,6 +194,7 @@ export default function HomeClient() {
     initialFiles?: NoteItem["files"];
     initialLabelId?: string;
     initialCategory?: string;
+    initialLabels?: string[];
   }>({ isOpen: false, parentId: null, anchorRect: null });
 
   useEffect(() => {
@@ -295,6 +345,8 @@ export default function HomeClient() {
     content: string;
     color?: string;
     category?: string;
+    labels?: string[];
+    labelId?: string | null;
     parentId: string | null;
     linkPreviews?: NoteItem["linkPreviews"];
     files?: NoteItem["files"];
@@ -311,20 +363,29 @@ export default function HomeClient() {
         title: newNoteData.title,
         content: newNoteData.content,
         category: newNoteData.category,
-        labelId: (newNoteData as any).labelId,
+        labels: newNoteData.labels,
+        labelId: newNoteData.labelId,
       },
       { isCreating: true, parentId: newNoteData.parentId },
     );
   };
 
   const handleUpdateNote = (noteId: string, updates: Partial<NoteItem>) => {
+    const existing = findNoteById(notes, noteId);
     if (
       updates.title !== undefined ||
       updates.content !== undefined ||
       updates.labelId !== undefined ||
-      updates.category !== undefined
+      updates.category !== undefined ||
+      updates.labels !== undefined
     ) {
-      registerChange(noteId, updates);
+      registerChange(noteId, {
+        title: updates.title !== undefined ? updates.title : existing?.title,
+        content: updates.content !== undefined ? updates.content : existing?.content,
+        category: updates.category !== undefined ? updates.category : existing?.category,
+        labelId: updates.labelId !== undefined ? updates.labelId : existing?.labelId,
+        labels: updates.labels !== undefined ? updates.labels : existing?.labels,
+      });
     }
     handleUpdateNoteState(noteId, updates);
   };
@@ -384,6 +445,8 @@ export default function HomeClient() {
               openNoteModal(id);
             }}
             onUpdateNote={handleUpdateNote}
+            onLoadMore={() => fetchNextPage()}
+            hasMore={Boolean(hasNextPage && !isFetchingNextPage)}
           />
         )}
       </div>
@@ -399,6 +462,7 @@ export default function HomeClient() {
         onOpenAddNoteWithLabel={(labelId, labelName, e) =>
           openPopover(null, e, labelId, labelName)
         }
+        searchKeyword={debouncedQuery}
       />
 
       <Header
@@ -406,6 +470,8 @@ export default function HomeClient() {
         onSelectView={(mode) => setViewMode(mode)}
         activeNoteTitle={activeNote?.title}
         onOpenAddNote={(e) => openPopover(null, e)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       <CreateNotePopover
@@ -419,6 +485,7 @@ export default function HomeClient() {
         initialFiles={popoverConfig.initialFiles}
         initialLabelId={popoverConfig.initialLabelId}
         initialCategory={popoverConfig.initialCategory}
+        initialLabels={popoverConfig.initialLabels}
       />
 
       <NoteModal

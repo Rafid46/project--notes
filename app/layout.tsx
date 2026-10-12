@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: any) {
       suppressHydrationWarning
       className={cn("h-full", "antialiased", interTight.variable, "font-sans")}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex flex-col">
         <ClerkProvider>
           <QueryProvider>
             <UserProvider initialUser={initialUser}>
@@ -48,9 +48,7 @@ export default async function RootLayout({ children }: any) {
                 enableSystem
                 disableTransitionOnChange
               >
-                <TooltipProvider>
-                  {children}
-                </TooltipProvider>
+                <TooltipProvider>{children}</TooltipProvider>
               </ThemeProvider>
             </UserProvider>
           </QueryProvider>

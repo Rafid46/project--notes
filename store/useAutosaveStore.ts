@@ -1,11 +1,12 @@
 import { create } from "zustand";
 
 export interface SaveSnapshot {
-  title: string;
-  content: string;
+  title?: string;
+  content?: string;
   revision: number;
   labelId?: string | null;
   category?: string | null;
+  labels?: string[];
 }
 
 export interface SaveTask {

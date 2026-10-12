@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { NoteItem } from "@/features/home/types";
 import Note from "@/features/notes/components/Note";
 import MiniMap from "@/components/common/MiniMap";
@@ -10,6 +10,8 @@ import {
   type WhiteboardControlSettings,
 } from "@/features/home/components/SettingsModal";
 import BottomToolbar, { COLOR_STORAGE_KEY } from "./BottomToolbar";
+import { api } from "@/lib/axios";
+import { NOTES } from "@/constants/api.constant";
 
 const POSITIONS_STORAGE_KEY = "project_notes_card_positions";
 
@@ -18,6 +20,18 @@ interface WhiteboardProps {
   selectedNoteId?: string | null;
   onSelectNote?: (noteId: string) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
+}
+
+interface DragCardState {
+  id: string;
+  startX: number;
+  startY: number;
+  initX: number;
+  initY: number;
+  currentX: number;
+  currentY: number;
+  moved: boolean;
+  el: HTMLDivElement | null;
 }
 
 export default function Whiteboard({
@@ -30,11 +44,10 @@ export default function Whiteboard({
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
   const [isPanning, setIsPanning] = useState(false);
-  const [isDraggingCard, setIsDraggingCard] = useState(false);
   const [isTransforming, setIsTransforming] = useState(false);
   const transformTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const markTransforming = (duration = 150) => {
+  const markTransforming = useCallback((duration = 150) => {
     setIsTransforming(true);
     if (transformTimeoutRef.current) {
       clearTimeout(transformTimeoutRef.current);
@@ -42,7 +55,7 @@ export default function Whiteboard({
     transformTimeoutRef.current = setTimeout(() => {
       setIsTransforming(false);
     }, duration);
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -51,9 +64,17 @@ export default function Whiteboard({
       }
     };
   }, []);
+
   const [cardPositions, setCardPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
+  const cardPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
+  const cardElementsRef = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    cardPositionsRef.current = cardPositions;
+  }, [cardPositions]);
+
   const [controlSettings, setControlSettings] =
     useState<WhiteboardControlSettings>(getSavedWhiteboardSettings);
   const controlSettingsRef = useRef<WhiteboardControlSettings>(controlSettings);
@@ -83,14 +104,7 @@ export default function Whiteboard({
     initPanY: number;
   } | null>(null);
 
-  const dragCardRef = useRef<{
-    id: string;
-    startX: number;
-    startY: number;
-    initX: number;
-    initY: number;
-    moved: boolean;
-  } | null>(null);
+  const dragCardRef = useRef<DragCardState | null>(null);
 
   useEffect(() => {
     zoomRef.current = zoom;
@@ -99,11 +113,6 @@ export default function Whiteboard({
   useEffect(() => {
     panRef.current = pan;
   }, [pan]);
-
-  const cardPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
-  useEffect(() => {
-    cardPositionsRef.current = cardPositions;
-  }, [cardPositions]);
 
   const allNotes: NoteItem[] = [];
   notes.forEach((parent) => {
@@ -127,26 +136,50 @@ export default function Whiteboard({
       } catch {}
     }
 
-    const initial: Record<string, { x: number; y: number }> = { ...loaded };
+    const initial: Record<string, { x: number; y: number }> = {
+      ...cardPositionsRef.current,
+      ...loaded,
+    };
     let col = 0;
+    let hasNewCards = false;
+
     notes.forEach((parent) => {
       if (!initial[parent.id]) {
-        initial[parent.id] = { x: 340 + col * 360, y: 120 };
+        hasNewCards = true;
+        if (
+          typeof parent.boardX === "number" &&
+          typeof parent.boardY === "number"
+        ) {
+          initial[parent.id] = { x: parent.boardX, y: parent.boardY };
+        } else {
+          initial[parent.id] = { x: 340 + col * 360, y: 120 };
+        }
       }
       if (parent.subNotes && parent.subNotes.length > 0) {
         parent.subNotes.forEach((sub, subIdx) => {
           if (!initial[sub.id]) {
-            initial[sub.id] = {
-              x: initial[parent.id].x,
-              y: initial[parent.id].y + 240 + subIdx * 210,
-            };
+            hasNewCards = true;
+            if (
+              typeof sub.boardX === "number" &&
+              typeof sub.boardY === "number"
+            ) {
+              initial[sub.id] = { x: sub.boardX, y: sub.boardY };
+            } else {
+              initial[sub.id] = {
+                x: initial[parent.id].x,
+                y: initial[parent.id].y + 240 + subIdx * 210,
+              };
+            }
           }
         });
       }
       col++;
     });
 
-    setCardPositions(initial);
+    if (hasNewCards || Object.keys(cardPositionsRef.current).length === 0) {
+      cardPositionsRef.current = initial;
+      setCardPositions(initial);
+    }
   }, [notes]);
 
   const handleZoomStep = (factor: number) => {
@@ -209,7 +242,7 @@ export default function Whiteboard({
     return () => {
       container.removeEventListener("wheel", handleWheel);
     };
-  }, []);
+  }, [markTransforming]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -256,23 +289,6 @@ export default function Whiteboard({
       }
     };
 
-    const handleGlobalPointerUp = () => {
-      isRightMouseDownRef.current = false;
-      isPanningRef.current = false;
-      panOriginRef.current = null;
-      setIsPanning(false);
-      setIsDraggingCard(false);
-      if (dragCardRef.current) {
-        dragCardRef.current = null;
-        try {
-          localStorage.setItem(
-            POSITIONS_STORAGE_KEY,
-            JSON.stringify(cardPositionsRef.current),
-          );
-        } catch {}
-      }
-    };
-
     const handleContextMenu = (e: MouseEvent) => {
       if (containerRef.current?.contains(e.target as Node)) {
         e.preventDefault();
@@ -284,7 +300,6 @@ export default function Whiteboard({
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("contextmenu", handleContextMenu);
-    window.addEventListener("pointerup", handleGlobalPointerUp);
 
     return () => {
       window.removeEventListener("mousedown", handleMouseDown);
@@ -292,11 +307,10 @@ export default function Whiteboard({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("contextmenu", handleContextMenu);
-      window.removeEventListener("pointerup", handleGlobalPointerUp);
     };
   }, []);
 
-  const isPanAction = (e: React.PointerEvent) => {
+  const isPanAction = (e: React.PointerEvent | PointerEvent) => {
     const trigger = controlSettingsRef.current.panTrigger;
     const isMiddle = e.button === 1 || (e.buttons & 4) === 4;
     const isSpace = isSpacePressedRef.current && (e.buttons & 1) === 1;
@@ -330,18 +344,36 @@ export default function Whiteboard({
     }
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (isPanAction(e)) {
-      if (dragCardRef.current) {
-        dragCardRef.current = null;
+  const handleGlobalPointerMove = useCallback((e: PointerEvent) => {
+    if (dragCardRef.current) {
+      const dx = e.clientX - dragCardRef.current.startX;
+      const dy = e.clientY - dragCardRef.current.startY;
+      if (!dragCardRef.current.moved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        dragCardRef.current.moved = true;
       }
+      const newX = dragCardRef.current.initX + dx / zoomRef.current;
+      const newY = dragCardRef.current.initY + dy / zoomRef.current;
+      dragCardRef.current.currentX = newX;
+      dragCardRef.current.currentY = newY;
+
+      const el =
+        dragCardRef.current.el ||
+        cardElementsRef.current[dragCardRef.current.id];
+      if (el) {
+        el.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
+        el.style.zIndex = "50";
+      }
+      return;
+    }
+
+    if (isPanAction(e)) {
       if (!isPanningRef.current || !panOriginRef.current) {
         isPanningRef.current = true;
         panOriginRef.current = {
           startX: e.clientX,
           startY: e.clientY,
-          initPanX: pan.x,
-          initPanY: pan.y,
+          initPanX: panRef.current.x,
+          initPanY: panRef.current.y,
         };
         setIsPanning(true);
       } else {
@@ -361,62 +393,95 @@ export default function Whiteboard({
       panOriginRef.current = null;
       setIsPanning(false);
     }
+  }, []);
 
-    if (dragCardRef.current) {
-      const cardId = dragCardRef.current.id;
-      const dx = e.clientX - dragCardRef.current.startX;
-      const dy = e.clientY - dragCardRef.current.startY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        dragCardRef.current.moved = true;
-        if (!isDraggingCard) {
-          setIsDraggingCard(true);
-        }
-      }
-      const newX = dragCardRef.current.initX + dx / zoomRef.current;
-      const newY = dragCardRef.current.initY + dy / zoomRef.current;
-      setCardPositions((prev) => ({
-        ...prev,
-        [cardId]: { x: newX, y: newY },
-      }));
-    }
-  };
-
-  const handlePointerUp = () => {
+  const handleGlobalPointerUp = useCallback(() => {
+    isRightMouseDownRef.current = false;
     isPanningRef.current = false;
     panOriginRef.current = null;
     setIsPanning(false);
-    setIsDraggingCard(false);
 
     if (dragCardRef.current) {
-      const noteId = dragCardRef.current.id;
-      const moved = dragCardRef.current.moved;
+      const {
+        id: noteId,
+        moved,
+        currentX,
+        currentY,
+        el,
+      } = dragCardRef.current;
       dragCardRef.current = null;
+
+      if (el) {
+        el.style.zIndex = "";
+      }
+
       if (!moved) {
         onSelectNote?.(noteId);
       } else {
+        const finalX = Math.round(currentX);
+        const finalY = Math.round(currentY);
+
+        const updatedPositions = {
+          ...cardPositionsRef.current,
+          [noteId]: { x: finalX, y: finalY },
+        };
+        cardPositionsRef.current = updatedPositions;
+        setCardPositions(updatedPositions);
+
         try {
           localStorage.setItem(
             POSITIONS_STORAGE_KEY,
-            JSON.stringify(cardPositions),
+            JSON.stringify(updatedPositions),
           );
         } catch {}
+
+        api
+          .put(NOTES.update(noteId), {
+            boardX: finalX,
+            boardY: finalY,
+          })
+          .catch(() => {});
+
+        onUpdateNote?.(noteId, {
+          boardX: finalX,
+          boardY: finalY,
+        });
       }
     }
-  };
+  }, [onSelectNote, onUpdateNote]);
 
-  const handleCardPointerDown = (e: React.PointerEvent, noteId: string) => {
+  useEffect(() => {
+    window.addEventListener("pointermove", handleGlobalPointerMove, {
+      passive: true,
+    });
+    window.addEventListener("pointerup", handleGlobalPointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handleGlobalPointerMove);
+      window.removeEventListener("pointerup", handleGlobalPointerUp);
+    };
+  }, [handleGlobalPointerMove, handleGlobalPointerUp]);
+
+  const handleCardPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    noteId: string,
+  ) => {
     if ((e.buttons & 3) === 3 || isSpacePressedRef.current || e.button !== 0) {
       return;
     }
     e.stopPropagation();
-    const pos = cardPositions[noteId] || { x: 0, y: 0 };
+    const pos = cardPositionsRef.current[noteId] || { x: 0, y: 0 };
+    const el = cardElementsRef.current[noteId];
     dragCardRef.current = {
       id: noteId,
       startX: e.clientX,
       startY: e.clientY,
       initX: pos.x,
       initY: pos.y,
+      currentX: pos.x,
+      currentY: pos.y,
       moved: false,
+      el,
     };
   };
 
@@ -429,8 +494,6 @@ export default function Whiteboard({
     <div
       ref={containerRef}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
       className={`relative h-full w-full overflow-hidden select-none ${
         isPanning
           ? "cursor-grabbing"
@@ -455,20 +518,24 @@ export default function Whiteboard({
           const pos = cardPositions[note.id] || { x: 0, y: 0 };
 
           return (
-            <Note
+            <div
               key={note.id}
-              note={note}
-              onPointerDown={(e) => handleCardPointerDown(e, note.id)}
-              onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
-              className="absolute w-80 cursor-grab active:cursor-grabbing pointer-events-auto"
-              style={{
-                left: `${pos.x}px`,
-                top: `${pos.y}px`,
+              ref={(el) => {
+                cardElementsRef.current[note.id] = el;
               }}
-              disableLayoutAnimation={
-                isDraggingCard || isPanning || isTransforming
-              }
-            />
+              className="absolute left-0 top-0 will-change-transform"
+              style={{
+                transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+              }}
+            >
+              <Note
+                note={note}
+                onPointerDown={(e) => handleCardPointerDown(e, note.id)}
+                onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
+                className="w-80 cursor-grab active:cursor-grabbing pointer-events-auto"
+                disableLayoutAnimation={true}
+              />
+            </div>
           );
         })}
       </div>

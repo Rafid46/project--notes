@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { NoteItem, ViewMode } from "../types";
 import Note from "@/features/notes/components/Note";
 
@@ -9,6 +9,8 @@ interface NotesGridProps {
   viewMode: ViewMode;
   onSelectNote: (noteId: string) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 }
 
 export default function NotesGrid({
@@ -16,8 +18,11 @@ export default function NotesGrid({
   viewMode,
   onSelectNote,
   onUpdateNote,
+  onLoadMore,
+  hasMore = false,
 }: NotesGridProps) {
   const [cols, setCols] = useState(4);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateCols = () => {
@@ -30,6 +35,21 @@ export default function NotesGrid({
     window.addEventListener("resize", updateCols);
     return () => window.removeEventListener("resize", updateCols);
   }, []);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !onLoadMore || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onLoadMore, hasMore]);
 
   const allNotes: NoteItem[] = [];
   notes.forEach((parent) => {
@@ -83,7 +103,7 @@ export default function NotesGrid({
 
   return (
     <div
-      className="h-full w-full overflow-y-auto pl-80 pt-24 pr-8 pb-8"
+      className="h-full w-full overflow-y-auto pl-80 pt-24 pr-8 pb-8 sidebar-scrollbar"
       style={{
         backgroundImage:
           "radial-gradient(var(--dot-color) 1.5px, transparent 1.5px)",
@@ -105,6 +125,7 @@ export default function NotesGrid({
           ))}
         </div>
       )}
+      <div ref={sentinelRef} className="h-8 w-full" />
     </div>
   );
 }

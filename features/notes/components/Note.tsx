@@ -16,6 +16,12 @@ import {
 import Link from "next/link";
 import NoteToolbar from "./NoteToolbar";
 import LinkPreviewCard from "./LinkPreviewCard";
+import NoteLabel from "./NoteLabel";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -166,26 +172,26 @@ export default function Note({
         <motion.div
           layout={!disableLayoutAnimation}
           layoutId={disableLayoutAnimation ? undefined : `note-${note.id}`}
-          className={`relative rounded-2xl p-5 pb-14 z-0 transition-colors shadow-xs`}
+          className={`relative rounded-2xl p-5 pb-18 z-0 transition-colors shadow-xs`}
           style={{
             backgroundColor: note.color || "#171717",
           }}
         >
-          {note.category && (
-            <div className="absolute top-0 right-[20px] px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold z-20 shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]">
-              {note.category}
-            </div>
-          )}
+          <NoteLabel note={note} />
 
-          <Link
-            href={`/notes/${note.id}`}
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="absolute top-3 right-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 bg-black/10 p-2 hover:bg-black/30 dark:hover:bg-white/10 z-30"
-            title="Open in full page"
-          >
-            <Fullscreen size={18} />
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                href={`/notes/${note.id}`}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="absolute top-3 left-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 bg-black/10 p-2 hover:bg-black/30 dark:hover:bg-white/10 z-30"
+              >
+                <Fullscreen size={18} />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Open full page</TooltipContent>
+          </Tooltip>
 
           <div className="flex items-center justify-between gap-2 mb-2.5 mt-1">
             {note.parentId && (
@@ -337,4 +343,3 @@ export default function Note({
     </div>
   );
 }
-

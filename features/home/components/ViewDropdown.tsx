@@ -32,7 +32,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   },
   {
     id: "masonry",
-    label: "Masonry",
+    label: "Gallery",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -54,7 +54,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   },
   {
     id: "grid-2",
-    label: "Grid 2",
+    label: "List view (2)",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -74,7 +74,7 @@ const VIEW_OPTIONS: { id: ViewMode; label: string; icon: React.ReactNode }[] = [
   },
   {
     id: "grid-4",
-    label: "Grid 4",
+    label: "List view (4)",
     icon: (
       <svg
         xmlns="http://www.w3.org/2000/svg"

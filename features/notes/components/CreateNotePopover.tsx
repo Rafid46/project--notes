@@ -31,6 +31,7 @@ interface NotePopoverProps {
     content: string;
     color?: string;
     category?: string;
+    labels?: string[];
     labelId?: string | null;
     parentId: string | null;
     linkPreviews?: LinkPreviewMetadata[];
@@ -48,6 +49,7 @@ interface NotePopoverProps {
   initialFiles?: NoteFile[];
   initialLabelId?: string;
   initialCategory?: string;
+  initialLabels?: string[];
 }
 
 const COLORS = [
@@ -70,6 +72,7 @@ export default function CreateNotePopover({
   initialFiles,
   initialLabelId,
   initialCategory,
+  initialLabels,
 }: NotePopoverProps) {
   const {
     title,
@@ -92,7 +95,11 @@ export default function CreateNotePopover({
   });
 
   const [color, setColor] = useState("");
-  const [category, setCategory] = useState(initialCategory || "");
+  const [selectedLabels, setSelectedLabels] = useState<string[]>(() => {
+    if (initialLabels && initialLabels.length > 0) return initialLabels;
+    if (initialCategory) return [initialCategory];
+    return [];
+  });
   const [labelId, setLabelId] = useState<string | null>(initialLabelId || null);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [newLabel, setNewLabel] = useState("");
@@ -107,25 +114,77 @@ export default function CreateNotePopover({
     title,
     content,
     color,
-    category,
+    selectedLabels,
     linkPreviews,
     files,
   });
 
   useEffect(() => {
-    stateRef.current = { title, content, color, category, linkPreviews, files };
-  }, [title, content, color, category, linkPreviews, files]);
+    stateRef.current = {
+      title,
+      content,
+      color,
+      selectedLabels,
+      linkPreviews,
+      files,
+    };
+  }, [title, content, color, selectedLabels, linkPreviews, files]);
 
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
       setColor("");
-      setCategory(initialCategory || "");
+      const init =
+        initialLabels && initialLabels.length > 0
+          ? initialLabels
+          : initialCategory
+          ? [initialCategory]
+          : [];
+      setSelectedLabels(init);
       setLabelId(initialLabelId || null);
       setIsCategoryOpen(false);
       setError("");
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen, initialCategory, initialLabelId]);
+  }, [isOpen, initialCategory, initialLabelId, initialLabels]);
+
+  const handleToggleLabel = (name: string, id: string) => {
+    setSelectedLabels((prev) => {
+      const exists = prev.includes(name);
+      const next = exists ? prev.filter((l) => l !== name) : [...prev, name];
+      if (next.length === 0) {
+        setLabelId(null);
+      } else if (!exists && prev.length === 0) {
+        setLabelId(id);
+      }
+      return next;
+    });
+  };
+
+  const handleAddNewLabel = () => {
+    const trimmed = newLabel.trim();
+    if (!trimmed) return;
+    const existing = serverLabels.find(
+      (l) => l.name.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (!existing) {
+      createLabelMutation.mutate(
+        { name: trimmed },
+        {
+          onSuccess: (data) => {
+            const createdLabel = data.label || data;
+            setSelectedLabels((prev) => Array.from(new Set([...prev, trimmed])));
+            if (selectedLabels.length === 0 && createdLabel?.id) {
+              setLabelId(createdLabel.id);
+            }
+            setNewLabel("");
+          },
+        },
+      );
+    } else {
+      setSelectedLabels((prev) => Array.from(new Set([...prev, existing.name])));
+      setNewLabel("");
+    }
+  };
 
   const handleSave = () => {
     if (
@@ -143,7 +202,8 @@ export default function CreateNotePopover({
       title: title.trim() || "Untitled Note",
       content,
       color,
-      category: category.trim() || undefined,
+      category: selectedLabels[0] || undefined,
+      labels: selectedLabels,
       labelId,
       parentId,
       linkPreviews: linkPreviews.length > 0 ? linkPreviews : undefined,
@@ -200,23 +260,34 @@ export default function CreateNotePopover({
             className="hidden"
           />
 
-          {category && (
-            <div className="absolute -top-3 right-6 bg-blue-500 px-4 py-1.5 rounded-2xl text-xs font-bold text-white flex items-center gap-2 z-20 shadow-md">
-              {category}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => {
-                      setCategory("");
-                      setLabelId(null);
-                    }}
-                    className="hover:bg-blue-600 rounded-full p-0.5 transition-colors"
-                  >
-                    <X size={14} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Remove category</TooltipContent>
-              </Tooltip>
+          {selectedLabels.length > 0 && (
+            <div className="absolute -top-3 right-6 flex flex-wrap items-center gap-1.5 z-20">
+              {selectedLabels.map((label) => (
+                <div
+                  key={label}
+                  className="bg-blue-500 px-3 py-1 rounded-2xl text-xs font-bold text-white flex items-center gap-1.5 shadow-md"
+                >
+                  {label}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedLabels((prev) => {
+                            const next = prev.filter((l) => l !== label);
+                            if (next.length === 0) setLabelId(null);
+                            return next;
+                          });
+                        }}
+                        className="hover:bg-blue-600 rounded-full p-0.5 transition-colors cursor-pointer"
+                      >
+                        <X size={14} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Remove label</TooltipContent>
+                  </Tooltip>
+                </div>
+              ))}
             </div>
           )}
 
@@ -417,9 +488,16 @@ export default function CreateNotePopover({
 
           {isCategoryOpen && (
             <div className="mt-4 pt-4 border-t border-border flex flex-col gap-3 shrink-0">
-              <h4 className="text-sm font-medium text-foreground px-1">
-                Labels
-              </h4>
+              <div className="flex items-center justify-between px-1">
+                <h4 className="text-sm font-medium text-foreground">
+                  Labels
+                </h4>
+                {selectedLabels.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    {selectedLabels.length} selected
+                  </span>
+                )}
+              </div>
 
               <div className="flex flex-col gap-1 max-h-40 overflow-y-auto custom-scrollbar">
                 {serverLabels.map((label) => (
@@ -429,16 +507,8 @@ export default function CreateNotePopover({
                   >
                     <input
                       type="checkbox"
-                      checked={category === label.name}
-                      onChange={() => {
-                        if (category === label.name) {
-                          setCategory("");
-                          setLabelId(null);
-                        } else {
-                          setCategory(label.name);
-                          setLabelId(label.id);
-                        }
-                      }}
+                      checked={selectedLabels.includes(label.name)}
+                      onChange={() => handleToggleLabel(label.name, label.id)}
                       className="rounded border-zinc-500 text-blue-500 focus:ring-blue-500 bg-transparent cursor-pointer"
                     />
                     <span className="text-sm text-foreground">
@@ -457,62 +527,16 @@ export default function CreateNotePopover({
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && newLabel.trim()) {
                       e.preventDefault();
-                      if (
-                        !serverLabels.find((l) => l.name === newLabel.trim())
-                      ) {
-                        createLabelMutation.mutate(
-                          { name: newLabel.trim() },
-                          {
-                            onSuccess: (data) => {
-                              const createdLabel = data.label || data;
-                              setCategory(newLabel.trim());
-                              setLabelId(createdLabel.id);
-                            },
-                          },
-                        );
-                      } else {
-                        const existingLabel = serverLabels.find(
-                          (l) => l.name === newLabel.trim(),
-                        );
-                        if (existingLabel) {
-                          setCategory(existingLabel.name);
-                          setLabelId(existingLabel.id);
-                        }
-                      }
-                      setNewLabel("");
+                      handleAddNewLabel();
                     }
                   }}
                   className="flex-1 text-sm px-3 py-2 bg-muted rounded-lg outline-none text-foreground border border-transparent focus:border-border transition-colors"
                 />
                 <button
-                  onClick={() => {
-                    if (newLabel.trim()) {
-                      if (
-                        !serverLabels.find((l) => l.name === newLabel.trim())
-                      ) {
-                        createLabelMutation.mutate(
-                          { name: newLabel.trim() },
-                          {
-                            onSuccess: (data) => {
-                              const createdLabel = data.label || data;
-                              setCategory(newLabel.trim());
-                              setLabelId(createdLabel.id);
-                            },
-                          },
-                        );
-                      } else {
-                        const existingLabel = serverLabels.find(
-                          (l) => l.name === newLabel.trim(),
-                        );
-                        if (existingLabel) {
-                          setCategory(existingLabel.name);
-                          setLabelId(existingLabel.id);
-                        }
-                      }
-                      setNewLabel("");
-                    }
-                  }}
-                  className="text-sm font-medium bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                  type="button"
+                  onClick={handleAddNewLabel}
+                  disabled={createLabelMutation.isPending || !newLabel.trim()}
+                  className="text-sm font-medium bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   Create
                 </button>

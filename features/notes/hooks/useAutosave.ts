@@ -16,6 +16,9 @@ const saveToLocalStorage = (
   snapshot: SaveSnapshot & { serverId?: string },
 ) => {
   try {
+    if (snapshot.title === undefined && snapshot.content === undefined) {
+      return;
+    }
     const data = JSON.stringify({ ...snapshot, timestamp: Date.now() });
     localStorage.setItem(getBackupKey(noteId), data);
   } catch (err) {
@@ -55,8 +58,8 @@ export function useAutosave({
 
       if (
         task.isCreating &&
-        !snapshotToSave.title.trim() &&
-        !snapshotToSave.content.trim()
+        !snapshotToSave.title?.trim() &&
+        !snapshotToSave.content?.trim()
       ) {
         return;
       }
@@ -70,16 +73,30 @@ export function useAutosave({
 
       try {
         const payload: NotePayload = {
-          title: snapshotToSave.title,
-          content: snapshotToSave.content,
-          plainText: snapshotToSave.content.replace(/<[^>]+>/g, ""),
+          ...(snapshotToSave.title !== undefined
+            ? { title: snapshotToSave.title }
+            : {}),
+          ...(snapshotToSave.content !== undefined
+            ? {
+                content: snapshotToSave.content,
+                plainText: (snapshotToSave.content || "").replace(/<[^>]+>/g, ""),
+              }
+            : {}),
           ...(task.parentId ? { parentId: task.parentId } : {}),
           ...(snapshotToSave.labelId !== undefined
             ? { labelId: snapshotToSave.labelId }
             : {}),
+          ...(snapshotToSave.labels !== undefined
+            ? { labels: snapshotToSave.labels }
+            : {}),
         };
 
         if (task.isCreating) {
+          if (payload.title === undefined) payload.title = "";
+          if (payload.content === undefined) {
+            payload.content = "";
+            payload.plainText = "";
+          }
           if (task.parentId && task.parentId.startsWith("temp-")) {
             const parentTask = useAutosaveStore.getState().tasks[task.parentId];
             if (parentTask && parentTask.serverId) {
@@ -130,7 +147,7 @@ export function useAutosave({
         if (latestTask && latestTask.pendingSnapshot) {
           triggerSave(id);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Autosave failed", err);
         const latestTask = useAutosaveStore.getState().tasks[id];
         const newerPending = latestTask.pendingSnapshot;
@@ -159,6 +176,7 @@ export function useAutosave({
         content?: string;
         labelId?: string | null;
         category?: string | null;
+        labels?: string[];
       },
       options?: { isCreating?: boolean; parentId?: string | null },
     ) => {
@@ -170,18 +188,20 @@ export function useAutosave({
           isCreating: options?.isCreating || false,
           isRequestInFlight: false,
           latestSnapshot: {
-            title: updates.title || "",
-            content: updates.content || "",
+            title: updates.title,
+            content: updates.content,
             revision: 1,
             labelId: updates.labelId,
             category: updates.category,
+            labels: updates.labels,
           },
           pendingSnapshot: {
-            title: updates.title || "",
-            content: updates.content || "",
+            title: updates.title,
+            content: updates.content,
             revision: 1,
             labelId: updates.labelId,
             category: updates.category,
+            labels: updates.labels,
           },
           lastSaveAttempt: 0,
           retryCount: 0,
@@ -194,19 +214,23 @@ export function useAutosave({
           title:
             updates.title !== undefined
               ? updates.title
-              : task.pendingSnapshot?.title || task.latestSnapshot.title,
+              : task.pendingSnapshot?.title ?? task.latestSnapshot.title,
           content:
             updates.content !== undefined
               ? updates.content
-              : task.pendingSnapshot?.content || task.latestSnapshot.content,
+              : task.pendingSnapshot?.content ?? task.latestSnapshot.content,
           labelId:
             updates.labelId !== undefined
               ? updates.labelId
-              : task.pendingSnapshot?.labelId || task.latestSnapshot.labelId,
+              : task.pendingSnapshot?.labelId ?? task.latestSnapshot.labelId,
           category:
             updates.category !== undefined
               ? updates.category
-              : task.pendingSnapshot?.category || task.latestSnapshot.category,
+              : task.pendingSnapshot?.category ?? task.latestSnapshot.category,
+          labels:
+            updates.labels !== undefined
+              ? updates.labels
+              : task.pendingSnapshot?.labels ?? task.latestSnapshot.labels,
           revision: newRev,
         };
         updateTask(id, { pendingSnapshot: newSnapshot });
@@ -268,6 +292,13 @@ export function useAutosave({
         if (item) {
           const parsed = JSON.parse(item);
           const noteId = k.replace("autosave_draft_", "");
+          if (
+            (!parsed.title || !parsed.title.trim()) &&
+            (!parsed.content || !parsed.content.trim())
+          ) {
+            clearLocalStorage(noteId);
+            continue;
+          }
 
           let task = useAutosaveStore.getState().tasks[noteId];
           if (!task) {
@@ -279,16 +310,18 @@ export function useAutosave({
               latestSnapshot: {
                 title: parsed.title,
                 content: parsed.content,
-                revision: parsed.revision,
+                revision: parsed.revision || 1,
                 labelId: parsed.labelId,
                 category: parsed.category,
+                labels: parsed.labels,
               },
               pendingSnapshot: {
                 title: parsed.title,
                 content: parsed.content,
-                revision: parsed.revision,
+                revision: parsed.revision || 1,
                 labelId: parsed.labelId,
                 category: parsed.category,
+                labels: parsed.labels,
               },
               lastSaveAttempt: 0,
               retryCount: 0,
@@ -296,12 +329,15 @@ export function useAutosave({
             setTask(noteId, task);
           }
           if (onUpdateNoteState) {
-            onUpdateNoteState(noteId, {
-              title: parsed.title,
-              content: parsed.content,
-              labelId: parsed.labelId,
-              category: parsed.category,
-            });
+            const updatesToApply: Partial<NoteItem> = {};
+            if (parsed.title !== undefined) updatesToApply.title = parsed.title;
+            if (parsed.content !== undefined) updatesToApply.content = parsed.content;
+            if (parsed.labelId !== undefined) updatesToApply.labelId = parsed.labelId;
+            if (parsed.category !== undefined) updatesToApply.category = parsed.category;
+            if (parsed.labels !== undefined) updatesToApply.labels = parsed.labels;
+            if (Object.keys(updatesToApply).length > 0) {
+              onUpdateNoteState(noteId, updatesToApply);
+            }
           }
           triggerSave(noteId);
         }

@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Paperclip, Download, X, Loader2 } from "lucide-react";
+import { Paperclip, Download, X, Loader2, Fullscreen } from "lucide-react";
+import Link from "next/link";
 import type { NoteItem } from "@/features/home/types";
 import LinkPreviewCard from "@/features/notes/components/LinkPreviewCard";
 import NoteToolbar from "@/features/notes/components/NoteToolbar";
+import NoteLabel from "@/features/notes/components/NoteLabel";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import {
   extractUrls,
   getLinkPreview,
@@ -158,11 +165,21 @@ export default function NoteModal({
                     }
                     className="w-full bg-transparent border-none outline-none text-lg font-semibold leading-none mr-2"
                   />
-                  {note.category && (
-                    <div className="absolute top-0 right-[20px] px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold z-20 shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]">
-                      {note.category}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          href={`/notes/${note.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="rounded-lg transition-colors p-1.5 hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground"
+                        >
+                          <Fullscreen size={16} />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>Open full page</TooltipContent>
+                    </Tooltip>
+                    <NoteLabel note={note} />
+                  </div>
                 </div>
               </div>
 

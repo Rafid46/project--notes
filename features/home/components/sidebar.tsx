@@ -1,8 +1,9 @@
 "use client";
 
-import { Plus, Lightbulb, Pencil, Archive, Trash2 } from "lucide-react";
+import { useRef, useEffect } from "react";
+import { Plus, Lightbulb, Archive, Trash2 } from "lucide-react";
 import type { NoteItem, Label } from "../types";
-import { useLabels } from "@/features/notes/hooks/useLabels";
+import { useInfiniteLabels } from "@/features/notes/hooks/useLabels";
 import {
   Tooltip,
   TooltipTrigger,
@@ -10,21 +11,51 @@ import {
 } from "@/components/ui/tooltip";
 
 interface SidebarProps {
-  notes: NoteItem[];
-  selectedNoteId: string | null;
-  onSelectNote: (noteId: string) => void;
+  notes?: NoteItem[];
+  selectedNoteId?: string | null;
+  onSelectNote?: (noteId: string) => void;
   onOpenAddSubnote?: (parentId: string, e: React.MouseEvent) => void;
   onOpenAddNoteWithLabel?: (labelId: string, labelName: string, e: React.MouseEvent) => void;
   isOpen?: boolean;
   onToggle?: () => void;
+  searchKeyword?: string;
 }
 
-export default function Sidebar({ onOpenAddSubnote, onOpenAddNoteWithLabel }: SidebarProps) {
-  const { data: labels = [], isLoading } = useLabels();
+export default function Sidebar({
+  onOpenAddNoteWithLabel,
+  searchKeyword = "",
+}: SidebarProps) {
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteLabels({
+    keyword: searchKeyword,
+    limit: 15,
+  });
+
+  const labels = data?.pages.flatMap((page) => page.labels) || [];
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <aside className="absolute top-20 bottom-6 left-6 z-30 flex w-64 flex-col bg-secondary rounded-2xl overflow-hidden py-3">
-      {/* Top Section - Notes */}
       <div className="px-3 mb-2 flex flex-col gap-1">
         <div className="flex h-[52px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors cursor-pointer bg-primary/10 hover:bg-primary/20 text-primary font-medium">
           <Lightbulb size={20} />
@@ -32,12 +63,9 @@ export default function Sidebar({ onOpenAddSubnote, onOpenAddNoteWithLabel }: Si
         </div>
       </div>
 
-      {/* Middle Section - Labels */}
-      <div className="flex-1 overflow-y-auto px-3">
+      <div className="flex-1 overflow-y-auto px-3 sidebar-scrollbar">
         {isLoading ? (
-          <div className="p-4 text-sm text-muted-foreground text-center">
-            {/* Loading labels... */}
-          </div>
+          <div className="p-4 text-sm text-muted-foreground text-center" />
         ) : (
           <nav className="flex flex-col gap-1">
             {labels.map((label: Label) => {
@@ -79,17 +107,11 @@ export default function Sidebar({ onOpenAddSubnote, onOpenAddNoteWithLabel }: Si
                 </div>
               );
             })}
-
-            {/* {labels.length === 0 && (
-              <div className="p-4 text-sm text-muted-foreground text-center">
-                No labels found.
-              </div>
-            )} */}
+            <div ref={sentinelRef} className="h-4 w-full shrink-0" />
           </nav>
         )}
       </div>
 
-      {/* Bottom Section - Edit labels, Archive, Bin */}
       <div className="mx-3 mt-2 mb-1 p-2 flex flex-col gap-1 bg-background/50 rounded-[10px]">
         <div className="flex h-[48px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer font-medium">
           <Archive size={20} />

@@ -7,7 +7,7 @@ export interface NotePayload {
   title?: string;
   content?: string;
   plainText?: string;
-  labels?: any;
+  labels?: string[];
   background?: string;
   headerColor?: string;
   headerFont?: string;
