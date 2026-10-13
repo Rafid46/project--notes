@@ -19,11 +19,15 @@ interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
   searchKeyword?: string;
+  selectedLabel?: Label | null;
+  onSelectLabel?: (label: Label | null) => void;
 }
 
 export default function Sidebar({
   onOpenAddNoteWithLabel,
   searchKeyword = "",
+  selectedLabel,
+  onSelectLabel,
 }: SidebarProps) {
   const {
     data,
@@ -57,7 +61,14 @@ export default function Sidebar({
   return (
     <aside className="absolute top-20 bottom-6 left-6 z-30 flex w-64 flex-col bg-secondary rounded-2xl overflow-hidden py-3">
       <div className="px-3 mb-2 flex flex-col gap-1">
-        <div className="flex h-[52px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors cursor-pointer bg-primary/10 hover:bg-primary/20 text-primary font-medium">
+        <div
+          onClick={() => onSelectLabel?.(null)}
+          className={`flex h-[52px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors cursor-pointer ${
+            !selectedLabel
+              ? "bg-primary/10 text-primary font-medium hover:bg-primary/20"
+              : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+          }`}
+        >
           <Lightbulb size={20} />
           <span className="text-sm">Notes</span>
         </div>
@@ -70,10 +81,18 @@ export default function Sidebar({
           <nav className="flex flex-col gap-1">
             {labels.map((label: Label) => {
               const labelId = label.id;
+              const isSelected = selectedLabel?.id === labelId;
 
               return (
                 <div key={labelId} className="flex flex-col">
-                  <div className="group flex h-[52px] items-center justify-between rounded-[10px] pl-4 pr-2 transition-colors text-muted-foreground hover:bg-muted cursor-pointer">
+                  <div
+                    onClick={() => onSelectLabel?.(isSelected ? null : label)}
+                    className={`group flex h-[52px] items-center justify-between rounded-[10px] pl-4 pr-2 transition-colors cursor-pointer ${
+                      isSelected
+                        ? "bg-primary/10 text-primary font-medium hover:bg-primary/20"
+                        : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+                    }`}
+                  >
                     <div className="flex flex-1 h-full items-center gap-4 overflow-hidden text-left text-sm">
                       <span
                         className="h-3 w-3 shrink-0 rounded-full"
@@ -81,7 +100,7 @@ export default function Sidebar({
                           backgroundColor: label.color || "currentColor",
                         }}
                       />
-                      <span className="truncate text-primary">
+                      <span className="truncate">
                         {label.name}
                       </span>
                     </div>

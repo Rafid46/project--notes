@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import type { NoteItem } from "@/features/home/types";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import type { NoteItem, Label } from "@/features/home/types";
 import Note from "@/features/notes/components/Note";
 import MiniMap from "@/components/common/MiniMap";
 import {
@@ -9,6 +9,7 @@ import {
   SETTINGS_CHANGE_EVENT,
   type WhiteboardControlSettings,
 } from "@/features/home/components/SettingsModal";
+import { Tag } from "lucide-react";
 import BottomToolbar, { COLOR_STORAGE_KEY } from "./BottomToolbar";
 import { api } from "@/lib/axios";
 import { NOTES } from "@/constants/api.constant";
@@ -20,6 +21,7 @@ interface WhiteboardProps {
   selectedNoteId?: string | null;
   onSelectNote?: (noteId: string) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
+  selectedLabel?: Label | null;
 }
 
 interface DragCardState {
@@ -39,6 +41,7 @@ export default function Whiteboard({
   selectedNoteId,
   onSelectNote,
   onUpdateNote,
+  selectedLabel,
 }: WhiteboardProps) {
   const [canvasColor, setCanvasColor] = useState<string>("#ffffff");
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -114,6 +117,26 @@ export default function Whiteboard({
     panRef.current = pan;
   }, [pan]);
 
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportWidth(containerRef.current?.clientWidth || window.innerWidth);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (selectedLabel) {
+      setPan({ x: 0, y: 0 });
+      setZoom(1);
+    }
+  }, [selectedLabel]);
+
   const allNotes: NoteItem[] = [];
   notes.forEach((parent) => {
     allNotes.push(parent);
@@ -122,11 +145,39 @@ export default function Whiteboard({
     }
   });
 
+  const labelPositions = useMemo(() => {
+    if (!selectedLabel) return null;
+    const posMap: Record<string, { x: number; y: number }> = {};
+    const centerX = 280 + (viewportWidth - 280) / 2;
+    const startX = Math.max(340, Math.round(centerX - 160));
+    const startY = 190;
+    allNotes.forEach((note, i) => {
+      posMap[note.id] = {
+        x: startX,
+        y: startY + i * 260,
+      };
+    });
+    return posMap;
+  }, [selectedLabel, allNotes, viewportWidth]);
+
+  const labelHeaderLayout = useMemo(() => {
+    if (!selectedLabel) return null;
+    const centerX = 280 + (viewportWidth - 280) / 2;
+    const startX = Math.max(340, Math.round(centerX - 160));
+    return {
+      x: startX,
+      y: 110,
+      width: 320,
+    };
+  }, [selectedLabel, viewportWidth]);
+
   useEffect(() => {
     const savedColor = localStorage.getItem(COLOR_STORAGE_KEY);
     if (savedColor) {
       setCanvasColor(savedColor);
     }
+
+    if (selectedLabel) return;
 
     const savedPositions = localStorage.getItem(POSITIONS_STORAGE_KEY);
     let loaded: Record<string, { x: number; y: number }> = {};
@@ -405,6 +456,8 @@ export default function Whiteboard({
       const {
         id: noteId,
         moved,
+        initX,
+        initY,
         currentX,
         currentY,
         el,
@@ -435,20 +488,25 @@ export default function Whiteboard({
           );
         } catch {}
 
-        api
-          .put(NOTES.update(noteId), {
+        if (
+          !selectedLabel &&
+          (Math.abs(finalX - initX) > 3 || Math.abs(finalY - initY) > 3)
+        ) {
+          api
+            .put(NOTES.update(noteId), {
+              boardX: finalX,
+              boardY: finalY,
+            })
+            .catch(() => {});
+
+          onUpdateNote?.(noteId, {
             boardX: finalX,
             boardY: finalY,
-          })
-          .catch(() => {});
-
-        onUpdateNote?.(noteId, {
-          boardX: finalX,
-          boardY: finalY,
-        });
+          });
+        }
       }
     }
-  }, [onSelectNote, onUpdateNote]);
+  }, [onSelectNote, onUpdateNote, selectedLabel]);
 
   useEffect(() => {
     window.addEventListener("pointermove", handleGlobalPointerMove, {
@@ -466,7 +524,12 @@ export default function Whiteboard({
     e: React.PointerEvent<HTMLDivElement>,
     noteId: string,
   ) => {
-    if ((e.buttons & 3) === 3 || isSpacePressedRef.current || e.button !== 0) {
+    if (
+      selectedLabel ||
+      (e.buttons & 3) === 3 ||
+      isSpacePressedRef.current ||
+      e.button !== 0
+    ) {
       return;
     }
     e.stopPropagation();
@@ -514,8 +577,33 @@ export default function Whiteboard({
           transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
         }}
       >
+        {selectedLabel && labelHeaderLayout && (
+          <div
+            className="absolute left-0 top-0 flex items-center justify-center pointer-events-auto"
+            style={{
+              transform: `translate3d(${labelHeaderLayout.x}px, ${labelHeaderLayout.y}px, 0)`,
+              width: `${labelHeaderLayout.width}px`,
+            }}
+          >
+            <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full border border-border bg-card text-card-foreground shadow-sm">
+              {selectedLabel.color ? (
+                <span
+                  className="h-2.5 w-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: selectedLabel.color }}
+                />
+              ) : (
+                <Tag size={15} className="text-muted-foreground shrink-0" />
+              )}
+              <span className="text-base font-semibold">{selectedLabel.name}</span>
+            </div>
+          </div>
+        )}
+
         {allNotes.map((note) => {
-          const pos = cardPositions[note.id] || { x: 0, y: 0 };
+          const pos =
+            (labelPositions && labelPositions[note.id]) ||
+            cardPositions[note.id] ||
+            { x: 0, y: 0 };
 
           return (
             <div
@@ -530,9 +618,14 @@ export default function Whiteboard({
             >
               <Note
                 note={note}
+                onClick={() => onSelectNote?.(note.id)}
                 onPointerDown={(e) => handleCardPointerDown(e, note.id)}
                 onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
-                className="w-80 cursor-grab active:cursor-grabbing pointer-events-auto"
+                className={`w-80 pointer-events-auto ${
+                  selectedLabel
+                    ? "cursor-pointer"
+                    : "cursor-grab active:cursor-grabbing"
+                }`}
                 disableLayoutAnimation={true}
               />
             </div>
@@ -542,7 +635,7 @@ export default function Whiteboard({
 
       <MiniMap
         notes={allNotes}
-        cardPositions={cardPositions}
+        cardPositions={labelPositions || cardPositions}
         selectedNoteId={selectedNoteId}
         pan={pan}
         zoom={zoom}

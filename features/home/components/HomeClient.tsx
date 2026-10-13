@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { FileUp } from "lucide-react";
 import NoteModal from "@/features/notes/components/NoteModal";
 import { useAutosave } from "@/features/notes/hooks/useAutosave";
@@ -8,7 +8,7 @@ import { useInfiniteNotes } from "@/features/notes/hooks/useNotes";
 
 import NotesGrid from "./NotesGrid";
 import CreateNotePopover from "../../notes/components/CreateNotePopover";
-import type { NoteItem, ViewMode, NoteFile, LinkPreviewMetadata } from "../types";
+import type { NoteItem, ViewMode, NoteFile, LinkPreviewMetadata, Label } from "../types";
 
 import { getSavedDefaultView, SETTINGS_CHANGE_EVENT } from "./SettingsModal";
 import {
@@ -50,6 +50,7 @@ interface BackendNoteItem {
 export default function HomeClient() {
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string>("note-1");
+  const [selectedLabel, setSelectedLabel] = useState<Label | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("whiteboard");
   const {
     isOpen: isNoteModalOpen,
@@ -85,11 +86,14 @@ export default function HomeClient() {
         labelId: note.labelId ?? null,
         boardX: typeof note.boardX === "number" ? note.boardX : null,
         boardY: typeof note.boardY === "number" ? note.boardY : null,
-        labels: Array.isArray(note.labels)
-          ? note.labels
-          : note.category
-            ? [note.category]
-            : [],
+        labels:
+          Array.isArray(note.labels) && note.labels.length > 0
+            ? note.labels
+            : note.label?.name
+              ? [note.label.name]
+              : note.category
+                ? [note.category]
+                : [],
         color: note.color,
         textColor: note.textColor,
         subNotes: note.children || [],
@@ -408,6 +412,31 @@ export default function HomeClient() {
     });
   };
 
+  const displayedNotes = useMemo(() => {
+    if (!selectedLabel) return notes;
+    const targetName = selectedLabel.name.toLowerCase();
+    const targetId = selectedLabel.id;
+    return notes.filter((note) => {
+      const matchesLabelId = note.labelId === targetId;
+      const matchesCategory = note.category?.toLowerCase() === targetName;
+      const matchesLabelsArray = note.labels?.some(
+        (l) => l.toLowerCase() === targetName || l === targetId,
+      );
+      const subNoteMatches = note.subNotes?.some(
+        (sub) =>
+          sub.labelId === targetId ||
+          sub.category?.toLowerCase() === targetName ||
+          sub.labels?.some((l) => l.toLowerCase() === targetName || l === targetId),
+      );
+      return (
+        matchesLabelId ||
+        matchesCategory ||
+        matchesLabelsArray ||
+        subNoteMatches
+      );
+    });
+  }, [notes, selectedLabel]);
+
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-background text-foreground transition-colors duration-300">
       {isDraggingOver && (
@@ -428,17 +457,18 @@ export default function HomeClient() {
       <div className="absolute inset-0 h-full w-full">
         {viewMode === "whiteboard" ? (
           <Whiteboard
-            notes={notes}
+            notes={displayedNotes}
             selectedNoteId={selectedNoteId}
             onSelectNote={(id) => {
               setSelectedNoteId(id);
               openNoteModal(id);
             }}
             onUpdateNote={handleUpdateNote}
+            selectedLabel={selectedLabel}
           />
         ) : (
           <NotesGrid
-            notes={notes}
+            notes={displayedNotes}
             viewMode={viewMode}
             onSelectNote={(id) => {
               setSelectedNoteId(id);
@@ -447,6 +477,7 @@ export default function HomeClient() {
             onUpdateNote={handleUpdateNote}
             onLoadMore={() => fetchNextPage()}
             hasMore={Boolean(hasNextPage && !isFetchingNextPage)}
+            selectedLabel={selectedLabel}
           />
         )}
       </div>
@@ -463,6 +494,8 @@ export default function HomeClient() {
           openPopover(null, e, labelId, labelName)
         }
         searchKeyword={debouncedQuery}
+        selectedLabel={selectedLabel}
+        onSelectLabel={setSelectedLabel}
       />
 
       <Header

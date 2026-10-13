@@ -2,15 +2,17 @@ import { NoteItem } from "@/features/home/types";
 
 const NoteLabel = ({ note }: { note: NoteItem }) => {
   const labels = Array.from(
-    new Set([
-      ...(note.labels || []),
-      ...(note.category ? [note.category] : []),
-    ].filter(Boolean))
+    new Set(
+      [
+        ...(note.labels || []),
+        ...(note.category ? [note.category] : []),
+      ].filter(Boolean),
+    ),
   );
 
   if (labels.length === 0) return null;
 
-  if (labels.length > 1) {
+  if (labels.length > 2) {
     return (
       <div className="absolute top-2.5 right-3 flex flex-wrap gap-1.5 justify-end max-w-[65%] z-20 pointer-events-none">
         {labels.map((label) => (
@@ -26,8 +28,15 @@ const NoteLabel = ({ note }: { note: NoteItem }) => {
   }
 
   return (
-    <div className="absolute top-0 right-[20px] px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold z-20 shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]">
-      {labels[0]}
+    <div className="absolute top-0 right-[20px] flex items-start gap-2 z-20">
+      {labels.map((label) => (
+        <div
+          key={label}
+          className="px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]"
+        >
+          {label}
+        </div>
+      ))}
     </div>
   );
 };

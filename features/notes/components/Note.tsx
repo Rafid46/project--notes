@@ -172,7 +172,7 @@ export default function Note({
         <motion.div
           layout={!disableLayoutAnimation}
           layoutId={disableLayoutAnimation ? undefined : `note-${note.id}`}
-          className={`relative rounded-2xl p-5 pb-18 z-0 transition-colors shadow-xs`}
+          className={`relative rounded-2xl p-5 min-h-40 z-0 transition-colors shadow-xs`}
           style={{
             backgroundColor: note.color || "#171717",
           }}

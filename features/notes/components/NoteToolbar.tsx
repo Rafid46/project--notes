@@ -554,7 +554,8 @@ export default function NoteToolbar({
               value={note.color || "#ffffff"}
               onChange={(newColor) => onUpdate?.({ color: newColor })}
               onOpenChange={setIsColorPickerOpen}
-              placement="top"
+              placement="bottom"
+              align="start"
               className="flex items-center justify-center"
             >
               <button
