@@ -15,7 +15,11 @@ interface SidebarProps {
   selectedNoteId?: string | null;
   onSelectNote?: (noteId: string) => void;
   onOpenAddSubnote?: (parentId: string, e: React.MouseEvent) => void;
-  onOpenAddNoteWithLabel?: (labelId: string, labelName: string, e: React.MouseEvent) => void;
+  onOpenAddNoteWithLabel?: (
+    labelId: string,
+    labelName: string,
+    e: React.MouseEvent,
+  ) => void;
   isOpen?: boolean;
   onToggle?: () => void;
   searchKeyword?: string;
@@ -29,16 +33,11 @@ export default function Sidebar({
   selectedLabel,
   onSelectLabel,
 }: SidebarProps) {
-  const {
-    data,
-    isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteLabels({
-    keyword: searchKeyword,
-    limit: 15,
-  });
+  const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useInfiniteLabels({
+      keyword: searchKeyword,
+      limit: 15,
+    });
 
   const labels = data?.pages.flatMap((page) => page.labels) || [];
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -52,7 +51,7 @@ export default function Sidebar({
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -100,9 +99,7 @@ export default function Sidebar({
                           backgroundColor: label.color || "currentColor",
                         }}
                       />
-                      <span className="truncate">
-                        {label.name}
-                      </span>
+                      <span className="truncate">{label.name}</span>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -114,7 +111,7 @@ export default function Sidebar({
                               e.stopPropagation();
                               onOpenAddNoteWithLabel?.(labelId, label.name, e);
                             }}
-                            className="transition-all duration-200 ease-in-out hover:scale-105 hover:bg-primary/90 active:scale-95 bg-primary rounded-xl text-primary-foreground flex h-10 w-10 items-center justify-center cursor-pointer shadow-sm"
+                            className="transition-all duration-200 ease-in-out hover:scale-105 hover:bg-primary/90 active:scale-95 bg-primary rounded-lg text-primary-foreground flex h-10 w-10 items-center justify-center cursor-pointer shadow-sm"
                           >
                             <Plus size={18} />
                           </button>

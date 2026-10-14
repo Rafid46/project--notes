@@ -249,8 +249,10 @@ export default function CreateNotePopover({
           overlayClassName="!backdrop-blur-[1px] !bg-black/10"
           onDrop={handlePopoverDrop}
           onDragOver={(e) => e.preventDefault()}
-          className="fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 flex w-full max-w-[90vw] sm:max-w-[800px] max-h-[85vh] flex-col rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10 transition-colors"
-          style={{ backgroundColor: color || "#171717" }}
+          className={`fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 flex w-full max-w-[90vw] sm:max-w-[800px] max-h-[85vh] flex-col rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10 transition-colors ${
+            color ? "" : "bg-gray-200 dark:bg-[#171717]"
+          }`}
+          style={color ? { backgroundColor: color } : undefined}
         >
           <input
             ref={fileInputRef}

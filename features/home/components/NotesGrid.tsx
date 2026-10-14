@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import type { NoteItem, ViewMode, Label } from "../types";
-import Note from "@/features/notes/components/Note";
-import { Tag } from "lucide-react";
+import NoteCard from "@/features/notes/components/NoteCard";
 
 interface NotesGridProps {
   notes: NoteItem[];
@@ -48,7 +47,7 @@ export default function NotesGrid({
           onLoadMore();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -73,7 +72,7 @@ export default function NotesGrid({
         {columns.map((col, i) => (
           <div key={i} className="flex-1 flex flex-col gap-4 min-w-0">
             {col.map((note) => (
-              <Note
+              <NoteCard
                 key={note.id}
                 note={note}
                 onClick={() => onSelectNote(note.id)}
@@ -113,39 +112,12 @@ export default function NotesGrid({
         backgroundSize: "24px 24px",
       }}
     >
-      {selectedLabel && (
-        <div className="flex justify-center mb-8">
-          <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full border border-border bg-card text-card-foreground shadow-sm">
-            {selectedLabel.color ? (
-              <span
-                className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: selectedLabel.color }}
-              />
-            ) : (
-              <Tag size={15} className="text-muted-foreground shrink-0" />
-            )}
-            <span className="text-base font-semibold">{selectedLabel.name}</span>
-          </div>
-        </div>
-      )}
-      {selectedLabel ? (
-        <div className="flex flex-col items-center gap-4 max-w-xl mx-auto w-full">
-          {allNotes.map((note) => (
-            <Note
-              key={note.id}
-              note={note}
-              onClick={() => onSelectNote(note.id)}
-              onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
-              className="cursor-pointer w-full"
-            />
-          ))}
-        </div>
-      ) : viewMode === "masonry" ? (
+      {viewMode === "masonry" ? (
         renderMasonry()
       ) : (
         <div className={getGridClassName()}>
           {allNotes.map((note) => (
-            <Note
+            <NoteCard
               key={note.id}
               note={note}
               onClick={() => onSelectNote(note.id)}

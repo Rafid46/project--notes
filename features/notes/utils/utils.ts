@@ -1,7 +1,143 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  FileText,
+  Archive,
+  FileCode,
+  Video,
+  Music,
+  File,
+} from "lucide-react";
 import type { LinkPreviewMetadata, NoteFile } from "../../home/types";
 import { processDroppedFiles } from "./file-handler";
 import { extractUrls, getLinkPreview } from "./link-preview";
+
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function getFileIcon(
+  mimeType: string,
+  filename: string,
+): React.ReactElement {
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
+  if (mimeType.includes("pdf") || ext === "pdf") {
+    return React.createElement(FileText, {
+      className: "text-red-500 shrink-0",
+      size: 16,
+    });
+  }
+  if (
+    mimeType.includes("zip") ||
+    mimeType.includes("tar") ||
+    mimeType.includes("rar") ||
+    mimeType.includes("compressed") ||
+    ["zip", "rar", "7z", "tar", "gz"].includes(ext)
+  ) {
+    return React.createElement(Archive, {
+      className: "text-amber-500 shrink-0",
+      size: 16,
+    });
+  }
+  if (
+    mimeType.includes("code") ||
+    mimeType.includes("javascript") ||
+    mimeType.includes("json") ||
+    mimeType.includes("html") ||
+    [
+      "js",
+      "ts",
+      "tsx",
+      "jsx",
+      "json",
+      "html",
+      "css",
+      "py",
+      "rs",
+      "go",
+      "cpp",
+      "c",
+    ].includes(ext)
+  ) {
+    return React.createElement(FileCode, {
+      className: "text-emerald-500 shrink-0",
+      size: 16,
+    });
+  }
+  if (
+    mimeType.startsWith("video/") ||
+    ["mp4", "webm", "mkv", "mov"].includes(ext)
+  ) {
+    return React.createElement(Video, {
+      className: "text-purple-500 shrink-0",
+      size: 16,
+    });
+  }
+  if (
+    mimeType.startsWith("audio/") ||
+    ["mp3", "wav", "ogg", "m4a", "flac"].includes(ext)
+  ) {
+    return React.createElement(Music, {
+      className: "text-pink-500 shrink-0",
+      size: 16,
+    });
+  }
+  return React.createElement(File, {
+    className: "text-blue-500 shrink-0",
+    size: 16,
+  });
+}
+
+export function getCardTextColor(colorStr?: string): {
+  title: string;
+  body: string;
+  subtext: string;
+} {
+  if (!colorStr) {
+    return {
+      title: "text-foreground group-hover:text-blue-600",
+      body: "text-muted-foreground",
+      subtext: "text-muted-foreground",
+    };
+  }
+
+  let isDark = false;
+  if (colorStr.startsWith("#")) {
+    let hex = colorStr.slice(1);
+    if (hex.length === 3)
+      hex = hex
+        .split("")
+        .map((c) => c + c)
+        .join("");
+    const num = parseInt(hex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    const luma = 0.299 * r + 0.587 * g + 0.114 * b;
+    isDark = luma < 140;
+  } else if (colorStr.startsWith("hsl")) {
+    const match = colorStr.match(/hsl[a]?\([^,]+,[^,]+,\s*([0-9.]+)%/);
+    if (match) {
+      const l = parseFloat(match[1]);
+      isDark = l < 50;
+    }
+  }
+
+  if (isDark) {
+    return {
+      title: "text-white font-semibold",
+      body: "text-white/85",
+      subtext: "text-white/70",
+    };
+  }
+
+  return {
+    title: "text-zinc-900 font-semibold group-hover:text-blue-600",
+    body: "text-zinc-700",
+    subtext: "text-zinc-600",
+  };
+}
 
 export function useCreateNoteForm({
   initialTitle = "",
