@@ -29,8 +29,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import CustomColorPicker from "@/components/common/ColorPicker";
 import { useLabels, useCreateLabel } from "@/features/notes/hooks/useLabels";
+import { useDeleteNote } from "@/features/notes/hooks/useNotes";
 
 const TEXT_COLORS: { label: string; value?: string; previewColor: string }[] = [
   { label: "Default", value: undefined, previewColor: "var(--card)" },
@@ -84,6 +94,7 @@ const TOOLBAR_BUTTONS: {
 export interface NoteToolbarProps {
   note: NoteItem;
   onUpdate?: (updates: Partial<NoteItem>) => void;
+  onDelete?: (id: string) => void;
   contentRef?: React.RefObject<HTMLDivElement | null>;
   onActionClick?: (action: string) => void;
   className?: string;
@@ -93,6 +104,7 @@ export interface NoteToolbarProps {
 export default function NoteToolbar({
   note,
   onUpdate,
+  onDelete,
   contentRef,
   onActionClick,
   className = "",
@@ -100,13 +112,33 @@ export default function NoteToolbar({
 }: NoteToolbarProps) {
   const showFormatting = isModal || Boolean(contentRef);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLabelDropdownOpen, setIsLabelDropdownOpen] = useState(false);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const [isTextColorOpen, setIsTextColorOpen] = useState(false);
   const { data: serverLabels = [] } = useLabels();
   const createLabelMutation = useCreateLabel();
+  const deleteNoteMutation = useDeleteNote();
   const [newLabel, setNewLabel] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDelete = () => {
+    if (note.id.startsWith("temp-")) {
+      onDelete?.(note.id);
+      setIsDeleteDialogOpen(false);
+      return;
+    }
+    deleteNoteMutation.mutate(note.id, {
+      onSuccess: () => {
+        onDelete?.(note.id);
+        setIsDeleteDialogOpen(false);
+      },
+      onError: () => {
+        onDelete?.(note.id);
+        setIsDeleteDialogOpen(false);
+      },
+    });
+  };
 
   const activeLabels = Array.from(
     new Set([
@@ -548,33 +580,30 @@ export default function NoteToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <CustomColorPicker
-              value={note.color || "#ffffff"}
-              onChange={(newColor) => onUpdate?.({ color: newColor })}
-              onOpenChange={setIsColorPickerOpen}
-              placement="bottom"
-              align="start"
-              className="flex items-center justify-center"
-            >
-              <button
-                type="button"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
-                  isColorPickerOpen
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-                aria-label="Change card color"
-              >
-                <Palette size={14} />
-              </button>
-            </CustomColorPicker>
-          </TooltipTrigger>
-          <TooltipContent side="top">Note color</TooltipContent>
-        </Tooltip>
+        <CustomColorPicker
+          noteId={note.id}
+          value={note.color || "#ffffff"}
+          onChange={(newColor) => onUpdate?.({ color: newColor })}
+          onOpenChange={setIsColorPickerOpen}
+          placement="bottom"
+          align="start"
+          className="flex items-center justify-center"
+        >
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
+              isColorPickerOpen
+                ? "bg-muted text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+            aria-label="Change card color"
+            title="Note color"
+          >
+            <Palette size={14} />
+          </button>
+        </CustomColorPicker>
 
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <Tooltip>
@@ -601,19 +630,73 @@ export default function NoteToolbar({
               return (
                 <DropdownMenuItem
                   key={item.label}
-                  className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
+                  className="cursor-pointer flex items-center gap-2 px-3 py-2 text-sm text-foreground focus:text-foreground not-data-[variant=destructive]:focus:**:text-foreground"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsDropdownOpen(false);
+                    if (item.label === "Delete") {
+                      setIsDeleteDialogOpen(true);
+                    } else if (item.label === "Copy") {
+                      const plainText = `${note.title || ""}\n\n${(contentRef?.current?.innerText || note.content || "").replace(/<[^>]+>/g, "")}`.trim();
+                      navigator.clipboard.writeText(plainText);
+                    } else if (item.label === "Export") {
+                      const plainText = `${note.title || ""}\n\n${(contentRef?.current?.innerText || note.content || "").replace(/<[^>]+>/g, "")}`.trim();
+                      const blob = new Blob([plainText], { type: "text/plain;charset=utf-8" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${note.title || "note"}.txt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }
                   }}
                 >
-                  <Icon size={14} />
-                  {item.label}
+                  <Icon size={14} className="text-foreground shrink-0" />
+                  <span className="text-foreground">{item.label}</span>
                 </DropdownMenuItem>
               );
             })}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent
+            className="sm:max-w-[400px]"
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+          >
+            <DialogHeader>
+              <DialogTitle>Delete note?</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this note? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteDialogOpen(false);
+                }}
+                disabled={deleteNoteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete();
+                }}
+                disabled={deleteNoteMutation.isPending}
+              >
+                {deleteNoteMutation.isPending ? "Deleting..." : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );

@@ -9,6 +9,7 @@ export interface NoteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdateNote: (noteId: string, updates: Partial<NoteItem>) => void;
+  onDeleteNote?: (noteId: string) => void;
 }
 
 export default function NoteModal({
@@ -16,6 +17,7 @@ export default function NoteModal({
   isOpen,
   onClose,
   onUpdateNote,
+  onDeleteNote,
 }: NoteModalProps) {
   return (
     <AnimatePresence>
@@ -35,6 +37,7 @@ export default function NoteModal({
               isModal
               onClose={onClose}
               onUpdate={(updates) => onUpdateNote(note.id, updates)}
+              onDelete={onDeleteNote}
             />
           </div>
         </>

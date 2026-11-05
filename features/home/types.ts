@@ -39,6 +39,7 @@ export interface NoteItem {
   boardX?: number | null;
   boardY?: number | null;
   color?: string;
+  background?: string;
   textColor?: string;
   category?: string | null;
   labels?: string[];

@@ -11,6 +11,7 @@ import React, {
   type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { createPortal } from "react-dom";
 import { useColorPickerStore } from "@/store/useColorPickerStore";
 
 export type ColorSpace = "hsb" | "hsl" | "rgb";
@@ -221,6 +222,7 @@ export interface ColorPickerProps {
   onChange?: (color: string) => void;
   onOpenChange?: (open: boolean) => void;
   className?: string;
+  noteId?: string;
 }
 
 export function ColorPicker({
@@ -230,6 +232,7 @@ export function ColorPicker({
   onChange,
   onOpenChange,
   className = "",
+  noteId,
 }: ColorPickerProps) {
   const [internalHsb, setInternalHsb] = useState<HSBColor>(() =>
     parseToHSB(value || defaultValue),
@@ -243,7 +246,7 @@ export function ColorPicker({
 
   const handleSetIsOpen = (open: boolean) => {
     if (open) {
-      openColorPicker(pickerId);
+      openColorPicker(pickerId, noteId);
     } else {
       if (activePickerId === pickerId) {
         closeColorPicker();
@@ -436,24 +439,81 @@ ColorPicker.Popover = function ColorPickerPopover({
   align?: "start" | "end" | "center";
   className?: string;
 }) {
-  const { isOpen, popoverRef } = useColorPickerContext();
-  if (!isOpen) return null;
-  const vClass = placement === "top" ? "bottom-full mb-2" : "top-full mt-2";
-  const hClass =
-    align === "center"
-      ? "left-1/2 -translate-x-1/2"
-      : align === "start"
-        ? "left-0"
-        : "right-0";
-  return (
+  const { isOpen, popoverRef, triggerRef } = useColorPickerContext();
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+  } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || !triggerRef.current) return;
+
+    const updatePosition = () => {
+      if (!triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      const popoverWidth = 256;
+      let left =
+        align === "center"
+          ? rect.left + rect.width / 2 - popoverWidth / 2
+          : align === "start"
+            ? rect.left
+            : rect.right - popoverWidth;
+
+      left = Math.max(8, Math.min(window.innerWidth - popoverWidth - 8, left));
+
+      const showTop =
+        placement === "top" ||
+        (placement === "bottom" &&
+          rect.bottom + 360 > window.innerHeight &&
+          rect.top > 360);
+
+      if (showTop) {
+        setCoords({
+          bottom: window.innerHeight - rect.top + 8,
+          left,
+        });
+      } else {
+        setCoords({
+          top: rect.bottom + 8,
+          left,
+        });
+      }
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [isOpen, placement, align, triggerRef]);
+
+  if (!isOpen || !mounted || !coords) return null;
+
+  return createPortal(
     <div
       ref={popoverRef}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
-      className={`absolute ${vClass} ${hClass} z-50 flex w-64 flex-col rounded-2xl border border-border bg-card p-3 shadow-2xl backdrop-blur-md ${className}`}
+      style={{
+        position: "fixed",
+        top: coords.top !== undefined ? `${coords.top}px` : undefined,
+        bottom: coords.bottom !== undefined ? `${coords.bottom}px` : undefined,
+        left: `${coords.left}px`,
+        zIndex: 9999,
+      }}
+      className={`flex w-64 flex-col rounded-2xl border border-border bg-card p-3 shadow-2xl backdrop-blur-md ${className}`}
     >
       {children}
-    </div>
+    </div>,
+    document.body,
   );
 };
 

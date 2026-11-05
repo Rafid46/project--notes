@@ -36,7 +36,7 @@ export default function LabelManagerModal({
       {
         onSuccess: () => {
           setNewLabelName("");
-          onClose(); // Close modal after creating the label
+          onClose();
         },
       },
     );
@@ -53,35 +53,39 @@ export default function LabelManagerModal({
           <DialogTitle>Manage Labels</DialogTitle>
         </DialogHeader>
 
-        {/* Create Label Section */}
         <form
           onSubmit={handleCreateLabel}
-          className="flex items-center gap-2 mb-4"
+          className="relative flex items-center mb-4"
         >
           <input
             type="text"
             value={newLabelName}
             onChange={(e) => setNewLabelName(e.target.value)}
             placeholder="Create new label..."
-            className="flex-1 bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full bg-background border border-border rounded-full pl-4 pr-24 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           <button
             type="submit"
             disabled={createLabel.isPending || !newLabelName.trim()}
-            className="flex items-center justify-center gap-1 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer text-sm font-medium"
+            className="absolute right-1.5 flex items-center justify-center gap-1 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer text-xs font-medium"
           >
-            <Plus size={16} />
+            <Plus size={14} />
             Create
           </button>
         </form>
 
         {isLoading ? (
-          <div className="text-center py-4 text-muted-foreground">
-            {/* Loading labels... */}
+          <div className="space-y-2 py-2">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-9 w-full rounded-lg bg-muted/40 animate-pulse"
+              />
+            ))}
           </div>
         ) : labels.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">
-            {/* No labels found. */}
+          <div className="text-center py-4 text-muted-foreground text-sm">
+            No labels found
           </div>
         ) : (
           <ul className="space-y-2 max-h-[50vh] overflow-y-auto pr-2">

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { FileUp } from "lucide-react";
+import { FileUp, AlertCircle, X } from "lucide-react";
 import NoteModal from "@/features/notes/components/NoteModal";
 import { useAutosave } from "@/features/notes/hooks/useAutosave";
 import { useInfiniteNotes } from "@/features/notes/hooks/useNotes";
+import { useAppUser } from "@/providers/UserProvider";
+import LoginModal from "@/features/auth/components/LoginModal";
 
 import NotesGrid from "./NotesGrid";
 import CreateNotePopover from "../../notes/components/CreateNotePopover";
@@ -37,6 +39,7 @@ interface BackendNoteItem {
   boardX?: number | null;
   boardY?: number | null;
   labels?: string[];
+  background?: string;
   color?: string;
   textColor?: string;
   category?: string | null;
@@ -48,10 +51,12 @@ interface BackendNoteItem {
 }
 
 export default function HomeClient() {
+  const { isSignedIn } = useAppUser();
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [selectedNoteId, setSelectedNoteId] = useState<string>("note-1");
   const [selectedLabel, setSelectedLabel] = useState<Label | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("whiteboard");
+  const [limitNotice, setLimitNotice] = useState<string | null>(null);
   const {
     isOpen: isNoteModalOpen,
     openNoteModal,
@@ -61,6 +66,14 @@ export default function HomeClient() {
   const dragCounterRef = useRef<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    if (!limitNotice) return;
+    const timer = setTimeout(() => {
+      setLimitNotice(null);
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [limitNotice]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -74,7 +87,11 @@ export default function HomeClient() {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useInfiniteNotes({ keyword: debouncedQuery, limit: 15 });
+  } = useInfiniteNotes({
+    keyword: debouncedQuery,
+    limit: 15,
+    enabled: Boolean(isSignedIn),
+  });
 
   useEffect(() => {
     if (notesData?.pages) {
@@ -94,7 +111,8 @@ export default function HomeClient() {
               : note.category
                 ? [note.category]
                 : [],
-        color: note.color,
+        color: note.background || note.color,
+        background: note.background || note.color,
         textColor: note.textColor,
         subNotes: note.children || [],
         files: note.files || note.attachments || [],
@@ -113,6 +131,7 @@ export default function HomeClient() {
 
   useEffect(() => {
     const handleDragEnter = (e: DragEvent) => {
+      if (!isSignedIn) return;
       if (e.dataTransfer?.types?.includes("Files")) {
         e.preventDefault();
         dragCounterRef.current += 1;
@@ -121,12 +140,14 @@ export default function HomeClient() {
     };
 
     const handleDragOver = (e: DragEvent) => {
+      if (!isSignedIn) return;
       if (e.dataTransfer?.types?.includes("Files")) {
         e.preventDefault();
       }
     };
 
     const handleDragLeave = (e: DragEvent) => {
+      if (!isSignedIn) return;
       if (e.dataTransfer?.types?.includes("Files")) {
         e.preventDefault();
         dragCounterRef.current -= 1;
@@ -138,10 +159,16 @@ export default function HomeClient() {
     };
 
     const handleDrop = async (e: DragEvent) => {
+      if (!isSignedIn) return;
       if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
         e.preventDefault();
         dragCounterRef.current = 0;
         setIsDraggingOver(false);
+
+        if (notes.length >= 5) {
+          setLimitNotice("You can only post up to 5 notes for now.");
+          return;
+        }
 
         if (isNoteModalOpen) {
           closeNoteModal();
@@ -210,6 +237,8 @@ export default function HomeClient() {
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (
+        !isSignedIn ||
+        notes.length >= 5 ||
         popoverConfig.isOpen ||
         isNoteModalOpen ||
         e.target instanceof HTMLInputElement ||
@@ -238,11 +267,12 @@ export default function HomeClient() {
 
     window.addEventListener("keydown", handleGlobalKeyDown);
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, [popoverConfig.isOpen, isNoteModalOpen]);
+  }, [popoverConfig.isOpen, isNoteModalOpen, isSignedIn, notes.length]);
 
   useEffect(() => {
     const handleGlobalPaste = async (e: ClipboardEvent) => {
       if (
+        !isSignedIn ||
         popoverConfig.isOpen ||
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
@@ -253,6 +283,10 @@ export default function HomeClient() {
 
       if (e.clipboardData?.files && e.clipboardData.files.length > 0) {
         e.preventDefault();
+        if (notes.length >= 5) {
+          setLimitNotice("You can only post up to 5 notes for now.");
+          return;
+        }
         if (isNoteModalOpen) {
           closeNoteModal();
         }
@@ -276,6 +310,10 @@ export default function HomeClient() {
       if (urls.length === 0) return;
 
       e.preventDefault();
+      if (notes.length >= 5) {
+        setLimitNotice("You can only post up to 5 notes for now.");
+        return;
+      }
       if (isNoteModalOpen) {
         closeNoteModal();
       }
@@ -291,7 +329,7 @@ export default function HomeClient() {
 
     window.addEventListener("paste", handleGlobalPaste);
     return () => window.removeEventListener("paste", handleGlobalPaste);
-  }, [popoverConfig.isOpen, isNoteModalOpen, closeNoteModal]);
+  }, [popoverConfig.isOpen, isNoteModalOpen, closeNoteModal, isSignedIn, notes.length]);
 
   const prevIsNoteModalOpen = useRef(isNoteModalOpen);
   useEffect(() => {
@@ -355,6 +393,10 @@ export default function HomeClient() {
     linkPreviews?: NoteItem["linkPreviews"];
     files?: NoteItem["files"];
   }) => {
+    if (notes.length >= 5) {
+      setLimitNotice("You can only post up to 5 notes for now.");
+      return;
+    }
     const tempId = `temp-${Date.now()}`;
     const newNote: NoteItem = {
       id: tempId,
@@ -369,9 +411,18 @@ export default function HomeClient() {
         category: newNoteData.category,
         labels: newNoteData.labels,
         labelId: newNoteData.labelId,
+        background: newNoteData.color,
       },
       { isCreating: true, parentId: newNoteData.parentId },
     );
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    const modalState = useNoteModalStore.getState();
+    if (modalState.selectedNoteId === noteId) {
+      modalState.closeNoteModal();
+    }
   };
 
   const handleUpdateNote = (noteId: string, updates: Partial<NoteItem>) => {
@@ -381,7 +432,9 @@ export default function HomeClient() {
       updates.content !== undefined ||
       updates.labelId !== undefined ||
       updates.category !== undefined ||
-      updates.labels !== undefined
+      updates.labels !== undefined ||
+      updates.color !== undefined ||
+      updates.background !== undefined
     ) {
       registerChange(noteId, {
         title: updates.title !== undefined ? updates.title : existing?.title,
@@ -389,6 +442,7 @@ export default function HomeClient() {
         category: updates.category !== undefined ? updates.category : existing?.category,
         labelId: updates.labelId !== undefined ? updates.labelId : existing?.labelId,
         labels: updates.labels !== undefined ? updates.labels : existing?.labels,
+        background: updates.color !== undefined ? updates.color : (updates.background !== undefined ? updates.background : existing?.color),
       });
     }
     handleUpdateNoteState(noteId, updates);
@@ -401,6 +455,10 @@ export default function HomeClient() {
     category?: string,
   ) => {
     if (isNoteModalOpen) return;
+    if (notes.length >= 5) {
+      setLimitNotice("You can only post up to 5 notes for now.");
+      return;
+    }
     const target = e.currentTarget as HTMLElement;
     const rect = target.getBoundingClientRect();
     setPopoverConfig({
@@ -464,6 +522,7 @@ export default function HomeClient() {
               openNoteModal(id);
             }}
             onUpdateNote={handleUpdateNote}
+            onDeleteNote={handleDeleteNote}
             selectedLabel={selectedLabel}
           />
         ) : (
@@ -475,6 +534,7 @@ export default function HomeClient() {
               openNoteModal(id);
             }}
             onUpdateNote={handleUpdateNote}
+            onDeleteNote={handleDeleteNote}
             onLoadMore={() => fetchNextPage()}
             hasMore={Boolean(hasNextPage && !isFetchingNextPage)}
             selectedLabel={selectedLabel}
@@ -505,6 +565,7 @@ export default function HomeClient() {
         onOpenAddNote={(e) => openPopover(null, e)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        notesCount={notes.length}
       />
 
       <CreateNotePopover
@@ -526,7 +587,24 @@ export default function HomeClient() {
         isOpen={isNoteModalOpen}
         onClose={() => closeNoteModal()}
         onUpdateNote={handleUpdateNote}
+        onDeleteNote={handleDeleteNote}
       />
+
+      {limitNotice && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 rounded-2xl bg-destructive text-destructive-foreground px-4 py-2.5 shadow-lg border border-destructive/20 text-xs font-medium">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{limitNotice}</span>
+          <button
+            type="button"
+            onClick={() => setLimitNotice(null)}
+            className="ml-2 hover:opacity-75 transition-opacity cursor-pointer"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {!isSignedIn && <LoginModal />}
     </main>
   );
 }

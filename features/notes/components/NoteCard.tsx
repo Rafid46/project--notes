@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { useColorPickerStore } from "@/store/useColorPickerStore";
 import {
   extractUrls,
   getLinkPreview,
@@ -36,6 +37,7 @@ export interface NoteCardProps {
   onClick?: () => void;
   onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
   onUpdate?: (updates: Partial<NoteItem>) => void;
+  onDelete?: (id: string) => void;
   className?: string;
   style?: React.CSSProperties;
   disableLayoutAnimation?: boolean;
@@ -49,12 +51,15 @@ export default function NoteCard({
   onClick,
   onPointerDown,
   onUpdate,
+  onDelete,
   className = "",
   style,
   disableLayoutAnimation = false,
   isModal = false,
   onClose,
 }: NoteCardProps) {
+  const activeColorPickerNoteId = useColorPickerStore((s) => s.activeNoteId);
+  const isColorPickerOpenOnThisCard = activeColorPickerNoteId === note.id;
   const textColor = getCardTextColor(note.color);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -361,6 +366,7 @@ export default function NoteCard({
           <NoteToolbar
             note={note}
             onUpdate={onUpdate}
+            onDelete={onDelete}
             contentRef={contentRef}
             isModal
           />
@@ -383,8 +389,13 @@ export default function NoteCard({
     <div
       onClick={onClick}
       onPointerDown={onPointerDown}
-      style={style}
-      className={`relative group ${className} hover:z-40 z-10`}
+      style={{
+        ...style,
+        zIndex: isColorPickerOpenOnThisCard ? 100 : undefined,
+      }}
+      className={`relative group ${className} ${
+        isColorPickerOpenOnThisCard ? "z-50" : "hover:z-40 z-10"
+      }`}
     >
       <div
         className={`relative w-full h-full transition-[filter] duration-200 ${
@@ -544,11 +555,16 @@ export default function NoteCard({
             <div
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
-              className="absolute bottom-3 left-3 transition-opacity opacity-0 group-hover:opacity-100 z-40"
+              className={`absolute bottom-3 left-3 transition-opacity z-40 ${
+                isColorPickerOpenOnThisCard
+                  ? "opacity-100"
+                  : "opacity-0 group-hover:opacity-100"
+              }`}
             >
               <NoteToolbar
                 note={note}
                 onUpdate={onUpdate}
+                onDelete={onDelete}
                 onActionClick={() => onClick?.()}
                 isModal={false}
               />

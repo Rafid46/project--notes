@@ -7,6 +7,7 @@ export interface SaveSnapshot {
   labelId?: string | null;
   category?: string | null;
   labels?: string[];
+  background?: string;
 }
 
 export interface SaveTask {

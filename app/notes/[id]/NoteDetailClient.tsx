@@ -12,6 +12,8 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { useAppUser } from "@/providers/UserProvider";
+import LoginModal from "@/features/auth/components/LoginModal";
 
 interface NoteDetailClientProps {
   id: string;
@@ -25,6 +27,7 @@ interface ServerNoteResponse {
   parentId?: string | null;
   labelId?: string | null;
   labels?: string[];
+  background?: string;
   color?: string;
   textColor?: string;
   category?: string | null;
@@ -39,7 +42,12 @@ interface ServerNoteResponse {
 
 export default function NoteDetailClient({ id }: NoteDetailClientProps) {
   const router = useRouter();
+  const { isSignedIn } = useAppUser();
   const { data: rawNote, isLoading, isError } = useNoteById(id);
+
+  if (!isSignedIn) {
+    return <LoginModal />;
+  }
 
   if (isLoading) {
     return (
@@ -92,7 +100,8 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
       : serverData.category
         ? [serverData.category]
         : [],
-    color: serverData.color,
+    color: serverData.background || serverData.color,
+    background: serverData.background || serverData.color,
     textColor: serverData.textColor,
     category: serverData.label?.name || serverData.category,
     subNotes: serverData.children || [],
@@ -142,14 +151,11 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
             <TooltipContent>Exit full screen</TooltipContent>
           </Tooltip>
         </div>
-
-        <div className="relative flex items-center gap-3">
-          <NoteLabel note={note} />
-        </div>
       </header>
 
       <article className="flex-1 max-w-4xl w-full mx-auto p-6 md:p-12 flex flex-col gap-6">
-        <div className="flex flex-col gap-2 border-b border-border/40 pb-6">
+        <div className="flex flex-col gap-3 border-b border-border/40 pb-6">
+          <NoteLabel note={note} variant="inline" />
           <h1
             className="text-2xl md:text-4xl font-bold leading-tight"
             style={note.textColor ? { color: note.textColor } : undefined}

@@ -12,6 +12,7 @@ import {
 import BottomToolbar, { COLOR_STORAGE_KEY } from "./BottomToolbar";
 import { api } from "@/lib/axios";
 import { NOTES } from "@/constants/api.constant";
+import { useColorPickerStore } from "@/store/useColorPickerStore";
 
 const POSITIONS_STORAGE_KEY = "project_notes_card_positions";
 
@@ -20,6 +21,7 @@ interface WhiteboardProps {
   selectedNoteId?: string | null;
   onSelectNote?: (noteId: string) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
+  onDeleteNote?: (noteId: string) => void;
   selectedLabel?: Label | null;
 }
 
@@ -40,9 +42,19 @@ export default function Whiteboard({
   selectedNoteId,
   onSelectNote,
   onUpdateNote,
+  onDeleteNote,
   selectedLabel,
 }: WhiteboardProps) {
-  const [canvasColor, setCanvasColor] = useState<string>("#ffffff");
+  const activeColorPickerNoteId = useColorPickerStore((s) => s.activeNoteId);
+  const [canvasColor, setCanvasColor] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem(COLOR_STORAGE_KEY);
+        if (saved) return saved;
+      } catch {}
+    }
+    return "#ffffff";
+  });
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
   const [isPanning, setIsPanning] = useState(false);
@@ -109,11 +121,15 @@ export default function Whiteboard({
   const dragCardRef = useRef<DragCardState | null>(null);
   const draggedRef = useRef(false);
   const dragTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (dragTimeoutRef.current) {
         clearTimeout(dragTimeoutRef.current);
+      }
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
       }
     };
   }, []);
@@ -363,7 +379,7 @@ export default function Whiteboard({
       const dy = e.clientY - dragCardRef.current.startY;
       if (
         !dragCardRef.current.moved &&
-        (Math.abs(dx) > 3 || Math.abs(dy) > 3)
+        (Math.abs(dx) > 2 || Math.abs(dy) > 2)
       ) {
         dragCardRef.current.moved = true;
         draggedRef.current = true;
@@ -373,12 +389,17 @@ export default function Whiteboard({
       dragCardRef.current.currentX = newX;
       dragCardRef.current.currentY = newY;
 
-      const el =
-        dragCardRef.current.el ||
-        cardElementsRef.current[dragCardRef.current.id];
-      if (el) {
-        el.style.transform = `translate3d(${newX}px, ${newY}px, 0)`;
-        el.style.zIndex = "50";
+      if (!rafIdRef.current) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
+          if (!dragCardRef.current) return;
+          const el =
+            dragCardRef.current.el ||
+            cardElementsRef.current[dragCardRef.current.id];
+          if (el) {
+            el.style.transform = `translate3d(${dragCardRef.current.currentX}px, ${dragCardRef.current.currentY}px, 0)`;
+          }
+        });
       }
       return;
     }
@@ -417,6 +438,13 @@ export default function Whiteboard({
     isPanningRef.current = false;
     panOriginRef.current = null;
     setIsPanning(false);
+    document.body.style.userSelect = "";
+    document.body.style.cursor = "";
+
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
 
     if (dragCardRef.current) {
       const {
@@ -432,6 +460,7 @@ export default function Whiteboard({
 
       if (el) {
         el.style.zIndex = "";
+        el.style.transition = "";
       }
 
       if (moved) {
@@ -445,6 +474,10 @@ export default function Whiteboard({
 
         const finalX = Math.round(currentX);
         const finalY = Math.round(currentY);
+
+        if (el) {
+          el.style.transform = `translate3d(${finalX}px, ${finalY}px, 0)`;
+        }
 
         const updatedPositions = {
           ...cardPositionsRef.current,
@@ -496,10 +529,27 @@ export default function Whiteboard({
     if ((e.buttons & 3) === 3 || isSpacePressedRef.current || e.button !== 0) {
       return;
     }
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("textarea") ||
+      target.closest('[role="button"]')
+    ) {
+      return;
+    }
     e.stopPropagation();
+    e.preventDefault();
     draggedRef.current = false;
     const pos = cardPositionsRef.current[noteId] || { x: 0, y: 0 };
     const el = cardElementsRef.current[noteId];
+    if (el) {
+      el.style.transition = "none";
+      el.style.zIndex = "50";
+    }
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = "grabbing";
     dragCardRef.current = {
       id: noteId,
       startX: e.clientX,
@@ -521,6 +571,7 @@ export default function Whiteboard({
   return (
     <div
       ref={containerRef}
+      suppressHydrationWarning
       onPointerDown={handlePointerDown}
       className={`relative h-full w-full overflow-hidden select-none ${
         isPanning
@@ -555,9 +606,15 @@ export default function Whiteboard({
               ref={(el) => {
                 cardElementsRef.current[note.id] = el;
               }}
-              className="absolute left-0 top-0 will-change-transform transition-transform duration-200 ease-out"
+              className={`absolute left-0 top-0 will-change-transform select-none ${
+                activeColorPickerNoteId === note.id
+                  ? "z-50"
+                  : "hover:z-30 z-10"
+              }`}
               style={{
                 transform: `translate3d(${pos.x}px, ${pos.y}px, 0)`,
+                transition: selectedLabel ? "transform 250ms ease-out" : "none",
+                zIndex: activeColorPickerNoteId === note.id ? 100 : undefined,
               }}
               onClickCapture={(e) => {
                 if (draggedRef.current) {
@@ -567,13 +624,15 @@ export default function Whiteboard({
             >
               <NoteCard
                 note={note}
+                disableLayoutAnimation={true}
                 onClick={() => {
                   if (draggedRef.current) return;
                   onSelectNote?.(note.id);
                 }}
                 onPointerDown={(e) => handleCardPointerDown(e, note.id)}
                 onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
-                className="w-80 pointer-events-auto cursor-grab active:cursor-grabbing"
+                onDelete={onDeleteNote}
+                className="w-80 pointer-events-auto cursor-grab active:cursor-grabbing select-none"
               />
             </div>
           );

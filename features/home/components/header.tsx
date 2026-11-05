@@ -34,6 +34,7 @@ interface HeaderProps {
   onOpenAddNote?: (e: React.MouseEvent) => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  notesCount?: number;
 }
 
 const GRID_OPTIONS: {
@@ -111,6 +112,7 @@ export default function Header({
   onOpenAddNote,
   searchQuery = "",
   onSearchChange,
+  notesCount,
 }: HeaderProps) {
   const [isGridDropdownOpen, setIsGridDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<{
@@ -292,6 +294,11 @@ export default function Header({
           >
             <PenLine size={18} />
             <span className="text-sm font-semibold">Note</span>
+            {typeof notesCount === "number" && notesCount >= 5 && (
+              <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full font-medium">
+                {notesCount}/5
+              </span>
+            )}
           </Button>
 
           <Button

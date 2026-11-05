@@ -1,6 +1,11 @@
 import { NoteItem } from "@/features/home/types";
 
-const NoteLabel = ({ note }: { note: NoteItem }) => {
+interface NoteLabelProps {
+  note: NoteItem;
+  variant?: "badge" | "inline";
+}
+
+const NoteLabel = ({ note, variant = "badge" }: NoteLabelProps) => {
   const labels = Array.from(
     new Set(
       [
@@ -11,6 +16,21 @@ const NoteLabel = ({ note }: { note: NoteItem }) => {
   );
 
   if (labels.length === 0) return null;
+
+  if (variant === "inline") {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {labels.map((label) => (
+          <span
+            key={label}
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]"
+          >
+            {label}
+          </span>
+        ))}
+      </div>
+    );
+  }
 
   if (labels.length > 2) {
     return (

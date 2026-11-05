@@ -30,8 +30,9 @@ export function useNotes(params?: {
 export function useInfiniteNotes(params: {
   keyword?: string;
   limit?: number;
+  enabled?: boolean;
 } = {}) {
-  const { keyword = "", limit = 15 } = params;
+  const { keyword = "", limit = 15, enabled = true } = params;
   return useInfiniteQuery({
     queryKey: ["notes", "infinite", keyword, limit],
     queryFn: async ({ pageParam = 0 }) => {
@@ -55,6 +56,7 @@ export function useInfiniteNotes(params: {
       }
       return undefined;
     },
+    enabled,
   });
 }
 

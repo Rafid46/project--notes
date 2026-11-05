@@ -9,6 +9,7 @@ interface NotesGridProps {
   viewMode: ViewMode;
   onSelectNote: (noteId: string) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
+  onDeleteNote?: (noteId: string) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
   selectedLabel?: Label | null;
@@ -19,6 +20,7 @@ export default function NotesGrid({
   viewMode,
   onSelectNote,
   onUpdateNote,
+  onDeleteNote,
   onLoadMore,
   hasMore = false,
   selectedLabel,
@@ -77,6 +79,7 @@ export default function NotesGrid({
                 note={note}
                 onClick={() => onSelectNote(note.id)}
                 onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
+                onDelete={onDeleteNote}
                 className="cursor-pointer w-full"
               />
             ))}
@@ -122,6 +125,7 @@ export default function NotesGrid({
               note={note}
               onClick={() => onSelectNote(note.id)}
               onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
+              onDelete={onDeleteNote}
               className="cursor-pointer w-full"
             />
           ))}

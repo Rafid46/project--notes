@@ -105,6 +105,7 @@ export interface CustomColorPickerProps {
   trigger?: React.ReactNode;
   children?: React.ReactNode;
   presetColors?: string[];
+  noteId?: string;
 }
 
 export function CustomColorPicker({
@@ -119,6 +120,7 @@ export function CustomColorPicker({
   trigger,
   children,
   presetColors,
+  noteId,
 }: CustomColorPickerProps) {
   const [colorSpace, setColorSpace] = useState<ColorSpace>("hsl");
 
@@ -137,6 +139,7 @@ export function CustomColorPicker({
       onChange={onChange}
       onOpenChange={onOpenChange}
       className={className}
+      noteId={noteId}
     >
       {triggerNode ? (
         <ColorPicker.Trigger asChild>{triggerNode}</ColorPicker.Trigger>

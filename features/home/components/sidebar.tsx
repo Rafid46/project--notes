@@ -75,7 +75,20 @@ export default function Sidebar({
 
       <div className="flex-1 overflow-y-auto px-3 sidebar-scrollbar">
         {isLoading ? (
-          <div className="p-4 text-sm text-muted-foreground text-center" />
+          <div className="flex flex-col gap-1 py-1">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex h-[52px] items-center gap-4 rounded-[10px] pl-4 pr-2 bg-muted/40 animate-pulse"
+              >
+                <div className="h-3 w-3 shrink-0 rounded-full bg-muted-foreground/20" />
+                <div
+                  className="h-3.5 rounded-md bg-muted-foreground/20"
+                  style={{ width: `${45 + ((i * 12) % 35)}%` }}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <nav className="flex flex-col gap-1">
             {labels.map((label: Label) => {

@@ -89,6 +89,9 @@ export function useAutosave({
           ...(snapshotToSave.labels !== undefined
             ? { labels: snapshotToSave.labels }
             : {}),
+          ...(snapshotToSave.background !== undefined
+            ? { background: snapshotToSave.background }
+            : {}),
         };
 
         if (task.isCreating) {
@@ -177,6 +180,7 @@ export function useAutosave({
         labelId?: string | null;
         category?: string | null;
         labels?: string[];
+        background?: string;
       },
       options?: { isCreating?: boolean; parentId?: string | null },
     ) => {
@@ -194,6 +198,7 @@ export function useAutosave({
             labelId: updates.labelId,
             category: updates.category,
             labels: updates.labels,
+            background: updates.background,
           },
           pendingSnapshot: {
             title: updates.title,
@@ -202,6 +207,7 @@ export function useAutosave({
             labelId: updates.labelId,
             category: updates.category,
             labels: updates.labels,
+            background: updates.background,
           },
           lastSaveAttempt: 0,
           retryCount: 0,
@@ -231,6 +237,10 @@ export function useAutosave({
             updates.labels !== undefined
               ? updates.labels
               : task.pendingSnapshot?.labels ?? task.latestSnapshot.labels,
+          background:
+            updates.background !== undefined
+              ? updates.background
+              : task.pendingSnapshot?.background ?? task.latestSnapshot.background,
           revision: newRev,
         };
         updateTask(id, { pendingSnapshot: newSnapshot });
