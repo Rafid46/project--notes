@@ -60,7 +60,12 @@ export default function NoteCard({
 }: NoteCardProps) {
   const activeColorPickerNoteId = useColorPickerStore((s) => s.activeNoteId);
   const isColorPickerOpenOnThisCard = activeColorPickerNoteId === note.id;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isToolbarActive = isColorPickerOpenOnThisCard || isMenuOpen;
   const textColor = getCardTextColor(note.color);
+  const activeTitleClass = textColor.title.includes("group-hover:text-blue-600")
+    ? "text-blue-600 font-semibold"
+    : textColor.title;
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const fetchingUrlsRef = useRef<Set<string>>(new Set());
@@ -391,10 +396,10 @@ export default function NoteCard({
       onPointerDown={onPointerDown}
       style={{
         ...style,
-        zIndex: isColorPickerOpenOnThisCard ? 100 : undefined,
+        zIndex: isToolbarActive ? 100 : undefined,
       }}
       className={`relative group ${className} ${
-        isColorPickerOpenOnThisCard ? "z-50" : "hover:z-40 z-10"
+        isToolbarActive ? "z-50" : "hover:z-40 z-10"
       }`}
     >
       <div
@@ -422,7 +427,11 @@ export default function NoteCard({
                 href={`/notes/${note.id}`}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="absolute top-3 left-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200 bg-black/10 p-2 hover:bg-black/30 dark:hover:bg-white/10 z-30"
+                className={`absolute top-3 left-3 rounded-lg transition-all duration-200 bg-black/10 p-2 hover:bg-black/30 dark:hover:bg-white/10 z-30 ${
+                  isToolbarActive
+                    ? "opacity-100"
+                    : "opacity-0 group-hover:opacity-100"
+                }`}
               >
                 <Fullscreen size={18} />
               </Link>
@@ -430,10 +439,14 @@ export default function NoteCard({
             <TooltipContent>Open full page</TooltipContent>
           </Tooltip>
 
-          <div className="mt-6">
+          <div className="my-6">
             <h3
               className={`text-base font-semibold transition-colors ${
-                note.textColor ? "" : textColor.title
+                note.textColor
+                  ? ""
+                  : isToolbarActive
+                  ? activeTitleClass
+                  : textColor.title
               }`}
               style={note.textColor ? { color: note.textColor } : undefined}
             >
@@ -556,7 +569,7 @@ export default function NoteCard({
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
               className={`absolute bottom-3 left-3 transition-opacity z-40 ${
-                isColorPickerOpenOnThisCard
+                isToolbarActive
                   ? "opacity-100"
                   : "opacity-0 group-hover:opacity-100"
               }`}
@@ -566,6 +579,7 @@ export default function NoteCard({
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onActionClick={() => onClick?.()}
+                onMenuOpenChange={setIsMenuOpen}
                 isModal={false}
               />
             </div>

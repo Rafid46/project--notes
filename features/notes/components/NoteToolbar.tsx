@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import type { NoteItem, NoteFile } from "@/features/home/types";
 import {
   DropdownMenu,
@@ -99,6 +99,7 @@ export interface NoteToolbarProps {
   onActionClick?: (action: string) => void;
   className?: string;
   isModal?: boolean;
+  onMenuOpenChange?: (isOpen: boolean) => void;
 }
 
 export default function NoteToolbar({
@@ -109,6 +110,7 @@ export default function NoteToolbar({
   onActionClick,
   className = "",
   isModal = false,
+  onMenuOpenChange,
 }: NoteToolbarProps) {
   const showFormatting = isModal || Boolean(contentRef);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -121,6 +123,16 @@ export default function NoteToolbar({
   const deleteNoteMutation = useDeleteNote();
   const [newLabel, setNewLabel] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isAnyMenuOpen =
+    isDropdownOpen ||
+    isLabelDropdownOpen ||
+    isColorPickerOpen ||
+    isTextColorOpen;
+
+  useEffect(() => {
+    onMenuOpenChange?.(isAnyMenuOpen);
+  }, [isAnyMenuOpen, onMenuOpenChange]);
 
   const handleDelete = () => {
     if (note.id.startsWith("temp-")) {
@@ -141,10 +153,12 @@ export default function NoteToolbar({
   };
 
   const activeLabels = Array.from(
-    new Set([
-      ...(note.labels || []),
-      ...(note.category ? [note.category] : []),
-    ].filter(Boolean))
+    new Set(
+      [
+        ...(note.labels || []),
+        ...(note.category ? [note.category] : []),
+      ].filter(Boolean),
+    ),
   );
 
   const handleToggleLabel = (labelName: string, labelId: string) => {
@@ -155,7 +169,9 @@ export default function NoteToolbar({
 
     onUpdate?.({
       title: note.title,
-      content: contentRef?.current ? contentRef.current.innerHTML : note.content,
+      content: contentRef?.current
+        ? contentRef.current.innerHTML
+        : note.content,
       labels: nextLabels,
       category: nextLabels[0] || null,
       labelId:
@@ -253,7 +269,7 @@ export default function NoteToolbar({
               e.stopPropagation();
               if (btn.format) applyFormat(btn.format);
             }}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
+            className="p-2 text-white/80 hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
           >
             <Icon size={14} />
           </button>
@@ -337,7 +353,7 @@ export default function NoteToolbar({
       <div
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
-        className={`flex items-center gap-0.5 bg-card/95 backdrop-blur-md shadow-md border border-border rounded-full p-1 z-40 ${className}`}
+        className={`flex items-center gap-0.5 bg-white/10 backdrop-blur-md shadow-md border border-border rounded-full p-1 z-40 ${className}`}
       >
         <input
           ref={fileInputRef}
@@ -363,7 +379,7 @@ export default function NoteToolbar({
                     className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
                       isTextColorOpen
                         ? "bg-muted text-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        : "text-white/90 hover:text-foreground hover:bg-muted"
                     }`}
                     aria-label="Text color"
                   >
@@ -385,7 +401,7 @@ export default function NoteToolbar({
                 align="start"
                 className="p-2.5 flex flex-col gap-2 rounded-2xl shadow-xl w-auto min-w-[200px]"
               >
-                <div className="text-[11px] font-semibold text-muted-foreground px-0.5">
+                <div className="text-[11px] font-semibold text-white/80 px-0.5">
                   Text Color
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -458,7 +474,7 @@ export default function NoteToolbar({
                 fileInputRef.current?.click();
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
+              className="p-2 text-white/80 hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
             >
               <Paperclip size={14} />
             </button>
@@ -480,7 +496,7 @@ export default function NoteToolbar({
                 className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
                   isLabelDropdownOpen
                     ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    : "text-white/90 hover:text-foreground hover:bg-muted"
                 }`}
                 aria-label="Labels"
               >
@@ -494,17 +510,17 @@ export default function NoteToolbar({
             align="start"
             className="w-76 p-0 flex flex-col overflow-hidden rounded-2xl"
           >
-            <div className="px-4 py-2 pt-4 text-xs font-semibold text-muted-foreground border-b border-border shrink-0 flex items-center justify-between">
+            <div className="px-4 py-2 pt-4 text-xs font-semibold text-white/80 border-b border-border shrink-0 flex items-center justify-between">
               <span>Labels</span>
               {activeLabels.length > 0 && (
-                <span className="text-[11px] font-normal text-muted-foreground">
+                <span className="text-[11px] font-normal text-white/80">
                   {activeLabels.length} selected
                 </span>
               )}
             </div>
             <div className="max-h-48 overflow-y-auto py-1">
               {serverLabels.length === 0 ? (
-                <div className="px-4 py-3 text-xs text-muted-foreground text-center">
+                <div className="px-4 py-3 text-xs text-white/80 text-center">
                   No labels yet
                 </div>
               ) : (
@@ -547,63 +563,72 @@ export default function NoteToolbar({
                 })
               )}
             </div>
-            <div className="p-2 border-t border-border flex items-center gap-2 shrink-0 bg-muted/30">
-              <input
-                type="text"
-                placeholder="New label..."
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                  if (e.key === "Enter" && newLabel.trim()) {
-                    e.preventDefault();
-                    handleAddLabel(newLabel);
-                  }
-                }}
-                className="flex-1 min-w-0 text-sm px-4 py-2 bg-background rounded-lg outline-none text-foreground border border-border focus:border-blue-500 transition-colors"
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (newLabel.trim()) {
-                    handleAddLabel(newLabel);
-                  }
-                }}
-                className="flex items-center gap-2 cursor-pointer text-sm font-medium bg-primary/60 text-white px-4 py-2 rounded-lg hover:bg-primary/55 transition-colors shrink-0 outline-none"
-              >
-                <Plus size={14} />
-                Create
-              </button>
+            <div className="p-2 border-t border-border shrink-0 bg-muted/30">
+              <div className="relative flex items-center w-full">
+                <input
+                  type="text"
+                  placeholder="New label..."
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === "Enter" && newLabel.trim()) {
+                      e.preventDefault();
+                      handleAddLabel(newLabel);
+                    }
+                  }}
+                  className="w-full bg-background border border-border rounded-full pl-4 pr-24 py-2 text-sm outline-none text-foreground focus:border-blue-500 transition-colors"
+                />
+                <button
+                  type="button"
+                  disabled={createLabelMutation.isPending || !newLabel.trim()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (newLabel.trim()) {
+                      handleAddLabel(newLabel);
+                    }
+                  }}
+                  className="absolute right-1.5 flex items-center justify-center gap-1 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer text-xs font-medium outline-none"
+                >
+                  <Plus size={14} />
+                  Create
+                </button>
+              </div>
             </div>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <CustomColorPicker
-          noteId={note.id}
-          value={note.color || "#ffffff"}
-          onChange={(newColor) => onUpdate?.({ color: newColor })}
-          onOpenChange={setIsColorPickerOpen}
-          placement="bottom"
-          align="start"
-          className="flex items-center justify-center"
-        >
-          <button
-            type="button"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
-              isColorPickerOpen
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
-            aria-label="Change card color"
-            title="Note color"
-          >
-            <Palette size={14} />
-          </button>
-        </CustomColorPicker>
+        <Tooltip open={isColorPickerOpen ? false : undefined}>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <CustomColorPicker
+                noteId={note.id}
+                value={note.color || "#ffffff"}
+                onChange={(newColor) => onUpdate?.({ color: newColor })}
+                onOpenChange={setIsColorPickerOpen}
+                placement="bottom"
+                align="start"
+                className="flex items-center justify-center"
+              >
+                <button
+                  type="button"
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className={`p-2 rounded-full transition-colors cursor-pointer outline-none ${
+                    isColorPickerOpen
+                      ? "bg-muted text-foreground"
+                      : "text-white/90 hover:text-foreground hover:bg-muted"
+                  }`}
+                  aria-label="Change card color"
+                >
+                  <Palette size={14} />
+                </button>
+              </CustomColorPicker>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top">Add color</TooltipContent>
+        </Tooltip>
 
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <Tooltip>
@@ -611,7 +636,11 @@ export default function NoteToolbar({
               <DropdownMenuTrigger
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer"
+                className={`p-2 rounded-full transition-colors outline-none cursor-pointer ${
+                  isDropdownOpen
+                    ? "bg-muted text-foreground"
+                    : "text-white/80 hover:text-foreground hover:bg-muted"
+                }`}
                 aria-label="More options"
               >
                 <MoreVertical size={14} />
@@ -637,11 +666,15 @@ export default function NoteToolbar({
                     if (item.label === "Delete") {
                       setIsDeleteDialogOpen(true);
                     } else if (item.label === "Copy") {
-                      const plainText = `${note.title || ""}\n\n${(contentRef?.current?.innerText || note.content || "").replace(/<[^>]+>/g, "")}`.trim();
+                      const plainText =
+                        `${note.title || ""}\n\n${(contentRef?.current?.innerText || note.content || "").replace(/<[^>]+>/g, "")}`.trim();
                       navigator.clipboard.writeText(plainText);
                     } else if (item.label === "Export") {
-                      const plainText = `${note.title || ""}\n\n${(contentRef?.current?.innerText || note.content || "").replace(/<[^>]+>/g, "")}`.trim();
-                      const blob = new Blob([plainText], { type: "text/plain;charset=utf-8" });
+                      const plainText =
+                        `${note.title || ""}\n\n${(contentRef?.current?.innerText || note.content || "").replace(/<[^>]+>/g, "")}`.trim();
+                      const blob = new Blob([plainText], {
+                        type: "text/plain;charset=utf-8",
+                      });
                       const url = URL.createObjectURL(blob);
                       const a = document.createElement("a");
                       a.href = url;
@@ -668,7 +701,8 @@ export default function NoteToolbar({
             <DialogHeader>
               <DialogTitle>Delete note?</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete this note? This action cannot be undone.
+                Are you sure you want to delete this note? This action cannot be
+                undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="mt-4 flex gap-2 sm:justify-end">

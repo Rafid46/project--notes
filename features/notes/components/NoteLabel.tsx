@@ -3,9 +3,10 @@ import { NoteItem } from "@/features/home/types";
 interface NoteLabelProps {
   note: NoteItem;
   variant?: "badge" | "inline";
+  className?: string;
 }
 
-const NoteLabel = ({ note, variant = "badge" }: NoteLabelProps) => {
+const NoteLabel = ({ note, variant = "badge", className }: NoteLabelProps) => {
   const labels = Array.from(
     new Set(
       [
@@ -34,7 +35,11 @@ const NoteLabel = ({ note, variant = "badge" }: NoteLabelProps) => {
 
   if (labels.length > 2) {
     return (
-      <div className="absolute top-2.5 right-3 flex flex-wrap gap-1.5 justify-end max-w-[65%] z-20 pointer-events-none">
+      <div
+        className={`flex flex-wrap gap-1.5 justify-end max-w-[65%] z-20 pointer-events-none ${
+          className ?? "absolute top-2.5 right-3"
+        }`}
+      >
         {labels.map((label) => (
           <span
             key={label}
@@ -48,13 +53,19 @@ const NoteLabel = ({ note, variant = "badge" }: NoteLabelProps) => {
   }
 
   return (
-    <div className="absolute top-0 right-[20px] flex items-start gap-2 z-20">
+    <div
+      className={`flex items-start gap-2 z-20 ${
+        className ?? "absolute top-0 right-[20px]"
+      }`}
+    >
       {labels.map((label) => (
         <div
           key={label}
-          className="px-6 py-4 rounded-none rounded-b-xl text-sm font-semibold shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]"
+          className="w-fit px-2 py-1 pb-2 pt-0 rounded-none rounded-b-xl text-sm font-semibold shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]"
         >
-          {label}
+          <div className="rounded-b-md rounded-t-none border-t-0 border-dashed border border-black/30 px-4 py-2">
+            {label}
+          </div>
         </div>
       ))}
     </div>

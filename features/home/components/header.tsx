@@ -285,12 +285,20 @@ export default function Header({
           </div>
 
           <Dock items={dockItems} />
-
+          <Button
+            type="button"
+            onClick={() => setIsLabelManagerOpen(true)}
+            aria-label="Manage Labels"
+            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-primary text-primary-foreground hover:opacity-90  transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
+          >
+            <Tag size={18} />
+            <span className="text-sm font-semibold">Label</span>
+          </Button>
           <Button
             type="button"
             onClick={onOpenAddNote}
             aria-label="Add Note"
-            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-primary text-primary-foreground hover:opacity-90 shadow-xs transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
+            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-[#BBDC12] text-[#004030] hover:opacity-90  transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
           >
             <PenLine size={18} />
             <span className="text-sm font-semibold">Note</span>
@@ -299,16 +307,6 @@ export default function Header({
                 {notesCount}/5
               </span>
             )}
-          </Button>
-
-          <Button
-            type="button"
-            onClick={() => setIsLabelManagerOpen(true)}
-            aria-label="Manage Labels"
-            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-primary text-primary-foreground hover:opacity-90 shadow-xs transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
-          >
-            <Tag size={18} />
-            <span className="text-sm font-semibold">Label</span>
           </Button>
         </div>
 

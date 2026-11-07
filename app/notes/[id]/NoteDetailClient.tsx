@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Minimize2, FileText, Download, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Minimize2,
+  FileText,
+  Download,
+  Loader2,
+} from "lucide-react";
 import { useNoteById } from "@/features/notes/hooks/useNotes";
 import NoteLabel from "@/features/notes/components/NoteLabel";
 import LinkPreviewCard from "@/features/notes/components/LinkPreviewCard";
@@ -111,7 +117,7 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
 
   const images = (note.files || []).filter((f) => f.type?.startsWith("image/"));
   const nonImageFiles = (note.files || []).filter(
-    (f) => !f.type?.startsWith("image/")
+    (f) => !f.type?.startsWith("image/"),
   );
 
   return (
@@ -153,23 +159,32 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
         </div>
       </header>
 
-      <article className="flex-1 max-w-4xl w-full mx-auto p-6 md:p-12 flex flex-col gap-6">
-        <div className="flex flex-col gap-3 border-b border-border/40 pb-6">
-          <NoteLabel note={note} variant="inline" />
-          <h1
-            className="text-2xl md:text-4xl font-bold leading-tight"
-            style={note.textColor ? { color: note.textColor } : undefined}
-          >
-            {note.title}
-          </h1>
-          {serverData.updatedAt && (
-            <time
-              dateTime={serverData.updatedAt}
-              className="text-xs text-muted-foreground"
+      <article className="flex-1 max-w-4xl w-full mx-auto p-6 md:p-12 !pt-0 flex flex-col gap-6">
+        <div className="flex items-start justify-between gap-6 border-b border-border/40 pb-6">
+          <div className="flex flex-col gap-3 min-w-0 flex-1 pt-5">
+            <h1
+              className="text-2xl md:text-4xl font-bold leading-tight"
+              style={note.textColor ? { color: note.textColor } : undefined}
             >
-              Last updated {new Date(serverData.updatedAt).toLocaleDateString()}
-            </time>
-          )}
+              {note.title}
+            </h1>
+            {(serverData.updatedAt || serverData.createdAt) && (
+              <time
+                dateTime={serverData.updatedAt || serverData.createdAt}
+                className="text-xs text-muted-foreground"
+              >
+                Last updated{" "}
+                {new Date(
+                  serverData.updatedAt || serverData.createdAt!,
+                ).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </time>
+            )}
+          </div>
+          <NoteLabel note={note} className="shrink-0" />
         </div>
 
         {images.length > 0 && (
@@ -224,7 +239,10 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
                   className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-card shadow-xs"
                 >
                   <div className="flex items-center gap-2.5 truncate mr-2">
-                    <FileText size={18} className="text-muted-foreground shrink-0" />
+                    <FileText
+                      size={18}
+                      className="text-muted-foreground shrink-0"
+                    />
                     <span className="text-xs font-medium truncate">
                       {file.name}
                     </span>
@@ -256,10 +274,7 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
             </h2>
             <div className="flex flex-col gap-2">
               {note.linkPreviews.map((preview) => (
-                <LinkPreviewCard
-                  key={preview.url}
-                  preview={preview}
-                />
+                <LinkPreviewCard key={preview.url} preview={preview} />
               ))}
             </div>
           </section>
