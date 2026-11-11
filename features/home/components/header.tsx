@@ -298,7 +298,7 @@ export default function Header({
             type="button"
             onClick={onOpenAddNote}
             aria-label="Add Note"
-            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-[#BBDC12] text-[#004030] hover:opacity-90  transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
+            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-[#BBDC12] text-[#004030] !hover:[#BBDC12]/80  transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
           >
             <PenLine size={18} />
             <span className="text-sm font-semibold">Note</span>

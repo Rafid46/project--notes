@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useClerk } from "@clerk/nextjs";
 import { Loader2 } from "lucide-react";
 
@@ -31,15 +32,15 @@ export default function LoginModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 select-none pointer-events-auto">
-      <div className="w-full max-w-3xl rounded-3xl border border-border/80 bg-card text-card-foreground shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+      <div className="w-full max-w-4xl rounded-3xl border border-border/80 bg-card text-card-foreground shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
         <div className="flex flex-col justify-between p-8 sm:p-10 bg-card">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Welcome to Notes
+              Where your thoughts take shape
             </h2>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              Continue with Google to access your workspace. New and returning
-              accounts connect seamlessly with one click.
+              Your personal workspace to capture ideas, organize notes, and think
+              freely on the whiteboard. Connect with Google in one click to get started.
             </p>
           </div>
 
@@ -88,280 +89,16 @@ export default function LoginModal() {
           </div>
         </div>
 
-        <div className="hidden md:flex p-3 bg-muted/20 items-center justify-center">
-          <div className="relative w-full h-full min-h-[400px] rounded-2xl overflow-hidden shadow-inner">
-            <svg
-              viewBox="0 0 400 480"
-              preserveAspectRatio="xMidYMid slice"
-              className="w-full h-full object-cover"
-            >
-              <defs>
-                <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#FDECDA" />
-                  <stop offset="25%" stopColor="#F9C6B3" />
-                  <stop offset="50%" stopColor="#EAA7A3" />
-                  <stop offset="75%" stopColor="#B49DBE" />
-                  <stop offset="100%" stopColor="#7D688D" />
-                </linearGradient>
-
-                <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
-                  <stop offset="35%" stopColor="#FFF2D6" stopOpacity="0.95" />
-                  <stop offset="70%" stopColor="#FDDDB0" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#FDECDA" stopOpacity="0" />
-                </radialGradient>
-
-                <linearGradient id="snowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#EDE6F4" />
-                  <stop offset="50%" stopColor="#D9D0E4" />
-                  <stop offset="100%" stopColor="#BCB1CC" />
-                </linearGradient>
-              </defs>
-
-              <rect width="400" height="480" fill="url(#skyGrad)" />
-
-              <circle cx="270" cy="170" r="85" fill="url(#sunGlow)" />
-              <circle cx="270" cy="170" r="42" fill="#FFFBF2" />
-
-              <path
-                d="M-20,290 Q90,260 210,285 T420,270 L420,480 L-20,480 Z"
-                fill="#8A637C"
-                opacity="0.85"
-              />
-              <path
-                d="M-20,305 Q80,285 240,305 T420,290 L420,480 L-20,480 Z"
-                fill="#614A66"
-                opacity="0.9"
-              />
-
-              <path
-                d="M420,240 Q350,230 300,250 Q240,275 220,320 L420,350 Z"
-                fill="#EDE5F5"
-              />
-              <path
-                d="M420,245 Q350,235 305,255 L300,265 Q350,245 420,255 Z"
-                fill="#B8A7C6"
-              />
-
-              <g transform="translate(315, 205)">
-                <path d="M0,45 A25,25 0 0,1 50,45 Z" fill="#2A2433" />
-                <line
-                  x1="25"
-                  y1="45"
-                  x2="25"
-                  y2="20"
-                  stroke="#EDE5F5"
-                  strokeWidth="2"
-                />
-                <line
-                  x1="12"
-                  y1="45"
-                  x2="16"
-                  y2="23"
-                  stroke="#EDE5F5"
-                  strokeWidth="2"
-                />
-                <line
-                  x1="38"
-                  y1="45"
-                  x2="34"
-                  y2="23"
-                  stroke="#EDE5F5"
-                  strokeWidth="2"
-                />
-              </g>
-
-              <g transform="translate(345, 185) scale(0.7)">
-                <path
-                  d="M10,60 Q12,30 25,10"
-                  stroke="#2A2433"
-                  strokeWidth="2.5"
-                  fill="none"
-                />
-                <circle cx="25" cy="10" r="3.5" fill="#2A2433" />
-                <path
-                  d="M11,45 Q25,35 35,25"
-                  stroke="#2A2433"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <circle cx="35" cy="25" r="3" fill="#2A2433" />
-                <path
-                  d="M9,50 Q-5,40 -12,30"
-                  stroke="#2A2433"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <circle cx="-12" cy="30" r="3" fill="#2A2433" />
-              </g>
-
-              <path
-                d="M-20,340 Q120,320 260,345 Q360,360 420,345 L420,480 L-20,480 Z"
-                fill="url(#snowGrad)"
-              />
-
-              <path
-                d="M-20,390 Q140,365 290,385 T420,380 L420,480 L-20,480 Z"
-                fill="#D4CAE2"
-                opacity="0.8"
-              />
-
-              <g transform="translate(230, 345) scale(0.85)">
-                <path
-                  d="M15,100 L15,10"
-                  stroke="#2A2233"
-                  strokeWidth="3"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,70 Q-5,50 -10,35"
-                  stroke="#2A2233"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M-10,35 Q-15,25 -20,20"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M-10,35 Q-5,25 -5,15"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,55 Q35,40 40,25"
-                  stroke="#2A2233"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M40,25 Q45,15 50,10"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M40,25 Q35,15 32,5"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,35 Q5,20 0,5"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,25 Q25,12 28,0"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              </g>
-
-              <g transform="translate(340, 335) scale(0.95)">
-                <path
-                  d="M15,110 L15,10"
-                  stroke="#2A2233"
-                  strokeWidth="3.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,80 Q-5,60 -12,45"
-                  stroke="#2A2233"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M-12,45 Q-20,35 -22,25"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,65 Q35,50 42,35"
-                  stroke="#2A2233"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M42,35 Q48,25 52,15"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,40 Q2,25 -2,10"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,30 Q28,15 30,-5"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              </g>
-
-              <g transform="translate(60, 360) scale(0.7)">
-                <path
-                  d="M15,110 L15,10"
-                  stroke="#2A2233"
-                  strokeWidth="3.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,75 Q-5,55 -10,40"
-                  stroke="#2A2233"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,60 Q35,45 38,30"
-                  stroke="#2A2233"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,35 Q5,20 2,5"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M15,25 Q25,10 27,0"
-                  stroke="#2A2233"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              </g>
-            </svg>
+        <div className="hidden md:flex p-6 bg-gradient-to-br from-[#8ba0fd]/25 via-purple-600/15 to-[#6d5fc2]/30 items-center justify-center border-l border-border/40">
+          <div className="relative w-full h-full min-h-[400px] flex items-center justify-center">
+            <Image
+              src="/assets/login-illustration.png"
+              alt="Notes workspace illustration"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
+              className="object-contain drop-shadow-md"
+            />
           </div>
         </div>
       </div>

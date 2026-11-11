@@ -25,6 +25,17 @@ interface NoteDetailClientProps {
   id: string;
 }
 
+interface BackendAttachment {
+  id?: string;
+  fileName?: string;
+  mimeType?: string;
+  storageKey?: string;
+  name?: string;
+  type?: string;
+  url?: string;
+  size?: number;
+}
+
 interface ServerNoteResponse {
   id: string;
   title: string;
@@ -39,8 +50,8 @@ interface ServerNoteResponse {
   category?: string | null;
   children?: NoteItem[];
   label?: { id: string; name: string };
-  attachments?: NoteFile[];
-  files?: NoteFile[];
+  attachments?: BackendAttachment[];
+  files?: BackendAttachment[];
   linkPreviews?: NoteItem["linkPreviews"];
   createdAt?: string;
   updatedAt?: string;
@@ -111,7 +122,13 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
     textColor: serverData.textColor,
     category: serverData.label?.name || serverData.category,
     subNotes: serverData.children || [],
-    files: serverData.files || serverData.attachments || [],
+    files: (serverData.attachments || serverData.files || []).map((att) => ({
+      id: att.id || `file-${Math.random().toString(36).slice(2, 9)}`,
+      name: att.fileName || att.name || "attachment",
+      type: att.mimeType || att.type || "application/octet-stream",
+      url: att.storageKey || att.url || "",
+      size: att.size || 0,
+    })),
     linkPreviews: serverData.linkPreviews || [],
   };
 

@@ -29,6 +29,17 @@ import { useNoteModalStore } from "@/store/useNoteModalStore";
 import Header from "./Header";
 import Whiteboard from "@/features/whiteboard/components/Whiteboard";
 
+interface BackendAttachment {
+  id?: string;
+  fileName?: string;
+  mimeType?: string;
+  storageKey?: string;
+  name?: string;
+  type?: string;
+  url?: string;
+  size?: number;
+}
+
 interface BackendNoteItem {
   id: string;
   title: string;
@@ -45,8 +56,8 @@ interface BackendNoteItem {
   category?: string | null;
   children?: NoteItem[];
   label?: { id: string; name: string };
-  attachments?: NoteFile[];
-  files?: NoteFile[];
+  attachments?: BackendAttachment[];
+  files?: BackendAttachment[];
   linkPreviews?: LinkPreviewMetadata[];
 }
 
@@ -115,7 +126,13 @@ export default function HomeClient() {
         background: note.background || note.color,
         textColor: note.textColor,
         subNotes: note.children || [],
-        files: note.files || note.attachments || [],
+        files: (note.attachments || note.files || []).map((att) => ({
+          id: att.id || `file-${Math.random().toString(36).slice(2, 9)}`,
+          name: att.fileName || att.name || "attachment",
+          type: att.mimeType || att.type || "application/octet-stream",
+          url: att.storageKey || att.url || "",
+          size: att.size || 0,
+        })),
         linkPreviews: note.linkPreviews || [],
         content:
           typeof note.content === "string"
@@ -412,6 +429,11 @@ export default function HomeClient() {
         labels: newNoteData.labels,
         labelId: newNoteData.labelId,
         background: newNoteData.color,
+        attachments: newNoteData.files?.map((f) => ({
+          fileName: f.name,
+          mimeType: f.type,
+          storageKey: f.url,
+        })),
       },
       { isCreating: true, parentId: newNoteData.parentId },
     );
@@ -434,7 +456,8 @@ export default function HomeClient() {
       updates.category !== undefined ||
       updates.labels !== undefined ||
       updates.color !== undefined ||
-      updates.background !== undefined
+      updates.background !== undefined ||
+      updates.files !== undefined
     ) {
       registerChange(noteId, {
         title: updates.title !== undefined ? updates.title : existing?.title,
@@ -443,6 +466,14 @@ export default function HomeClient() {
         labelId: updates.labelId !== undefined ? updates.labelId : existing?.labelId,
         labels: updates.labels !== undefined ? updates.labels : existing?.labels,
         background: updates.color !== undefined ? updates.color : (updates.background !== undefined ? updates.background : existing?.color),
+        attachments:
+          updates.files !== undefined
+            ? updates.files.map((f) => ({
+                fileName: f.name,
+                mimeType: f.type,
+                storageKey: f.url,
+              }))
+            : undefined,
       });
     }
     handleUpdateNoteState(noteId, updates);
@@ -553,7 +584,6 @@ export default function HomeClient() {
         onOpenAddNoteWithLabel={(labelId, labelName, e) =>
           openPopover(null, e, labelId, labelName)
         }
-        searchKeyword={debouncedQuery}
         selectedLabel={selectedLabel}
         onSelectLabel={setSelectedLabel}
       />

@@ -8,6 +8,7 @@ export interface SaveSnapshot {
   category?: string | null;
   labels?: string[];
   background?: string;
+  attachments?: { fileName: string; mimeType: string; storageKey: string }[];
 }
 
 export interface SaveTask {

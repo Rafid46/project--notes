@@ -22,20 +22,17 @@ interface SidebarProps {
   ) => void;
   isOpen?: boolean;
   onToggle?: () => void;
-  searchKeyword?: string;
   selectedLabel?: Label | null;
   onSelectLabel?: (label: Label | null) => void;
 }
 
 export default function Sidebar({
   onOpenAddNoteWithLabel,
-  searchKeyword = "",
   selectedLabel,
   onSelectLabel,
 }: SidebarProps) {
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteLabels({
-      keyword: searchKeyword,
       limit: 15,
     });
 
