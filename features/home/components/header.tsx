@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Presentation,
@@ -15,17 +16,22 @@ import {
   Settings,
   Tag,
   PenLine,
+  FolderOpen,
   X,
 } from "lucide-react";
 
 import { motion } from "framer-motion";
-import type { ViewMode, GridViewMode, DockItemData } from "../types";
+import type { ViewMode, GridViewMode } from "../types";
 import ThemeToggle from "./ThemeToggle";
 import SettingsModal from "./SettingsModal";
-import Dock from "./Dock";
 import AuthButton from "../../auth/components/AuthButton";
 import LabelManagerModal from "../../notes/components/LabelManagerModal";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -124,9 +130,21 @@ export default function Header({
   const [lastSelectedGrid, setLastSelectedGrid] =
     useState<GridViewMode>("grid-4");
   const [isMounted, setIsMounted] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleShortcut = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
 
   const isGridActive = currentView.startsWith("grid-");
@@ -165,16 +183,12 @@ export default function Header({
     };
   }, [isGridDropdownOpen]);
 
-  const handleGridDockItemClick = (
-    e?: React.MouseEvent<Element> | React.KeyboardEvent<Element>,
-  ) => {
-    if (e && "currentTarget" in e && e.currentTarget) {
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 8,
-        left: rect.left + rect.width / 2,
-      });
-    }
+  const handleGridTriggerClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDropdownPosition({
+      top: rect.bottom + 10,
+      left: rect.left + rect.width / 2,
+    });
 
     if (!isGridActive) {
       onSelectView(lastSelectedGrid);
@@ -189,139 +203,232 @@ export default function Header({
   };
 
   const currentGridLabel = isGridActive
-    ? currentView.replace("grid-", "List View ")
-    : "List View";
+    ? currentView.replace("grid-", "List ")
+    : "List";
 
-  const dockItems: DockItemData[] = [
+  const primaryViews: {
+    id: "whiteboard" | "masonry";
+    label: string;
+    icon: React.ReactNode;
+    isActive: boolean;
+  }[] = [
     {
-      icon: <Presentation size={16} />,
+      id: "whiteboard",
       label: "Whiteboard",
-      onClick: () => {
-        setIsGridDropdownOpen(false);
-        onSelectView("whiteboard");
-      },
+      icon: <Presentation size={15} />,
       isActive: currentView === "whiteboard",
     },
     {
-      icon: <LayoutGrid size={16} />,
+      id: "masonry",
       label: "Gallery",
-      onClick: () => {
-        setIsGridDropdownOpen(false);
-        onSelectView("masonry");
-      },
+      icon: <LayoutGrid size={15} />,
       isActive: currentView === "masonry",
-    },
-    {
-      icon: <Columns3 size={16} />,
-      label: (
-        <span
-          data-grid-trigger="true"
-          className="inline-flex items-center gap-1.5"
-        >
-          <span>{currentGridLabel}</span>
-          <ChevronDown
-            size={13}
-            className={`transition-transform duration-200 ${
-              isGridDropdownOpen ? "rotate-180" : ""
-            }`}
-          />
-        </span>
-      ),
-      onClick: handleGridDockItemClick,
-      isActive: isGridActive,
-      className: "relative",
     },
   ];
 
   return (
     <>
-      <header className="absolute top-6 inset-x-0 z-30 flex items-center justify-between px-6">
-        <div className="flex items-center">
-          <div className="flex h-10 items-center gap-2.5 pb-4 px-4">
+      <header className="pointer-events-none absolute top-5 inset-x-0 z-30 flex items-center justify-between gap-3 px-6">
+        <div className="pointer-events-auto flex shrink-0 items-center">
+          <Link
+            href="/"
+            aria-label="Hane Notes Home"
+            className="flex h-12 items-center rounded-full border border-border/80 bg-background/85 px-4 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md transition-opacity hover:opacity-80 dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]"
+          >
             <Image
               src="/assets/hane.png"
               alt="Logo"
-              width={104}
-              height={44}
-              className="object-contain w-auto h-auto rounded-lg"
+              width={92}
+              height={36}
+              priority
+              className="h-7 w-auto object-contain rounded-md"
             />
-          </div>
+          </Link>
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <nav
+          aria-label="Workspace navigation"
+          className="pointer-events-auto flex h-12 min-w-0 items-center gap-1 rounded-full border border-border/80 bg-background/85 p-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]"
+        >
           <div
-            className={`group relative flex h-[52px] items-center justify-start rounded-full bg-secondary shadow-xs transition-all duration-300 ${
-              searchQuery ? "w-64" : "hover:w-64 focus-within:w-64 w-[52px]"
+            className={`group relative flex h-9 items-center rounded-full bg-secondary/75 transition-[width] duration-200 ${
+              searchQuery
+                ? "w-48 sm:w-56"
+                : "w-9 sm:w-40 focus-within:w-52"
             } overflow-hidden`}
           >
             <button
               type="button"
-              aria-label="Search"
-              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => searchInputRef.current?.focus()}
+              aria-label="Search notes"
+              className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors group-focus-within:text-foreground hover:text-foreground cursor-pointer"
             >
-              <Search size={18} />
+              <Search size={15} />
             </button>
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange?.(e.target.value)}
               placeholder="Search notes..."
-              className={`h-full w-full bg-transparent px-2 pr-8 text-sm text-foreground placeholder-muted-foreground outline-none transition-opacity duration-300 ${
+              className={`h-full w-full min-w-0 bg-transparent pr-8 text-xs text-foreground placeholder:text-muted-foreground outline-none transition-opacity duration-200 ${
                 searchQuery
                   ? "opacity-100"
-                  : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+                  : "opacity-0 sm:opacity-100 group-focus-within:opacity-100"
               }`}
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
                 type="button"
                 onClick={() => onSearchChange?.("")}
                 aria-label="Clear search"
-                className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="absolute right-2.5 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
               >
-                <X size={15} />
+                <X size={14} />
               </button>
+            ) : (
+              <kbd className="pointer-events-none absolute right-2.5 hidden rounded border border-border/80 bg-background/80 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground group-focus-within:hidden lg:inline-flex">
+                ⌘K
+              </kbd>
             )}
           </div>
 
-          <Dock items={dockItems} />
-          <Button
-            type="button"
-            onClick={() => setIsLabelManagerOpen(true)}
-            aria-label="Manage Labels"
-            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-primary text-primary-foreground hover:opacity-90  transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
-          >
-            <Tag size={18} />
-            <span className="text-sm font-semibold">Label</span>
-          </Button>
-          <Button
-            type="button"
-            onClick={onOpenAddNote}
-            aria-label="Add Note"
-            className="flex w-fit h-[52px] items-center justify-center gap-2 px-6 rounded-full bg-[#BBDC12] text-[#004030] !hover:[#BBDC12]/80  transition-all duration-200 ease-in-out active:scale-[0.98] focus:outline-none cursor-pointer"
-          >
-            <PenLine size={18} />
-            <span className="text-sm font-semibold">Note</span>
-            {typeof notesCount === "number" && notesCount >= 5 && (
-              <span className="text-xs bg-primary-foreground/20 px-2 py-0.5 rounded-full font-medium">
-                {notesCount}/5
-              </span>
-            )}
-          </Button>
-        </div>
+          <span
+            aria-hidden="true"
+            className="mx-1 h-4 w-px shrink-0 bg-border"
+          />
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+          <div className="flex items-center gap-0.5">
+            {primaryViews.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  setIsGridDropdownOpen(false);
+                  onSelectView(item.id);
+                }}
+                aria-pressed={item.isActive}
+                className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  item.isActive
+                    ? "text-foreground font-semibold"
+                    : "text-muted-foreground font-medium hover:text-foreground hover:bg-secondary/50"
+                }`}
+              >
+                {item.isActive && (
+                  <motion.span
+                    layoutId="header-active-view"
+                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    className="absolute inset-0 rounded-full bg-secondary shadow-xs"
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
+                  {item.icon}
+                  <span className="hidden md:inline">{item.label}</span>
+                </span>
+              </button>
+            ))}
+
+            <button
+              type="button"
+              data-grid-trigger="true"
+              onClick={handleGridTriggerClick}
+              aria-expanded={isGridDropdownOpen}
+              aria-haspopup="menu"
+              className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                isGridActive
+                  ? "text-foreground font-semibold"
+                  : "text-muted-foreground font-medium hover:text-foreground hover:bg-secondary/50"
+              }`}
+            >
+              {isGridActive && (
+                <motion.span
+                  layoutId="header-active-view"
+                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                  className="absolute inset-0 rounded-full bg-secondary shadow-xs"
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <Columns3 size={15} />
+                <span className="hidden md:inline">{currentGridLabel}</span>
+                <ChevronDown
+                  size={13}
+                  className={`transition-transform duration-200 ${
+                    isGridDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
+
+          <span
+            aria-hidden="true"
+            className="mx-1 h-4 w-px shrink-0 bg-border"
+          />
+
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={() => setIsLabelManagerOpen(true)}
+                  aria-label="Manage Labels"
+                  className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                >
+                  <Tag size={15} />
+                  <span className="hidden lg:inline">Labels</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Manage labels</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/board"
+                  aria-label="Open Folder Whiteboard"
+                  className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <FolderOpen size={15} />
+                  <span className="hidden lg:inline">Folder Board</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>Folder Board</TooltipContent>
+            </Tooltip>
+
+            <Button
+              type="button"
+              onClick={onOpenAddNote}
+              aria-label="Add Note"
+              className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#BBDC12] px-4 text-xs font-semibold text-[#004030] shadow-xs transition-all duration-200 hover:bg-[#BBDC12]/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            >
+              <PenLine size={15} />
+              <span>Note</span>
+              {typeof notesCount === "number" && notesCount >= 5 && (
+                <span className="rounded-full bg-[#004030]/15 px-1.5 py-0.5 text-[10px] font-semibold">
+                  {notesCount}/5
+                </span>
+              )}
+            </Button>
+          </div>
+        </nav>
+
+        <div className="pointer-events-auto flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
           <ThemeToggle />
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.94 }}
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            aria-label="Settings"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground focus:outline-none cursor-pointer"
-          >
-            <Settings size={18} />
-          </motion.button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+                aria-label="Settings"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground shadow-xs transition-colors hover:bg-muted hover:text-foreground focus:outline-none cursor-pointer"
+              >
+                <Settings size={18} />
+              </motion.button>
+            </TooltipTrigger>
+            <TooltipContent>Settings</TooltipContent>
+          </Tooltip>
           <AuthButton />
         </div>
       </header>

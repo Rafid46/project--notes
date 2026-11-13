@@ -7,9 +7,18 @@ const MINIMAP_W = 160;
 const MINIMAP_H = 112;
 const MINIMAP_SCALE = 0.02;
 
+export interface MiniMapExtraItem {
+  id: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+}
+
 interface MiniMapProps {
   notes?: NoteItem[];
   cardPositions?: Record<string, { x: number; y: number }>;
+  extraItems?: MiniMapExtraItem[];
   selectedNoteId?: string | null;
   pan: { x: number; y: number };
   zoom: number;
@@ -20,6 +29,7 @@ interface MiniMapProps {
 export default function MiniMap({
   notes = [],
   cardPositions = {},
+  extraItems = [],
   selectedNoteId,
   pan,
   zoom,
@@ -132,6 +142,23 @@ export default function MiniMap({
               top: my,
               width: 320 * MINIMAP_SCALE,
               height: 160 * MINIMAP_SCALE,
+            }}
+          />
+        );
+      })}
+
+      {extraItems.map((item) => {
+        const mx = mmCx + item.x * MINIMAP_SCALE;
+        const my = mmCy + item.y * MINIMAP_SCALE;
+        return (
+          <div
+            key={`minimap-extra-${item.id}`}
+            className="absolute rounded-sm pointer-events-none bg-emerald-500/80"
+            style={{
+              left: mx,
+              top: my,
+              width: (item.width || 260) * MINIMAP_SCALE,
+              height: (item.height || 180) * MINIMAP_SCALE,
             }}
           />
         );
