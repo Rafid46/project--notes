@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@base-ui/react";
 
 interface LabelManagerModalProps {
   isOpen: boolean;
@@ -45,29 +46,40 @@ export default function LabelManagerModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
+        showCloseButton={false}
         className="max-w-md p-6 !rounded-[20px]"
-        overlayClassName="bg-black/15 !backdrop-blur-[1px]"
+        overlayClassName="bg-black/15 !backdrop-blur-[5px]"
       >
-        <DialogHeader className="flex flex-row items-center gap-2 space-y-0 mb-4">
-          <Tag size={20} className="mt-1" />
-          <DialogTitle>Manage Labels</DialogTitle>
+        <DialogHeader className="flex flex-row items-center justify-between space-y-0">
+          <div className="flex items-center gap-2">
+            <Tag size={20} className="mt-1" />
+            <DialogTitle>Manage Labels</DialogTitle>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          >
+            <X size={16} />
+          </button>
         </DialogHeader>
 
         <form
           onSubmit={handleCreateLabel}
-          className="relative flex items-center mb-4"
+          className="relative flex items-center bg-background border border-border rounded-full pl-4 pr-2 py-2 text-sm"
         >
-          <input
+          <Input
             type="text"
             value={newLabelName}
             onChange={(e) => setNewLabelName(e.target.value)}
             placeholder="Create new label..."
-            className="w-full bg-background border border-border rounded-full pl-4 pr-24 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full focus:border-none focus:outline-none"
           />
           <button
             type="submit"
             disabled={createLabel.isPending || !newLabelName.trim()}
-            className="absolute right-1.5 flex items-center justify-center gap-1 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer text-xs font-medium"
+            className="flex items-center justify-center gap-1 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer text-xs font-medium"
           >
             <Plus size={14} />
             Create
@@ -129,7 +141,7 @@ function LabelItem({ label }: { label: Label }) {
   };
 
   return (
-    <li className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50 hover:border-border transition-colors group">
+    <li className="flex items-center justify-between p-3 rounded-2xl bg-secondary/50 border border-border/50 hover:border-border transition-colors group">
       {isEditing ? (
         <div className="flex items-center gap-2 flex-1 mr-2">
           <input

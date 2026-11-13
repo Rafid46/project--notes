@@ -7,11 +7,12 @@ import {
   Minimize2,
   FileText,
   Download,
-  Loader2,
 } from "lucide-react";
+import { ThinkingOrb } from "thinking-orbs";
 import { useNoteById } from "@/features/notes/hooks/useNotes";
 import NoteLabel from "@/features/notes/components/NoteLabel";
 import LinkPreviewCard from "@/features/notes/components/LinkPreviewCard";
+import ResizableNoteImage from "@/features/notes/components/ResizableNoteImage";
 import type { NoteItem, NoteFile } from "@/features/home/types";
 import {
   Tooltip,
@@ -69,10 +70,7 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
   if (isLoading) {
     return (
       <main className="min-h-screen w-full flex items-center justify-center bg-background text-foreground">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="animate-spin text-muted-foreground" size={28} />
-          <p className="text-xs text-muted-foreground">Loading note...</p>
-        </div>
+        <ThinkingOrb state="searching" size={64} />
       </main>
     );
   }
@@ -205,34 +203,9 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
         </div>
 
         {images.length > 0 && (
-          <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <section className="flex flex-col gap-4">
             {images.map((img) => (
-              <div
-                key={img.id}
-                className="relative rounded-2xl overflow-hidden border border-border/60 bg-muted/20 aspect-video group"
-              >
-                <img
-                  src={img.url}
-                  alt={img.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end p-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a
-                        href={img.url}
-                        download={img.name}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-black/80 transition-colors"
-                      >
-                        <Download size={14} />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent>Download image</TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
+              <ResizableNoteImage key={img.id} file={img} />
             ))}
           </section>
         )}

@@ -15,6 +15,7 @@ import Link from "next/link";
 import NoteToolbar from "./NoteToolbar";
 import LinkPreviewCard from "./LinkPreviewCard";
 import NoteLabel from "./NoteLabel";
+import ResizableNoteImage from "./ResizableNoteImage";
 import {
   Tooltip,
   TooltipTrigger,
@@ -218,7 +219,7 @@ export default function NoteCard({
             }
             data-placeholder="Take a note..."
             style={note.textColor ? { color: note.textColor } : undefined}
-            className="text-sm whitespace-pre-wrap min-h-[6rem] outline-none cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60 empty:before:pointer-events-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_img]:rounded-lg"
+            className="note-content text-sm whitespace-pre-wrap outline-none cursor-text empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60 empty:before:pointer-events-none"
           />
 
           {isLoadingPreview && (
@@ -261,50 +262,20 @@ export default function NoteCard({
                 Attached Files ({note.files.length})
               </h4>
               {note.files.some((f) => f.type.startsWith("image/")) && (
-                <div className="grid grid-cols-3 gap-2 mb-3">
+                <div className="flex flex-col gap-3 mb-3">
                   {note.files
                     .filter((f) => f.type.startsWith("image/"))
                     .map((file) => (
-                      <div
+                      <ResizableNoteImage
                         key={file.id}
-                        className="relative group/file rounded-lg overflow-hidden border border-border/80 bg-muted/30 aspect-video"
-                      >
-                        <img
-                          src={file.url}
-                          alt={file.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/file:opacity-100 transition-opacity flex items-center justify-between p-1.5 text-white">
-                          <span className="text-[10px] truncate max-w-[70%] font-medium">
-                            {file.name}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <a
-                              href={file.url}
-                              download={file.name}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1 hover:bg-white/20 rounded cursor-pointer text-white"
-                              title="Download"
-                            >
-                              <Download size={12} />
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const updated = (note.files || []).filter(
-                                  (f) => f.id !== file.id,
-                                );
-                                onUpdate?.({ files: updated });
-                              }}
-                              className="p-1 hover:bg-white/20 rounded cursor-pointer text-white"
-                              title="Remove"
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                        file={file}
+                        onRemove={() => {
+                          const updated = (note.files || []).filter(
+                            (f) => f.id !== file.id,
+                          );
+                          onUpdate?.({ files: updated });
+                        }}
+                      />
                     ))}
                 </div>
               )}
@@ -357,7 +328,7 @@ export default function NoteCard({
                   <li key={sub.id} className="text-sm bg-muted p-2 rounded-md">
                     <span className="font-medium">{sub.title}</span>
                     <div
-                      className="text-xs text-muted-foreground mt-1 line-clamp-2 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4"
+                      className="note-content-compact text-xs text-muted-foreground mt-1 line-clamp-2"
                       dangerouslySetInnerHTML={{ __html: sub.content }}
                     />
                   </li>
@@ -380,7 +351,7 @@ export default function NoteCard({
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary hover:bg-primary/90 text-primary-foreground h-9 px-4 py-2 border border-transparent cursor-pointer shrink-0"
+              className="inline-flex items-center justify-center rounded-lg text-sm font-medium transition-colors bg-primary hover:bg-primary/90 text-primary-foreground h-10 px-4 py-2 border border-transparent cursor-pointer shrink-0"
             >
               Close
             </button>
@@ -439,14 +410,14 @@ export default function NoteCard({
             <TooltipContent>Open full page</TooltipContent>
           </Tooltip>
 
-          <div className="my-6">
+          <div className="mt-6 mb-12">
             <h3
               className={`text-base font-semibold transition-colors ${
                 note.textColor
                   ? ""
                   : isToolbarActive
-                  ? activeTitleClass
-                  : textColor.title
+                    ? activeTitleClass
+                    : textColor.title
               }`}
               style={note.textColor ? { color: note.textColor } : undefined}
             >
@@ -454,9 +425,9 @@ export default function NoteCard({
             </h3>
 
             <div
-              className={`mt-2 text-sm leading-relaxed line-clamp-4 ${
+              className={`note-content note-content-preview mt-2 text-sm leading-relaxed line-clamp-4 ${
                 note.textColor ? "" : textColor.body
-              } [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_img]:rounded-lg [&_a]:pointer-events-none`}
+              }`}
               style={note.textColor ? { color: note.textColor } : undefined}
               dangerouslySetInnerHTML={{ __html: note.content }}
             />
@@ -484,11 +455,7 @@ export default function NoteCard({
             )}
 
             {note.files && note.files.length > 0 && (
-              <div
-                className="mt-3 flex flex-col gap-1.5"
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-              >
+              <div className="mt-3 flex flex-col gap-1.5">
                 {note.files.some((f) => f.type.startsWith("image/")) && (
                   <div className="grid grid-cols-2 gap-1.5 mb-1">
                     {note.files
@@ -496,31 +463,13 @@ export default function NoteCard({
                       .map((file) => (
                         <div
                           key={file.id}
-                          className="relative group/file rounded-lg overflow-hidden border border-border/80 bg-muted/30 aspect-video"
+                          className="relative rounded-lg overflow-hidden border border-border/80 bg-muted/30 aspect-video"
                         >
                           <img
                             src={file.url}
                             alt={file.name}
                             className="w-full h-full object-cover rounded-lg"
                           />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/file:opacity-100 transition-opacity flex items-center justify-between p-1 text-white">
-                            <span className="text-[9px] truncate max-w-[65%] font-medium">
-                              {file.name}
-                            </span>
-                            <div className="flex items-center gap-0.5">
-                              <a
-                                href={file.url}
-                                download={file.name}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-0.5 hover:bg-white/20 rounded cursor-pointer text-white"
-                                title="Download"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Download size={10} />
-                              </a>
-                            </div>
-                          </div>
                         </div>
                       ))}
                   </div>
@@ -530,7 +479,9 @@ export default function NoteCard({
                   .map((file) => (
                     <div
                       key={file.id}
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border bg-muted/40 text-xs"
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      className="flex items-center gap-1.5 px-4 py-4 rounded-lg border border-border bg-white/10 text-sm"
                     >
                       {getFileIcon(file.type, file.name)}
                       <span className="truncate flex-1 font-medium text-[11px]">

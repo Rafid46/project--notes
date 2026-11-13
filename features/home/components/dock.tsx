@@ -156,7 +156,7 @@ export default function Dock({
           isHovered.set(0);
           mouseX.set(Infinity);
         }}
-        className={`${className} flex items-center justify-center gap-4 rounded-full bg-secondary px-4 pl-3 shadow-xs`}
+        className={`${className} flex items-center justify-center gap-4 rounded-full bg-secondary pr-3 pl-2 shadow-xs`}
         style={{ height: panelHeight }}
         role="toolbar"
         aria-label="Application dock"

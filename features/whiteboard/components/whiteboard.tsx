@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { ThinkingOrb } from "thinking-orbs";
 import type { NoteItem, Label } from "@/features/home/types";
 import NoteCard from "@/features/notes/components/NoteCard";
 import MiniMap from "@/components/common/MiniMap";
@@ -18,6 +19,7 @@ const POSITIONS_STORAGE_KEY = "project_notes_card_positions";
 
 interface WhiteboardProps {
   notes?: NoteItem[];
+  isLoading?: boolean;
   selectedNoteId?: string | null;
   onSelectNote?: (noteId: string) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
@@ -39,6 +41,7 @@ interface DragCardState {
 
 export default function Whiteboard({
   notes = [],
+  isLoading = false,
   selectedNoteId,
   onSelectNote,
   onUpdateNote,
@@ -638,6 +641,16 @@ export default function Whiteboard({
           );
         })}
       </div>
+
+      {isLoading && (
+        <div className="absolute inset-0 pl-72 pt-16 flex items-center justify-center pointer-events-none z-20">
+          <ThinkingOrb
+            state="searching"
+            size={64}
+            theme={isDarkCanvas ? "dark" : "light"}
+          />
+        </div>
+      )}
 
       <MiniMap
         notes={allNotes}

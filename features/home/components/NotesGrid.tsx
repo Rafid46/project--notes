@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { ThinkingOrb } from "thinking-orbs";
 import type { NoteItem, ViewMode, Label } from "../types";
 import NoteCard from "@/features/notes/components/NoteCard";
 
 interface NotesGridProps {
   notes: NoteItem[];
   viewMode: ViewMode;
+  isLoading?: boolean;
+  isFetchingNextPage?: boolean;
   onSelectNote: (noteId: string) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
   onDeleteNote?: (noteId: string) => void;
@@ -18,6 +21,8 @@ interface NotesGridProps {
 export default function NotesGrid({
   notes,
   viewMode,
+  isLoading = false,
+  isFetchingNextPage = false,
   onSelectNote,
   onUpdateNote,
   onDeleteNote,
@@ -115,7 +120,11 @@ export default function NotesGrid({
         backgroundSize: "24px 24px",
       }}
     >
-      {viewMode === "masonry" ? (
+      {isLoading ? (
+        <div className="flex h-full min-h-[50vh] w-full items-center justify-center">
+          <ThinkingOrb state="searching" size={64} />
+        </div>
+      ) : viewMode === "masonry" ? (
         renderMasonry()
       ) : (
         <div className={getGridClassName()}>
@@ -129,6 +138,11 @@ export default function NotesGrid({
               className="cursor-pointer w-full"
             />
           ))}
+        </div>
+      )}
+      {isFetchingNextPage && (
+        <div className="flex w-full items-center justify-center py-4">
+          <ThinkingOrb state="searching" size={64} />
         </div>
       )}
       <div ref={sentinelRef} className="h-8 w-full" />

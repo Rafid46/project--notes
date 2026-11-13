@@ -95,6 +95,7 @@ export default function HomeClient() {
 
   const {
     data: notesData,
+    isLoading: isNotesLoading,
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
@@ -547,6 +548,7 @@ export default function HomeClient() {
         {viewMode === "whiteboard" ? (
           <Whiteboard
             notes={displayedNotes}
+            isLoading={isNotesLoading}
             selectedNoteId={selectedNoteId}
             onSelectNote={(id) => {
               setSelectedNoteId(id);
@@ -560,6 +562,8 @@ export default function HomeClient() {
           <NotesGrid
             notes={displayedNotes}
             viewMode={viewMode}
+            isLoading={isNotesLoading}
+            isFetchingNextPage={isFetchingNextPage}
             onSelectNote={(id) => {
               setSelectedNoteId(id);
               openNoteModal(id);
