@@ -55,80 +55,90 @@ export default function Sidebar({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
-    <aside className="absolute top-20 bottom-6 left-6 z-30 flex w-64 flex-col bg-secondary rounded-2xl overflow-hidden py-3">
-      <div className="px-3 mb-2 flex flex-col gap-1">
-        <div
+    <aside
+      aria-label="Workspace sidebar"
+      className="absolute top-21 bottom-6 left-6 z-30 hidden md:flex w-64 flex-col rounded-3xl border border-border/80 bg-background/85 backdrop-blur-md shadow-[0_8px_32px_-12px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_36px_-12px_rgba(0,0,0,0.5)] overflow-hidden p-3"
+    >
+      <div className="flex flex-col gap-1">
+        <button
+          type="button"
           onClick={() => onSelectLabel?.(null)}
-          className={`flex h-[52px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors cursor-pointer ${
+          className={`flex h-10 w-full items-center gap-3 rounded-xl px-3 text-sm transition-colors cursor-pointer ${
             !selectedLabel
-              ? "bg-primary/10 text-primary font-medium hover:bg-primary/20"
-              : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"
+              ? "bg-secondary text-foreground font-semibold shadow-2xs"
+              : "text-muted-foreground font-medium hover:bg-secondary/60 hover:text-foreground"
           }`}
         >
-          <Lightbulb size={20} />
-          <span className="text-sm">Notes</span>
-        </div>
+          <Lightbulb size={17} />
+          <span>All Notes</span>
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 sidebar-scrollbar">
+      <div className="mt-4 mb-1.5 px-3 flex items-center justify-between">
+        <span className="text-[11px] font-semibold uppercase text-muted-foreground/80">
+          Labels
+        </span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto sidebar-scrollbar">
         {isLoading ? (
           <div className="flex flex-col gap-1 py-1">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="flex h-[52px] items-center gap-4 rounded-[10px] pl-4 pr-2 bg-muted/40 animate-pulse"
+                className="flex h-10 items-center gap-3 rounded-xl px-3 bg-muted/40 animate-pulse"
               >
-                <div className="h-3 w-3 shrink-0 rounded-full bg-muted-foreground/20" />
+                <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-muted-foreground/20" />
                 <div
-                  className="h-3.5 rounded-md bg-muted-foreground/20"
+                  className="h-3 rounded-md bg-muted-foreground/20"
                   style={{ width: `${45 + ((i * 12) % 35)}%` }}
                 />
               </div>
             ))}
           </div>
         ) : (
-          <nav className="flex flex-col gap-1">
+          <nav aria-label="Labels" className="flex flex-col gap-0.5">
             {labels.map((label: Label) => {
               const labelId = label.id;
               const isSelected = selectedLabel?.id === labelId;
 
               return (
-                <div key={labelId} className="flex flex-col">
-                  <div
-                    onClick={() => onSelectLabel?.(isSelected ? null : label)}
-                    className={`group flex h-[52px] items-center justify-between rounded-[10px] pl-4 pr-2 transition-colors cursor-pointer ${
-                      isSelected
-                        ? "bg-primary/10 text-primary font-medium hover:bg-primary/20"
-                        : "text-muted-foreground hover:bg-primary/10 hover:text-foreground"
-                    }`}
-                  >
-                    <div className="flex flex-1 h-full items-center gap-4 overflow-hidden text-left text-sm">
-                      <span
-                        className="h-3 w-3 shrink-0 rounded-full"
-                        style={{
-                          backgroundColor: label.color || "currentColor",
-                        }}
-                      />
-                      <span className="truncate">{label.name}</span>
-                    </div>
+                <div
+                  key={labelId}
+                  onClick={() => onSelectLabel?.(isSelected ? null : label)}
+                  className={`group flex h-10 items-center justify-between rounded-xl pl-3 pr-1.5 transition-colors cursor-pointer ${
+                    isSelected
+                      ? "bg-secondary text-foreground font-semibold shadow-2xs"
+                      : "text-muted-foreground font-medium hover:bg-secondary/60 hover:text-foreground"
+                  }`}
+                >
+                  <div className="flex flex-1 h-full items-center gap-3 overflow-hidden text-left text-sm">
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-black/10 dark:ring-white/15"
+                      style={{
+                        backgroundColor: label.color || "currentColor",
+                      }}
+                    />
+                    <span className="truncate">{label.name}</span>
+                  </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onOpenAddNoteWithLabel?.(labelId, label.name, e);
-                            }}
-                            className="transition-all duration-200 ease-in-out hover:scale-105 hover:bg-primary/90 active:scale-95 bg-primary rounded-lg text-primary-foreground flex h-10 w-10 items-center justify-center cursor-pointer shadow-sm"
-                          >
-                            <Plus size={18} />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>Add Note</TooltipContent>
-                      </Tooltip>
-                    </div>
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenAddNoteWithLabel?.(labelId, label.name, e);
+                          }}
+                          aria-label={`Add note to ${label.name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#BBDC12] text-[#004030] shadow-xs transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                        >
+                          <Plus size={15} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Add Note</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               );
@@ -138,14 +148,14 @@ export default function Sidebar({
         )}
       </div>
 
-      <div className="mx-3 mt-2 mb-1 p-2 flex flex-col gap-1 bg-background/50 rounded-[10px]">
-        <div className="flex h-[48px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer font-medium">
-          <Archive size={20} />
-          <span className="text-sm">Archive</span>
+      <div className="mt-2 pt-2 border-t border-border/70 flex flex-col gap-0.5">
+        <div className="flex h-9 items-center gap-3 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground cursor-pointer">
+          <Archive size={16} />
+          <span>Archive</span>
         </div>
-        <div className="flex h-[48px] items-center gap-4 rounded-[10px] pl-4 pr-2 transition-colors text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer font-medium">
-          <Trash2 size={20} />
-          <span className="text-sm">Bin</span>
+        <div className="flex h-9 items-center gap-3 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground cursor-pointer">
+          <Trash2 size={16} />
+          <span>Bin</span>
         </div>
       </div>
     </aside>

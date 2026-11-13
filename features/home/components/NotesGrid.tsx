@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { ThinkingOrb } from "thinking-orbs";
+import { StickyNote } from "lucide-react";
 import type { NoteItem, ViewMode, Label } from "../types";
 import NoteCard from "@/features/notes/components/NoteCard";
 
@@ -113,39 +114,58 @@ export default function NotesGrid({
 
   return (
     <div
-      className="h-full w-full overflow-y-auto pl-80 pt-24 pr-8 pb-8 sidebar-scrollbar"
+      className="h-full w-full overflow-y-auto px-6 md:pl-76 pt-24 pb-10 sidebar-scrollbar"
       style={{
         backgroundImage:
           "radial-gradient(var(--dot-color) 1.5px, transparent 1.5px)",
         backgroundSize: "24px 24px",
       }}
     >
-      {isLoading ? (
-        <div className="flex h-full min-h-[50vh] w-full items-center justify-center">
-          <ThinkingOrb state="searching" size={64} />
-        </div>
-      ) : viewMode === "masonry" ? (
-        renderMasonry()
-      ) : (
-        <div className={getGridClassName()}>
-          {allNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onClick={() => onSelectNote(note.id)}
-              onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
-              onDelete={onDeleteNote}
-              className="cursor-pointer w-full"
-            />
-          ))}
-        </div>
-      )}
-      {isFetchingNextPage && (
-        <div className="flex w-full items-center justify-center py-4">
-          <ThinkingOrb state="searching" size={64} />
-        </div>
-      )}
-      <div ref={sentinelRef} className="h-8 w-full" />
+      <div className="mx-auto w-full max-w-[1600px]">
+        {isLoading ? (
+          <div className="flex h-full min-h-[55vh] w-full items-center justify-center">
+            <ThinkingOrb state="searching" size={64} />
+          </div>
+        ) : allNotes.length === 0 ? (
+          <div className="flex min-h-[55vh] w-full items-center justify-center">
+            <div className="flex max-w-sm flex-col items-center rounded-3xl border border-border/80 bg-background/85 px-8 py-10 text-center shadow-[0_8px_32px_-12px_rgba(0,0,0,0.1)] backdrop-blur-md">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-muted-foreground">
+                <StickyNote size={22} />
+              </div>
+              <h2 className="mt-4 text-base font-semibold text-foreground">
+                {selectedLabel
+                  ? `No notes in "${selectedLabel.name}"`
+                  : "No notes yet"}
+              </h2>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                Use the Note button in the top bar or drop files onto the
+                canvas to create your first note.
+              </p>
+            </div>
+          </div>
+        ) : viewMode === "masonry" ? (
+          renderMasonry()
+        ) : (
+          <div className={getGridClassName()}>
+            {allNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note}
+                onClick={() => onSelectNote(note.id)}
+                onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
+                onDelete={onDeleteNote}
+                className="cursor-pointer w-full"
+              />
+            ))}
+          </div>
+        )}
+        {isFetchingNextPage && (
+          <div className="flex w-full items-center justify-center py-6">
+            <ThinkingOrb state="searching" size={64} />
+          </div>
+        )}
+        <div ref={sentinelRef} className="h-8 w-full" />
+      </div>
     </div>
   );
 }

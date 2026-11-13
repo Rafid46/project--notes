@@ -167,17 +167,17 @@ export default function FolderBar({
       />
 
       {!folderName ? (
-        <div className="flex h-[50px] items-center gap-1.5 rounded-full border border-black/10 bg-white/90 px-2.5 shadow-lg backdrop-blur-md text-xs font-medium text-zinc-700">
+        <div className="flex h-11 items-center gap-1.5 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md text-xs font-medium text-foreground dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
           <button
             type="button"
             onClick={handleOpenClick}
             disabled={isLoading}
-            className="flex h-9 items-center gap-2 rounded-full bg-zinc-900 px-3.5 text-white transition-transform hover:bg-zinc-800 active:scale-95 disabled:opacity-60 cursor-pointer"
+            className="flex h-8 items-center gap-2 rounded-full bg-[#BBDC12] px-3.5 font-semibold text-[#004030] transition-all hover:bg-[#BBDC12]/90 active:scale-95 disabled:opacity-60 cursor-pointer"
           >
             {isLoading ? (
-              <Loader2 size={15} className="animate-spin" />
+              <Loader2 size={14} className="animate-spin" />
             ) : (
-              <FolderOpen size={15} />
+              <FolderOpen size={14} />
             )}
             <span>Open Folder</span>
           </button>
@@ -189,7 +189,7 @@ export default function FolderBar({
                   type="button"
                   onClick={onReconnectSaved}
                   disabled={isLoading}
-                  className="flex h-9 items-center gap-1.5 rounded-full px-3 text-zinc-700 hover:bg-zinc-100 active:scale-95 transition-colors cursor-pointer"
+                  className="flex h-8 items-center gap-1.5 rounded-full px-3 text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95 transition-colors cursor-pointer"
                 >
                   <RotateCw size={13} />
                   <span className="max-w-[140px] truncate">{savedFolderName}</span>
@@ -201,15 +201,15 @@ export default function FolderBar({
         </div>
       ) : (
         <>
-          <div className="flex h-[50px] items-center gap-1 rounded-full border border-black/10 bg-white/90 px-2.5 shadow-lg backdrop-blur-md text-xs font-medium text-zinc-700">
+          <div className="flex h-11 items-center gap-1 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md text-xs font-medium text-foreground dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   onClick={handleOpenClick}
-                  className="flex h-8 items-center gap-1.5 rounded-full px-2.5 font-semibold text-zinc-900 hover:bg-zinc-100 transition-colors cursor-pointer"
+                  className="flex h-8 items-center gap-1.5 rounded-full px-3 font-semibold text-foreground hover:bg-secondary transition-colors cursor-pointer"
                 >
-                  <FolderOpen size={15} className="text-blue-600 shrink-0" />
+                  <FolderOpen size={14} className="text-[#7e9800] dark:text-[#BBDC12] shrink-0" />
                   <span className="max-w-[130px] truncate">{folderName}</span>
                 </button>
               </TooltipTrigger>
@@ -224,7 +224,7 @@ export default function FolderBar({
                     onClick={onRefreshFolder}
                     disabled={isLoading}
                     aria-label="Refresh folder"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                   >
                     <RefreshCw
                       size={14}
@@ -242,7 +242,7 @@ export default function FolderBar({
                   type="button"
                   onClick={onClearFolder}
                   aria-label="Close folder"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-red-600 transition-colors cursor-pointer"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors cursor-pointer"
                 >
                   <X size={14} />
                 </button>
@@ -251,7 +251,7 @@ export default function FolderBar({
             </Tooltip>
           </div>
 
-          <div className="flex h-[50px] items-center gap-1 rounded-full border border-black/10 bg-white/90 px-2 shadow-lg backdrop-blur-md text-xs font-medium text-zinc-700">
+          <div className="flex h-11 items-center gap-0.5 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md text-xs font-medium dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
             {filterTabs.map((tab) => {
               const isActive = activeFilter === tab.id;
               return (
@@ -261,17 +261,17 @@ export default function FolderBar({
                   onClick={() => onFilterChange(tab.id)}
                   className={`flex h-8 items-center gap-1.5 rounded-full px-3 transition-colors cursor-pointer ${
                     isActive
-                      ? "bg-zinc-900 text-white"
-                      : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+                      ? "bg-secondary text-foreground font-semibold shadow-2xs"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                   }`}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
                   <span
-                    className={`rounded-full px-1.5 py-0.2 text-[10px] ${
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] leading-none ${
                       isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-zinc-200/80 text-zinc-600"
+                        ? "bg-foreground text-background font-semibold"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {tab.count}
@@ -281,19 +281,19 @@ export default function FolderBar({
             })}
           </div>
 
-          <div className="flex h-[50px] items-center gap-1 rounded-full border border-black/10 bg-white/90 px-2 shadow-lg backdrop-blur-md text-xs font-medium text-zinc-700">
+          <div className="flex h-11 items-center gap-1 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md text-xs font-medium dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
             <div ref={sortRef} className="relative">
               <button
                 type="button"
                 onClick={() => setIsSortOpen((prev) => !prev)}
-                className="flex h-8 items-center gap-1.5 rounded-full px-3 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
+                className="flex h-8 items-center gap-1.5 rounded-full px-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
               >
                 <ArrowUpDown size={13} />
                 <span>Sort: {activeSortLabel}</span>
               </button>
 
               {isSortOpen && (
-                <div className="absolute bottom-12 left-0 z-50 w-36 rounded-2xl border border-black/10 bg-white/95 p-1.5 shadow-xl backdrop-blur-md">
+                <div className="absolute bottom-12 left-0 z-50 w-36 rounded-2xl border border-border bg-popover/95 p-1.5 shadow-xl backdrop-blur-md">
                   {SORT_OPTIONS.map((opt) => (
                     <button
                       key={opt.id}
@@ -304,8 +304,8 @@ export default function FolderBar({
                       }}
                       className={`flex w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
                         sortBy === opt.id
-                          ? "bg-zinc-100 text-zinc-900"
-                          : "text-zinc-600 hover:bg-zinc-100/70 hover:text-zinc-900"
+                          ? "bg-muted text-foreground"
+                          : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                       }`}
                     >
                       <span>{opt.label}</span>
@@ -316,12 +316,14 @@ export default function FolderBar({
               )}
             </div>
 
+            <span aria-hidden="true" className="h-4 w-px bg-border" />
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   onClick={onArrangeVisible}
-                  className="flex h-8 items-center gap-1.5 rounded-full px-3 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 transition-colors cursor-pointer"
+                  className="flex h-8 items-center gap-1.5 rounded-full px-3 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                 >
                   <LayoutGrid size={13} />
                   <span>Arrange</span>

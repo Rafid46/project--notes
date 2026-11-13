@@ -169,8 +169,8 @@ export default function NoteCard({
         layoutId={`note-${note.id}`}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
         style={note.color ? { backgroundColor: note.color } : style}
-        className={`relative w-full max-w-lg h-[580px] max-h-[90vh] flex flex-col p-6 shadow-2xl rounded-[26px] pointer-events-auto ${
-          note.color ? "" : "bg-gray-200 dark:bg-[#171717]"
+        className={`relative w-full max-w-lg h-[580px] max-h-[90vh] flex flex-col p-6 border border-border/80 shadow-[0_24px_64px_-16px_rgba(0,0,0,0.28)] rounded-3xl pointer-events-auto ${
+          note.color ? "" : "bg-card"
         } ${className}`}
       >
         <div className="flex flex-col space-y-1.5 text-center sm:text-left shrink-0">
@@ -374,19 +374,21 @@ export default function NoteCard({
       }`}
     >
       <div
-        className={`relative w-full h-full transition-[filter] duration-200 ${
+        className={`relative w-full h-full transition-all duration-200 ${
           disableLayoutAnimation ? "" : "hover:-translate-y-0.5"
         } ${
           isSelected
-            ? "drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]"
-            : "hover:drop-shadow-md"
+            ? "drop-shadow-[0_0_10px_rgba(187,220,18,0.45)]"
+            : "hover:drop-shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
         }`}
       >
         <motion.div
           layout={!disableLayoutAnimation}
           layoutId={disableLayoutAnimation ? undefined : `note-${note.id}`}
-          className={`relative rounded-2xl p-5 min-h-40 z-0 transition-colors shadow-xs ${
-            note.color ? "" : "bg-gray-200 dark:bg-[#171717]"
+          className={`relative rounded-2xl border p-5 min-h-40 z-0 transition-colors shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_6px_20px_-8px_rgba(0,0,0,0.45)] ${
+            note.color
+              ? "border-black/10 dark:border-white/15"
+              : "border-border/80 bg-card hover:border-border"
           }`}
           style={note.color ? { backgroundColor: note.color } : undefined}
         >
@@ -398,13 +400,13 @@ export default function NoteCard({
                 href={`/notes/${note.id}`}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
-                className={`absolute top-3 left-3 rounded-lg transition-all duration-200 bg-black/10 p-2 hover:bg-black/30 dark:hover:bg-white/10 z-30 ${
+                className={`absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full border border-border/60 bg-background/75 backdrop-blur-sm text-muted-foreground transition-all duration-200 hover:bg-background hover:text-foreground z-30 ${
                   isToolbarActive
                     ? "opacity-100"
                     : "opacity-0 group-hover:opacity-100"
                 }`}
               >
-                <Fullscreen size={18} />
+                <Fullscreen size={15} />
               </Link>
             </TooltipTrigger>
             <TooltipContent>Open full page</TooltipContent>

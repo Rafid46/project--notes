@@ -142,31 +142,34 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
         backgroundColor: note.color || undefined,
       }}
     >
-      <header className="sticky top-0 z-40 w-full flex items-center justify-between px-6 py-4 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="flex items-center gap-2">
+      <header className="pointer-events-none sticky top-0 z-40 w-full flex items-center justify-between px-6 py-5">
+        <div className="pointer-events-auto flex h-11 items-center gap-1 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                className="flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                 aria-label="Back to notes"
               >
-                <ArrowLeft size={18} />
+                <ArrowLeft size={15} />
+                <span>Back to notes</span>
               </button>
             </TooltipTrigger>
             <TooltipContent>Back to notes</TooltipContent>
           </Tooltip>
+
+          <span aria-hidden="true" className="h-4 w-px bg-border" />
 
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors cursor-pointer"
                 aria-label="Exit fullscreen"
               >
-                <Minimize2 size={18} />
+                <Minimize2 size={15} />
               </button>
             </TooltipTrigger>
             <TooltipContent>Exit full screen</TooltipContent>
@@ -174,123 +177,125 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
         </div>
       </header>
 
-      <article className="flex-1 max-w-4xl w-full mx-auto p-6 md:p-12 !pt-0 flex flex-col gap-6">
-        <div className="flex items-start justify-between gap-6 border-b border-border/40 pb-6">
-          <div className="flex flex-col gap-3 min-w-0 flex-1 pt-5">
-            <h1
-              className="text-2xl md:text-4xl font-bold leading-tight"
-              style={note.textColor ? { color: note.textColor } : undefined}
-            >
-              {note.title}
-            </h1>
-            {(serverData.updatedAt || serverData.createdAt) && (
-              <time
-                dateTime={serverData.updatedAt || serverData.createdAt}
-                className="text-xs text-muted-foreground"
+      <article className="flex-1 max-w-3xl w-full mx-auto px-6 pb-16 pt-2 flex flex-col gap-6">
+        <div className="rounded-3xl border border-border/70 bg-background/75 backdrop-blur-sm p-6 sm:p-10 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.08)] flex flex-col gap-6">
+          <div className="flex items-start justify-between gap-6 border-b border-border/50 pb-6">
+            <div className="flex flex-col gap-3 min-w-0 flex-1">
+              <h1
+                className="text-2xl md:text-4xl font-bold leading-tight"
+                style={note.textColor ? { color: note.textColor } : undefined}
               >
-                Last updated{" "}
-                {new Date(
-                  serverData.updatedAt || serverData.createdAt!,
-                ).toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </time>
-            )}
+                {note.title}
+              </h1>
+              {(serverData.updatedAt || serverData.createdAt) && (
+                <time
+                  dateTime={serverData.updatedAt || serverData.createdAt}
+                  className="text-xs text-muted-foreground"
+                >
+                  Last updated{" "}
+                  {new Date(
+                    serverData.updatedAt || serverData.createdAt!,
+                  ).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </time>
+              )}
+            </div>
+            <NoteLabel note={note} className="shrink-0" />
           </div>
-          <NoteLabel note={note} className="shrink-0" />
-        </div>
 
-        {images.length > 0 && (
-          <section className="flex flex-col gap-4">
-            {images.map((img) => (
-              <ResizableNoteImage key={img.id} file={img} />
-            ))}
+          {images.length > 0 && (
+            <section className="flex flex-col gap-4">
+              {images.map((img) => (
+                <ResizableNoteImage key={img.id} file={img} />
+              ))}
+            </section>
+          )}
+
+          <section
+            className="text-base leading-relaxed whitespace-pre-wrap min-h-32"
+            style={note.textColor ? { color: note.textColor } : undefined}
+          >
+            {note.content}
           </section>
-        )}
 
-        <section
-          className="text-base leading-relaxed whitespace-pre-wrap min-h-32"
-          style={note.textColor ? { color: note.textColor } : undefined}
-        >
-          {note.content}
-        </section>
-
-        {nonImageFiles.length > 0 && (
-          <section className="flex flex-col gap-2 pt-4 border-t border-border/40">
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              Attachments ({nonImageFiles.length})
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {nonImageFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center justify-between p-3 rounded-xl border border-border/60 bg-card shadow-xs"
-                >
-                  <div className="flex items-center gap-2.5 truncate mr-2">
-                    <FileText
-                      size={18}
-                      className="text-muted-foreground shrink-0"
-                    />
-                    <span className="text-xs font-medium truncate">
-                      {file.name}
-                    </span>
+          {nonImageFiles.length > 0 && (
+            <section className="flex flex-col gap-2 pt-4 border-t border-border/50">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                Attachments ({nonImageFiles.length})
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {nonImageFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between p-3 rounded-2xl border border-border/70 bg-card shadow-2xs"
+                  >
+                    <div className="flex items-center gap-2.5 truncate mr-2">
+                      <FileText
+                        size={18}
+                        className="text-muted-foreground shrink-0"
+                      />
+                      <span className="text-xs font-medium truncate">
+                        {file.name}
+                      </span>
+                    </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={file.url}
+                          download={file.name}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                        >
+                          <Download size={15} />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Download file</TooltipContent>
+                    </Tooltip>
                   </div>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <a
-                        href={file.url}
-                        download={file.name}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                      >
-                        <Download size={15} />
-                      </a>
-                    </TooltipTrigger>
-                    <TooltipContent>Download file</TooltipContent>
-                  </Tooltip>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+                ))}
+              </div>
+            </section>
+          )}
 
-        {note.linkPreviews && note.linkPreviews.length > 0 && (
-          <section className="flex flex-col gap-2 pt-4 border-t border-border/40">
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              Link Previews
-            </h2>
-            <div className="flex flex-col gap-2">
-              {note.linkPreviews.map((preview) => (
-                <LinkPreviewCard key={preview.url} preview={preview} />
-              ))}
-            </div>
-          </section>
-        )}
+          {note.linkPreviews && note.linkPreviews.length > 0 && (
+            <section className="flex flex-col gap-2 pt-4 border-t border-border/50">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                Link Previews
+              </h2>
+              <div className="flex flex-col gap-2">
+                {note.linkPreviews.map((preview) => (
+                  <LinkPreviewCard key={preview.url} preview={preview} />
+                ))}
+              </div>
+            </section>
+          )}
 
-        {note.subNotes && note.subNotes.length > 0 && (
-          <section className="flex flex-col gap-2 pt-4 border-t border-border/40">
-            <h2 className="text-sm font-semibold text-muted-foreground">
-              Subnotes ({note.subNotes.length})
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {note.subNotes.map((sub) => (
-                <Link
-                  key={sub.id}
-                  href={`/notes/${sub.id}`}
-                  className="p-4 rounded-xl border border-border/60 bg-card hover:border-primary/50 transition-colors shadow-xs"
-                >
-                  <h3 className="text-sm font-semibold mb-1">{sub.title}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {sub.content}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+          {note.subNotes && note.subNotes.length > 0 && (
+            <section className="flex flex-col gap-2 pt-4 border-t border-border/50">
+              <h2 className="text-sm font-semibold text-muted-foreground">
+                Subnotes ({note.subNotes.length})
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {note.subNotes.map((sub) => (
+                  <Link
+                    key={sub.id}
+                    href={`/notes/${sub.id}`}
+                    className="p-4 rounded-2xl border border-border/70 bg-card hover:border-foreground/30 transition-colors shadow-2xs"
+                  >
+                    <h3 className="text-sm font-semibold mb-1">{sub.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {sub.content}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       </article>
     </main>
   );

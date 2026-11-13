@@ -196,11 +196,11 @@ export default function SettingsModal({
               stiffness: 280,
               mass: 0.8,
             }}
-            className="fixed top-6 right-6 z-50 h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)] rounded-2xl border border-border bg-popover p-6 text-popover-foreground shadow-2xl flex flex-col overflow-hidden origin-top-right"
+            className="fixed top-5 right-6 z-50 h-[calc(100vh-40px)] w-[400px] max-w-[calc(100vw-48px)] rounded-3xl border border-border/80 bg-popover/95 backdrop-blur-md p-6 text-popover-foreground shadow-2xl flex flex-col overflow-hidden origin-top-right"
           >
             <div className="flex items-center justify-between pb-4 border-b border-border/60">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#BBDC12]/25 text-[#495a00] dark:text-[#BBDC12]">
                   <Sliders size={16} />
                 </div>
                 <div>
@@ -213,10 +213,10 @@ export default function SettingsModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
-                <span>close</span>
-                <div className="bg-muted text-foreground hover:bg-muted/80 p-1.5 rounded-full flex items-center justify-center transition-colors">
+                <span>Close</span>
+                <div className="bg-secondary text-foreground hover:bg-muted p-1.5 rounded-full flex items-center justify-center transition-colors">
                   <X size={14} strokeWidth={2.5} />
                 </div>
               </button>
@@ -225,7 +225,7 @@ export default function SettingsModal({
             <div className="flex-1 overflow-y-auto mt-4 pr-1 flex flex-col gap-5 sidebar-scrollbar">
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-2">
-                  <Monitor size={14} className="text-blue-500" />
+                  <Monitor size={14} className="text-muted-foreground" />
                   <span>Default View Layout</span>
                 </label>
                 <p className="text-xs text-muted-foreground leading-relaxed">
@@ -262,7 +262,7 @@ export default function SettingsModal({
 
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-2">
-                  <MousePointer size={14} className="text-blue-500" />
+                  <MousePointer size={14} className="text-muted-foreground" />
                   <span>Mouse Dragging Keybinding (Canvas Pan)</span>
                 </label>
                 <p className="text-xs text-muted-foreground leading-relaxed">
@@ -302,7 +302,7 @@ export default function SettingsModal({
 
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-2">
-                  <ZoomIn size={14} className="text-blue-500" />
+                  <ZoomIn size={14} className="text-muted-foreground" />
                   <span>Mouse Wheel Zoom Trigger</span>
                 </label>
                 <p className="text-xs text-muted-foreground leading-relaxed">
@@ -395,7 +395,7 @@ export default function SettingsModal({
                       e.target.checked
                     )
                   }
-                  className="h-4 w-4 rounded border-border accent-blue-500 cursor-pointer"
+                  className="h-4 w-4 rounded border-border accent-[#004030] dark:accent-[#BBDC12] cursor-pointer"
                 />
               </div>
 

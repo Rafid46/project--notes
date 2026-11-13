@@ -47,27 +47,29 @@ export default function LabelManagerModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-md p-6 !rounded-[20px]"
-        overlayClassName="bg-black/15 !backdrop-blur-[5px]"
+        className="max-w-md p-6 !rounded-3xl border border-border/80 bg-popover/95 backdrop-blur-md shadow-2xl"
+        overlayClassName="bg-black/30 !backdrop-blur-xs"
       >
         <DialogHeader className="flex flex-row items-center justify-between space-y-0">
-          <div className="flex items-center gap-2">
-            <Tag size={20} className="mt-1" />
-            <DialogTitle>Manage Labels</DialogTitle>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#BBDC12]/25 text-[#495a00] dark:text-[#BBDC12]">
+              <Tag size={16} />
+            </div>
+            <DialogTitle className="text-sm font-semibold">Manage Labels</DialogTitle>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </DialogHeader>
 
         <form
           onSubmit={handleCreateLabel}
-          className="relative flex items-center bg-background border border-border rounded-full pl-4 pr-2 py-2 text-sm"
+          className="relative flex items-center bg-background border border-border rounded-full pl-4 pr-1.5 py-1.5 text-sm"
         >
           <Input
             type="text"
@@ -79,7 +81,7 @@ export default function LabelManagerModal({
           <button
             type="submit"
             disabled={createLabel.isPending || !newLabelName.trim()}
-            className="flex items-center justify-center gap-1 bg-primary text-primary-foreground px-3.5 py-1.5 rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer text-xs font-medium"
+            className="flex items-center justify-center gap-1 bg-[#BBDC12] text-[#004030] px-3.5 py-1.5 rounded-full hover:bg-[#BBDC12]/90 transition-all disabled:opacity-50 cursor-pointer text-xs font-semibold shrink-0"
           >
             <Plus size={14} />
             Create

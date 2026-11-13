@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useClerk } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles, Layers, FolderOpen } from "lucide-react";
 
 export default function LoginModal() {
   const clerk = useClerk();
@@ -31,25 +31,38 @@ export default function LoginModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 select-none pointer-events-auto">
-      <div className="w-full max-w-4xl rounded-3xl border border-border/80 bg-card text-card-foreground shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 select-none pointer-events-auto">
+      <div className="w-full max-w-4xl rounded-3xl border border-border/80 bg-card text-card-foreground shadow-[0_28px_80px_-18px_rgba(0,0,0,0.35)] overflow-hidden grid grid-cols-1 md:grid-cols-2">
         <div className="flex flex-col justify-between p-8 sm:p-10 bg-card">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
-              Where your thoughts take shape
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              Your personal workspace to capture ideas, organize notes, and think
-              freely on the whiteboard. Connect with Google in one click to get started.
+            <div className="mb-8 flex items-center">
+              <Image
+                src="/assets/hane.png"
+                alt="Hane Notes"
+                width={92}
+                height={36}
+                className="h-7 w-auto object-contain rounded-md"
+              />
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-bold leading-tight text-foreground">
+              Where your thoughts{" "}
+              <span className="inline-block rounded-lg bg-[#BBDC12] px-2 py-0.5 text-[#004030]">
+                take shape
+              </span>
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+              Your personal spatial studio to capture ideas, arrange notes on an
+              infinite canvas, and organize local folders without friction.
             </p>
           </div>
 
-          <div className="my-8 flex flex-col gap-4">
+          <div className="my-8 flex flex-col gap-3">
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={isLoading || !clerk.loaded}
-              className="w-full h-12 flex items-center justify-center gap-3 rounded-2xl border border-border bg-background hover:bg-muted/80 text-foreground font-medium text-sm transition-all shadow-xs hover:shadow-md cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 flex items-center justify-center gap-3 rounded-full border border-border bg-background hover:bg-secondary text-foreground font-semibold text-sm transition-all shadow-xs hover:shadow-md cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <Loader2
@@ -87,9 +100,31 @@ export default function LoginModal() {
               </p>
             )}
           </div>
+
+          <div className="flex flex-wrap items-center gap-4 border-t border-border/60 pt-5 text-[11px] font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Layers size={13} />
+              Spatial whiteboard
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <FolderOpen size={13} />
+              Local folder board
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Sparkles size={13} />
+              Instant sync
+            </span>
+          </div>
         </div>
 
-        <div className="hidden md:flex p-6 bg-gradient-to-br from-[#8ba0fd]/25 via-purple-600/15 to-[#6d5fc2]/30 items-center justify-center border-l border-border/40">
+        <div
+          className="hidden md:flex p-8 items-center justify-center border-l border-border/60 bg-secondary/40"
+          style={{
+            backgroundImage:
+              "radial-gradient(var(--dot-color) 1.5px, transparent 1.5px)",
+            backgroundSize: "20px 20px",
+          }}
+        >
           <div className="relative w-full h-full min-h-[400px] flex items-center justify-center">
             <Image
               src="/assets/login-illustration.png"

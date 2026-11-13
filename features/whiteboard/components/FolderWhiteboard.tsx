@@ -795,41 +795,47 @@ export default function FolderWhiteboard() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-background text-foreground">
-      <header className="absolute top-6 inset-x-0 z-30 flex items-center justify-between px-6 pointer-events-none">
-        <div className="flex items-center pointer-events-auto">
-          <Link href="/" className="flex h-10 items-center gap-2.5 pb-4 px-4">
+      <header className="pointer-events-none absolute top-5 inset-x-0 z-30 flex items-center justify-between gap-3 px-6">
+        <div className="pointer-events-auto flex shrink-0 items-center">
+          <Link
+            href="/"
+            aria-label="Hane Notes Home"
+            className="flex h-12 items-center px-2 transition-opacity hover:opacity-80"
+          >
             <Image
               src="/assets/hane.png"
               alt="Logo"
-              width={104}
-              height={44}
-              className="object-contain w-auto h-auto rounded-lg"
+              width={92}
+              height={36}
+              priority
+              className="h-7 w-auto object-contain rounded-md"
             />
           </Link>
         </div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-auto">
+        <nav
+          aria-label="Folder board navigation"
+          className="pointer-events-auto flex h-12 min-w-0 items-center gap-1 rounded-full border border-border/80 bg-background/85 p-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]"
+        >
           <div
-            className={`group relative flex h-[52px] items-center justify-start rounded-full bg-secondary shadow-xs transition-all duration-300 ${
-              searchQuery ? "w-64" : "hover:w-64 focus-within:w-64 w-[52px]"
+            className={`group relative flex h-9 items-center rounded-full bg-secondary/75 transition-[width] duration-200 ${
+              searchQuery
+                ? "w-48 sm:w-56"
+                : "w-9 sm:w-44 focus-within:w-56"
             } overflow-hidden`}
           >
-            <button
-              type="button"
-              aria-label="Search files"
-              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Search size={18} />
-            </button>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors group-focus-within:text-foreground">
+              <Search size={15} />
+            </span>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search folder files..."
-              className={`h-full w-full bg-transparent px-2 pr-8 text-sm text-foreground placeholder-muted-foreground outline-none transition-opacity duration-300 ${
+              className={`h-full w-full min-w-0 bg-transparent pr-8 text-xs text-foreground placeholder:text-muted-foreground outline-none transition-opacity duration-200 ${
                 searchQuery
                   ? "opacity-100"
-                  : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+                  : "opacity-0 sm:opacity-100 group-focus-within:opacity-100"
               }`}
             />
             {searchQuery && (
@@ -837,32 +843,37 @@ export default function FolderWhiteboard() {
                 type="button"
                 onClick={() => setSearchQuery("")}
                 aria-label="Clear search"
-                className="absolute right-3 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="absolute right-2.5 text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
               >
-                <X size={15} />
+                <X size={14} />
               </button>
             )}
           </div>
 
-          <nav className="flex h-[52px] items-center gap-1 rounded-full bg-secondary p-1.5 shadow-xs">
+          <span
+            aria-hidden="true"
+            className="mx-1 h-4 w-px shrink-0 bg-border"
+          />
+
+          <div className="flex items-center gap-0.5">
             <Link
               href="/"
-              className="inline-flex h-full items-center gap-2 rounded-full px-4 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+              className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-secondary/50 hover:text-foreground"
             >
               <ArrowLeft size={14} />
               <span>Notes</span>
             </Link>
-            <span className="inline-flex h-full items-center gap-2 rounded-full bg-background px-4 text-xs font-semibold text-foreground shadow-xs">
+            <span className="flex h-9 items-center gap-1.5 rounded-full bg-secondary px-3 text-xs font-semibold text-foreground whitespace-nowrap shadow-xs">
               <FolderOpen size={14} />
               <span>Folder Board</span>
             </span>
-          </nav>
-        </div>
+          </div>
+        </nav>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+        <div className="pointer-events-auto flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
           <ThemeToggle />
           <motion.button
-            whileHover={{ scale: 1.08 }}
+            whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
             type="button"
             onClick={() => setIsSettingsOpen(true)}
@@ -944,7 +955,7 @@ export default function FolderWhiteboard() {
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-6">
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="pointer-events-auto flex max-w-md flex-col items-center rounded-3xl border border-black/10 bg-white/90 p-8 text-center shadow-xl backdrop-blur-md text-zinc-900"
+              className="pointer-events-auto flex max-w-md flex-col items-center rounded-3xl border border-border/80 bg-background/85 p-8 text-center shadow-[0_20px_56px_-16px_rgba(0,0,0,0.18)] backdrop-blur-md text-foreground dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6)]"
             >
               <input
                 ref={emptyFallbackInputRef}
@@ -958,13 +969,13 @@ export default function FolderWhiteboard() {
                   e.target.value = "";
                 }}
               />
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-sm">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#BBDC12] text-[#004030] shadow-xs">
                 <FolderOpen size={26} />
               </div>
               <h1 className="text-lg font-semibold">
                 Inspiration Folder Whiteboard
               </h1>
-              <p className="mt-1.5 text-sm text-zinc-600">
+              <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
                 Select a folder from your device to arrange, resize, filter, and
                 sort images, videos, and files freely on an infinite canvas.
               </p>
@@ -973,7 +984,7 @@ export default function FolderWhiteboard() {
                   type="button"
                   onClick={handleEmptyOpenClick}
                   disabled={isLoadingFolder}
-                  className="inline-flex h-10 items-center gap-2 rounded-full bg-zinc-900 px-5 text-sm font-medium text-white transition-transform hover:bg-zinc-800 active:scale-95 disabled:opacity-60 cursor-pointer"
+                  className="inline-flex h-10 items-center gap-2 rounded-full bg-[#BBDC12] px-5 text-sm font-semibold text-[#004030] transition-all hover:bg-[#BBDC12]/90 active:scale-95 disabled:opacity-60 cursor-pointer"
                 >
                   <FolderOpen size={16} />
                   <span>Open Folder</span>
@@ -983,7 +994,7 @@ export default function FolderWhiteboard() {
                     type="button"
                     onClick={handleReconnectSaved}
                     disabled={isLoadingFolder}
-                    className="inline-flex h-10 items-center gap-2 rounded-full border border-black/10 bg-white px-4 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 cursor-pointer"
+                    className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-secondary px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted cursor-pointer"
                   >
                     <RotateCw size={15} />
                     <span className="max-w-[160px] truncate">

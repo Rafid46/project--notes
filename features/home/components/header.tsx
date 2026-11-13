@@ -233,7 +233,7 @@ export default function Header({
           <Link
             href="/"
             aria-label="Hane Notes Home"
-            className="flex h-12 items-center rounded-full border border-border/80 bg-background/85 px-4 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md transition-opacity hover:opacity-80 dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]"
+            className="flex h-12 items-center px-2 transition-opacity hover:opacity-80"
           >
             <Image
               src="/assets/hane.png"
