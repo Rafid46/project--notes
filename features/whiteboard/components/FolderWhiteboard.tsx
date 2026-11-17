@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FolderOpen } from "lucide-react";
 import MiniMap from "@/components/common/MiniMap";
-import Header from "@/features/home/components/Header";
+import Header from "@/features/home/components/header";
 import {
   getSavedWhiteboardSettings,
   SETTINGS_CHANGE_EVENT,

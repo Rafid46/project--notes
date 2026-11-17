@@ -10,7 +10,7 @@ import LoginModal from "@/features/auth/components/LoginModal";
 
 import NotesGrid from "./NotesGrid";
 import CreateNotePopover from "../../notes/components/CreateNotePopover";
-import type { NoteItem, ViewMode, NoteFile, Label } from "../types";
+import type { NoteItem, ViewMode, Label } from "../types";
 
 import { getSavedDefaultView, SETTINGS_CHANGE_EVENT } from "./SettingsModal";
 import {
@@ -18,21 +18,21 @@ import {
   extractUrls,
   findNoteById,
   getActiveNote,
-  getLinkPreview,
   updateNoteInState,
 } from "@/features/notes/utils/link-preview";
 import { processDroppedFiles } from "@/features/notes/utils/file-handler";
 
-import Sidebar from "./Sidebar";
+import Sidebar from "./sidebar";
 
 import { useNoteModalStore } from "@/store/useNoteModalStore";
-import Header from "./Header";
-import Whiteboard from "@/features/whiteboard/components/Whiteboard";
+
+import Whiteboard from "@/features/whiteboard/components/whiteboard";
 import AiChatDrawer from "@/features/ai/components/AiChatDrawer";
 import {
   mapBackendNoteToNoteItem,
   type BackendNoteItem,
 } from "@/features/notes/utils/note-content";
+import Header from "./header";
 
 export default function HomeClient() {
   const { isSignedIn } = useAppUser();
@@ -174,7 +174,9 @@ export default function HomeClient() {
   useEffect(() => {
     setViewMode(getSavedDefaultView());
     try {
-      const nextView = sessionStorage.getItem("project_notes_next_view") as ViewMode | null;
+      const nextView = sessionStorage.getItem(
+        "project_notes_next_view",
+      ) as ViewMode | null;
       if (nextView) {
         sessionStorage.removeItem("project_notes_next_view");
         setViewMode(nextView);
@@ -314,7 +316,13 @@ export default function HomeClient() {
 
     window.addEventListener("paste", handleGlobalPaste);
     return () => window.removeEventListener("paste", handleGlobalPaste);
-  }, [popoverConfig.isOpen, isNoteModalOpen, closeNoteModal, isSignedIn, notes.length]);
+  }, [
+    popoverConfig.isOpen,
+    isNoteModalOpen,
+    closeNoteModal,
+    isSignedIn,
+    notes.length,
+  ]);
 
   const prevIsNoteModalOpen = useRef(isNoteModalOpen);
   useEffect(() => {
@@ -429,11 +437,22 @@ export default function HomeClient() {
     ) {
       registerChange(noteId, {
         title: updates.title !== undefined ? updates.title : existing?.title,
-        content: updates.content !== undefined ? updates.content : existing?.content,
-        category: updates.category !== undefined ? updates.category : existing?.category,
-        labelId: updates.labelId !== undefined ? updates.labelId : existing?.labelId,
-        labels: updates.labels !== undefined ? updates.labels : existing?.labels,
-        background: updates.color !== undefined ? updates.color : (updates.background !== undefined ? updates.background : existing?.color),
+        content:
+          updates.content !== undefined ? updates.content : existing?.content,
+        category:
+          updates.category !== undefined
+            ? updates.category
+            : existing?.category,
+        labelId:
+          updates.labelId !== undefined ? updates.labelId : existing?.labelId,
+        labels:
+          updates.labels !== undefined ? updates.labels : existing?.labels,
+        background:
+          updates.color !== undefined
+            ? updates.color
+            : updates.background !== undefined
+              ? updates.background
+              : existing?.color,
         attachments:
           updates.files !== undefined
             ? updates.files.map((f) => ({
@@ -483,7 +502,9 @@ export default function HomeClient() {
         (sub) =>
           sub.labelId === targetId ||
           sub.category?.toLowerCase() === targetName ||
-          sub.labels?.some((l) => l.toLowerCase() === targetName || l === targetId),
+          sub.labels?.some(
+            (l) => l.toLowerCase() === targetName || l === targetId,
+          ),
       );
       return (
         matchesLabelId ||
