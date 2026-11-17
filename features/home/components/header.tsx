@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -17,6 +18,7 @@ import {
   Tag,
   PenLine,
   FolderOpen,
+  Sparkles,
   X,
 } from "lucide-react";
 
@@ -38,6 +40,8 @@ interface HeaderProps {
   onSelectView: (view: ViewMode) => void;
   activeNoteTitle?: string;
   onOpenAddNote?: (e: React.MouseEvent) => void;
+  onOpenAiChat?: () => void;
+  isAiChatOpen?: boolean;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
   notesCount?: number;
@@ -116,6 +120,8 @@ export default function Header({
   currentView,
   onSelectView,
   onOpenAddNote,
+  onOpenAiChat,
+  isAiChatOpen = false,
   searchQuery = "",
   onSearchChange,
   notesCount,
@@ -147,7 +153,9 @@ export default function Header({
     return () => window.removeEventListener("keydown", handleShortcut);
   }, []);
 
-  const isGridActive = currentView.startsWith("grid-");
+  const pathname = usePathname();
+  const isFolderBoard = pathname === "/board";
+  const isGridActive = !isFolderBoard && currentView.startsWith("grid-");
 
   useEffect(() => {
     if (isGridActive) {
@@ -216,13 +224,13 @@ export default function Header({
       id: "whiteboard",
       label: "Whiteboard",
       icon: <Presentation size={15} />,
-      isActive: currentView === "whiteboard",
+      isActive: !isFolderBoard && currentView === "whiteboard",
     },
     {
       id: "masonry",
       label: "Gallery",
       icon: <LayoutGrid size={15} />,
-      isActive: currentView === "masonry",
+      isActive: !isFolderBoard && currentView === "masonry",
     },
   ];
 
@@ -246,15 +254,16 @@ export default function Header({
           </Link>
         </div>
 
-        <nav
-          aria-label="Workspace navigation"
-          className="pointer-events-auto flex h-12 min-w-0 items-center gap-1 rounded-full border border-border/80 bg-background/85 p-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]"
-        >
+        <div className="pointer-events-auto flex min-w-0 items-center gap-2.5">
+          <nav
+            aria-label="Workspace navigation"
+            className="flex h-12 min-w-0 items-center gap-1 rounded-full border border-border/80 bg-background/85 p-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]"
+          >
           <div
             className={`group relative flex h-9 items-center rounded-full bg-secondary/75 transition-[width] duration-200 ${
               searchQuery
-                ? "w-48 sm:w-56"
-                : "w-9 sm:w-40 focus-within:w-52"
+                ? "w-40 sm:w-48 xl:w-56"
+                : "w-9 sm:w-32 xl:w-40 focus-within:w-48"
             } overflow-hidden`}
           >
             <button
@@ -375,7 +384,7 @@ export default function Header({
                   className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 >
                   <Tag size={15} />
-                  <span className="hidden lg:inline">Labels</span>
+                  <span className="hidden xl:inline">Labels</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent>Manage labels</TooltipContent>
@@ -386,31 +395,69 @@ export default function Header({
                 <Link
                   href="/board"
                   aria-label="Open Folder Whiteboard"
-                  className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-current={isFolderBoard ? "page" : undefined}
+                  className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    isFolderBoard
+                      ? "text-foreground font-semibold"
+                      : "text-muted-foreground font-medium hover:bg-secondary/70 hover:text-foreground"
+                  }`}
                 >
-                  <FolderOpen size={15} />
-                  <span className="hidden lg:inline">Folder Board</span>
+                  {isFolderBoard && (
+                    <motion.span
+                      layoutId="header-active-view"
+                      transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 rounded-full bg-secondary shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <FolderOpen size={15} />
+                    <span className="hidden xl:inline">Folder Board</span>
+                  </span>
                 </Link>
               </TooltipTrigger>
               <TooltipContent>Folder Board</TooltipContent>
             </Tooltip>
 
-            <Button
-              type="button"
-              onClick={onOpenAddNote}
-              aria-label="Add Note"
-              className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-[#BBDC12] px-4 text-xs font-semibold text-[#004030] shadow-xs transition-all duration-200 hover:bg-[#BBDC12]/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-            >
-              <PenLine size={15} />
-              <span>Note</span>
-              {typeof notesCount === "number" && notesCount >= 5 && (
-                <span className="rounded-full bg-[#004030]/15 px-1.5 py-0.5 text-[10px] font-semibold">
-                  {notesCount}/5
-                </span>
-              )}
-            </Button>
+            {onOpenAiChat && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onOpenAiChat}
+                    aria-label="AI Note Assistant"
+                    aria-pressed={isAiChatOpen}
+                    className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer ${
+                      isAiChatOpen
+                        ? "bg-secondary text-foreground font-semibold shadow-2xs"
+                        : "text-muted-foreground font-medium hover:bg-secondary/70 hover:text-foreground"
+                    }`}
+                  >
+                    <Sparkles size={15} />
+                    <span className="hidden xl:inline">AI Notes</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>AI Note Assistant (⌘J)</TooltipContent>
+              </Tooltip>
+            )}
+
           </div>
         </nav>
+
+        <Button
+          type="button"
+          onClick={onOpenAddNote}
+          aria-label="Add Note"
+          className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[#BBDC12] px-5 text-xs font-semibold text-[#004030] shadow-[0_4px_24px_-8px_rgba(0,0,0,0.18)] transition-all duration-200 hover:bg-[#BBDC12]/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+        >
+          <PenLine size={16} />
+          <span>Note</span>
+          {typeof notesCount === "number" && notesCount >= 5 && (
+            <span className="rounded-full bg-[#004030]/15 px-1.5 py-0.5 text-[10px] font-semibold">
+              {notesCount}/5
+            </span>
+          )}
+        </Button>
+      </div>
 
         <div className="pointer-events-auto flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
           <ThemeToggle />
@@ -485,7 +532,7 @@ export default function Header({
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onDefaultViewChange={onSelectView}
+        onDefaultViewChange={isFolderBoard ? undefined : onSelectView}
       />
 
       <LabelManagerModal

@@ -10,6 +10,13 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
+    if (config.data instanceof FormData) {
+      if (config.headers.delete) {
+        config.headers.delete("Content-Type");
+      } else {
+        delete config.headers["Content-Type"];
+      }
+    }
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("accessToken");
       if (token) {

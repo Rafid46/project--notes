@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { ThinkingOrb } from "thinking-orbs";
 import type { NoteItem, Label } from "@/features/home/types";
+import EmptyNotesState from "@/features/home/components/EmptyNotesState";
 import NoteCard from "@/features/notes/components/NoteCard";
 import MiniMap from "@/components/common/MiniMap";
 import {
@@ -22,6 +23,7 @@ interface WhiteboardProps {
   isLoading?: boolean;
   selectedNoteId?: string | null;
   onSelectNote?: (noteId: string) => void;
+  onOpenAddNote?: (e: React.MouseEvent) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
   onDeleteNote?: (noteId: string) => void;
   selectedLabel?: Label | null;
@@ -44,6 +46,7 @@ export default function Whiteboard({
   isLoading = false,
   selectedNoteId,
   onSelectNote,
+  onOpenAddNote,
   onUpdateNote,
   onDeleteNote,
   selectedLabel,
@@ -244,7 +247,7 @@ export default function Whiteboard({
         (settings.wheelZoomMode === "alt" && e.altKey);
 
       if (isZoomModifier) {
-        const dir = settings.invertZoom ? 1 : -1;
+        const dir = settings.invertZoom ? -1 : 1;
         const zoomFactor = Math.exp(
           dir * -e.deltaY * 0.0025 * (settings.zoomStep / 1.2),
         );
@@ -648,6 +651,15 @@ export default function Whiteboard({
             state="searching"
             size={64}
             theme={isDarkCanvas ? "dark" : "light"}
+          />
+        </div>
+      )}
+
+      {!isLoading && allNotes.length === 0 && (
+        <div className="absolute inset-0 md:pl-72 lg:pl-0 flex items-center justify-center pointer-events-none z-20 p-6">
+          <EmptyNotesState
+            selectedLabel={selectedLabel}
+            onGetStarted={onOpenAddNote}
           />
         </div>
       )}

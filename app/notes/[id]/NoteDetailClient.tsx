@@ -13,6 +13,7 @@ import { useNoteById } from "@/features/notes/hooks/useNotes";
 import NoteLabel from "@/features/notes/components/NoteLabel";
 import LinkPreviewCard from "@/features/notes/components/LinkPreviewCard";
 import ResizableNoteImage from "@/features/notes/components/ResizableNoteImage";
+import { formatNoteContentToText } from "@/features/notes/utils/note-content";
 import type { NoteItem, NoteFile } from "@/features/home/types";
 import {
   Tooltip,
@@ -102,12 +103,7 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
   const note: NoteItem = {
     id: serverData.id,
     title: serverData.title || "Untitled",
-    content:
-      typeof serverData.content === "string"
-        ? serverData.content
-        : serverData.content
-          ? JSON.stringify(serverData.content)
-          : serverData.plainText || "",
+    content: formatNoteContentToText(serverData.content, serverData.plainText),
     parentId: serverData.parentId ?? null,
     labelId: serverData.labelId ?? null,
     labels: Array.isArray(serverData.labels)
@@ -179,10 +175,10 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
 
       <article className="flex-1 max-w-3xl w-full mx-auto px-6 pb-16 pt-2 flex flex-col gap-6">
         <div className="rounded-3xl border border-border/70 bg-background/75 backdrop-blur-sm p-6 sm:p-10 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.08)] flex flex-col gap-6">
-          <div className="flex items-start justify-between gap-6 border-b border-border/50 pb-6">
-            <div className="flex flex-col gap-3 min-w-0 flex-1">
+          <div className="flex flex-col gap-4 border-b border-border/50 pb-6">
+            <div className="flex flex-col gap-2">
               <h1
-                className="text-2xl md:text-4xl font-bold leading-tight"
+                className="text-2xl md:text-3xl font-bold leading-snug break-words"
                 style={note.textColor ? { color: note.textColor } : undefined}
               >
                 {note.title}
@@ -203,7 +199,7 @@ export default function NoteDetailClient({ id }: NoteDetailClientProps) {
                 </time>
               )}
             </div>
-            <NoteLabel note={note} className="shrink-0" />
+            <NoteLabel note={note} variant="inline" />
           </div>
 
           {images.length > 0 && (

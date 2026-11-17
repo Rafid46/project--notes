@@ -42,7 +42,7 @@ export default function BottomToolbar({
   return (
     <div
       className={
-        className || "fixed bottom-5 right-5 z-50 flex items-center gap-2"
+        className || "fixed bottom-5 right-5 z-30 flex items-center gap-2"
       }
     >
       <div className="flex h-11 items-center gap-0.5 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md text-xs font-medium text-muted-foreground dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">

@@ -21,3 +21,7 @@ export const NOTES = {
   update: (id: string) => `/api/notes/update-note/${id}`,
   delete: (id: string) => `/api/notes/delete-note/${id}`,
 };
+
+export const AI = {
+  convert: "/api/ai/convert",
+};

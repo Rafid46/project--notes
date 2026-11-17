@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Plus, Lightbulb, Archive, Trash2 } from "lucide-react";
+import { Plus, Lightbulb, Archive, Trash2, Tag } from "lucide-react";
 import type { NoteItem, Label } from "../types";
 import { useInfiniteLabels } from "@/features/notes/hooks/useLabels";
 import {
@@ -95,6 +95,18 @@ export default function Sidebar({
                 />
               </div>
             ))}
+          </div>
+        ) : labels.length === 0 ? (
+          <div className="my-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-secondary/30 px-4 py-5 text-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#BBDC12]/25 text-[#495a00] dark:text-[#BBDC12]">
+              <Tag size={15} />
+            </div>
+            <p className="mt-2 text-xs font-semibold text-foreground">
+              No labels yet
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+              Organize your notes by adding labels from the Labels menu above.
+            </p>
           </div>
         ) : (
           <nav aria-label="Labels" className="flex flex-col gap-0.5">

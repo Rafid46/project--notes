@@ -10,7 +10,7 @@ import LoginModal from "@/features/auth/components/LoginModal";
 
 import NotesGrid from "./NotesGrid";
 import CreateNotePopover from "../../notes/components/CreateNotePopover";
-import type { NoteItem, ViewMode, NoteFile, LinkPreviewMetadata, Label } from "../types";
+import type { NoteItem, ViewMode, NoteFile, Label } from "../types";
 
 import { getSavedDefaultView, SETTINGS_CHANGE_EVENT } from "./SettingsModal";
 import {
@@ -28,38 +28,11 @@ import Sidebar from "./Sidebar";
 import { useNoteModalStore } from "@/store/useNoteModalStore";
 import Header from "./Header";
 import Whiteboard from "@/features/whiteboard/components/Whiteboard";
-
-interface BackendAttachment {
-  id?: string;
-  fileName?: string;
-  mimeType?: string;
-  storageKey?: string;
-  name?: string;
-  type?: string;
-  url?: string;
-  size?: number;
-}
-
-interface BackendNoteItem {
-  id: string;
-  title: string;
-  content: unknown;
-  plainText?: string;
-  parentId?: string | null;
-  labelId?: string | null;
-  boardX?: number | null;
-  boardY?: number | null;
-  labels?: string[];
-  background?: string;
-  color?: string;
-  textColor?: string;
-  category?: string | null;
-  children?: NoteItem[];
-  label?: { id: string; name: string };
-  attachments?: BackendAttachment[];
-  files?: BackendAttachment[];
-  linkPreviews?: LinkPreviewMetadata[];
-}
+import AiChatDrawer from "@/features/ai/components/AiChatDrawer";
+import {
+  mapBackendNoteToNoteItem,
+  type BackendNoteItem,
+} from "@/features/notes/utils/note-content";
 
 export default function HomeClient() {
   const { isSignedIn } = useAppUser();
@@ -77,6 +50,18 @@ export default function HomeClient() {
   const dragCounterRef = useRef<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+
+  useEffect(() => {
+    const handleAiShortcut = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        setIsAiChatOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleAiShortcut);
+    return () => window.removeEventListener("keydown", handleAiShortcut);
+  }, []);
 
   useEffect(() => {
     if (!limitNotice) return;
@@ -107,43 +92,10 @@ export default function HomeClient() {
 
   useEffect(() => {
     if (notesData?.pages) {
-      const allFetchedNotes = notesData.pages.flatMap((page) => page.notes as unknown as BackendNoteItem[]);
-      const mappedNotes: NoteItem[] = allFetchedNotes.map((note) => ({
-        id: note.id,
-        title: note.title,
-        parentId: note.parentId ?? null,
-        labelId: note.labelId ?? null,
-        boardX: typeof note.boardX === "number" ? note.boardX : null,
-        boardY: typeof note.boardY === "number" ? note.boardY : null,
-        labels:
-          Array.isArray(note.labels) && note.labels.length > 0
-            ? note.labels
-            : note.label?.name
-              ? [note.label.name]
-              : note.category
-                ? [note.category]
-                : [],
-        color: note.background || note.color,
-        background: note.background || note.color,
-        textColor: note.textColor,
-        subNotes: note.children || [],
-        files: (note.attachments || note.files || []).map((att) => ({
-          id: att.id || `file-${Math.random().toString(36).slice(2, 9)}`,
-          name: att.fileName || att.name || "attachment",
-          type: att.mimeType || att.type || "application/octet-stream",
-          url: att.storageKey || att.url || "",
-          size: att.size || 0,
-        })),
-        linkPreviews: note.linkPreviews || [],
-        content:
-          typeof note.content === "string"
-            ? note.content
-            : note.content
-              ? JSON.stringify(note.content)
-              : "",
-        category: note.label?.name || note.category,
-      }));
-      setNotes(mappedNotes);
+      const allFetchedNotes = notesData.pages.flatMap(
+        (page) => page.notes as unknown as BackendNoteItem[],
+      );
+      setNotes(allFetchedNotes.map(mapBackendNoteToNoteItem));
     }
   }, [notesData]);
 
@@ -221,6 +173,21 @@ export default function HomeClient() {
 
   useEffect(() => {
     setViewMode(getSavedDefaultView());
+    try {
+      const nextView = sessionStorage.getItem("project_notes_next_view") as ViewMode | null;
+      if (nextView) {
+        sessionStorage.removeItem("project_notes_next_view");
+        setViewMode(nextView);
+      }
+      const nextAction = sessionStorage.getItem("project_notes_next_action");
+      if (nextAction) {
+        sessionStorage.removeItem("project_notes_next_action");
+        if (nextAction === "ai-chat") setIsAiChatOpen(true);
+        if (nextAction === "new-note") {
+          setPopoverConfig({ isOpen: true, parentId: null, anchorRect: null });
+        }
+      }
+    } catch {}
     const handleSettingsChange = () => {
       setViewMode(getSavedDefaultView());
     };
@@ -554,6 +521,9 @@ export default function HomeClient() {
               setSelectedNoteId(id);
               openNoteModal(id);
             }}
+            onOpenAddNote={(e) =>
+              openPopover(null, e, selectedLabel?.id, selectedLabel?.name)
+            }
             onUpdateNote={handleUpdateNote}
             onDeleteNote={handleDeleteNote}
             selectedLabel={selectedLabel}
@@ -568,6 +538,9 @@ export default function HomeClient() {
               setSelectedNoteId(id);
               openNoteModal(id);
             }}
+            onOpenAddNote={(e) =>
+              openPopover(null, e, selectedLabel?.id, selectedLabel?.name)
+            }
             onUpdateNote={handleUpdateNote}
             onDeleteNote={handleDeleteNote}
             onLoadMore={() => fetchNextPage()}
@@ -597,9 +570,31 @@ export default function HomeClient() {
         onSelectView={(mode) => setViewMode(mode)}
         activeNoteTitle={activeNote?.title}
         onOpenAddNote={(e) => openPopover(null, e)}
+        onOpenAiChat={() => setIsAiChatOpen((prev) => !prev)}
+        isAiChatOpen={isAiChatOpen}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         notesCount={notes.length}
+      />
+
+      <AiChatDrawer
+        isOpen={isAiChatOpen}
+        onClose={() => setIsAiChatOpen(false)}
+        selectedLabel={selectedLabel}
+        notesCount={notes.length}
+        onNoteCreated={(createdNote) => {
+          setNotes((prev) => [
+            createdNote,
+            ...prev.filter((n) => n.id !== createdNote.id),
+          ]);
+        }}
+        onOpenNote={(noteId) => {
+          setSelectedNoteId(noteId);
+          openNoteModal(noteId);
+        }}
+        onLimitReached={() => {
+          setLimitNotice("You can only post up to 5 notes for now.");
+        }}
       />
 
       <CreateNotePopover

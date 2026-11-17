@@ -121,7 +121,7 @@ export default function MiniMap({
     <div
       className={
         className ||
-        "fixed bottom-[76px] right-5 z-50 overflow-hidden rounded-2xl border border-border/80 bg-background/85 shadow-[0_8px_28px_-10px_rgba(0,0,0,0.16)] backdrop-blur-md cursor-grab active:cursor-grabbing transition-transform hover:scale-[1.03] touch-none select-none dark:shadow-[0_10px_32px_-10px_rgba(0,0,0,0.5)]"
+        "fixed bottom-[76px] right-5 z-30 overflow-hidden rounded-2xl border border-border/80 bg-background/85 shadow-[0_8px_28px_-10px_rgba(0,0,0,0.16)] backdrop-blur-md cursor-grab active:cursor-grabbing transition-transform hover:scale-[1.03] touch-none select-none dark:shadow-[0_10px_32px_-10px_rgba(0,0,0,0.5)]"
       }
       style={{ width: MINIMAP_W, height: MINIMAP_H }}
       onPointerDown={handlePointerDown}

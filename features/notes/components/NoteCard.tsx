@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import NoteToolbar from "./NoteToolbar";
 import LinkPreviewCard from "./LinkPreviewCard";
-import NoteLabel from "./NoteLabel";
+import NoteLabel, { getNoteLabels } from "./NoteLabel";
 import ResizableNoteImage from "./ResizableNoteImage";
 import {
   Tooltip,
@@ -64,12 +64,22 @@ export default function NoteCard({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isToolbarActive = isColorPickerOpenOnThisCard || isMenuOpen;
   const textColor = getCardTextColor(note.color);
+  const labelCount = getNoteLabels(note).length;
   const activeTitleClass = textColor.title.includes("group-hover:text-blue-600")
     ? "text-blue-600 font-semibold"
     : textColor.title;
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const titleRef = useRef<HTMLTextAreaElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const fetchingUrlsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (el && isModal) {
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, [note?.title, isModal]);
 
   useEffect(() => {
     if (contentRef.current && isModal && note) {
@@ -126,7 +136,7 @@ export default function NoteCard({
   ]);
 
   const handleModalPaste = async (
-    e: React.ClipboardEvent<HTMLInputElement | HTMLDivElement>,
+    e: React.ClipboardEvent<HTMLTextAreaElement | HTMLDivElement>,
   ) => {
     const text = e.clipboardData.getData("text");
     if (!text || !note) return;
@@ -173,37 +183,42 @@ export default function NoteCard({
           note.color ? "" : "bg-card"
         } ${className}`}
       >
-        <div className="flex flex-col space-y-1.5 text-center sm:text-left shrink-0">
-          <div className="flex items-center justify-between">
-            <input
-              type="text"
+        <div className="flex flex-col gap-2.5 text-left shrink-0">
+          <div className="flex items-start justify-between gap-2">
+            <textarea
+              ref={titleRef}
+              rows={1}
               value={note.title}
               onChange={(e) =>
                 onUpdate?.({
                   title: e.target.value,
                 })
               }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  contentRef.current?.focus();
+                }
+              }}
               onPaste={handleModalPaste}
               placeholder="Note title..."
               style={note.textColor ? { color: note.textColor } : undefined}
-              className="w-full bg-transparent border-none outline-none text-lg font-semibold leading-none mr-2"
+              className="w-full resize-none overflow-hidden bg-transparent border-none outline-none text-lg font-semibold leading-snug break-words"
             />
-            <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={`/notes/${note.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="rounded-lg transition-colors p-1.5 hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground"
-                  >
-                    <Fullscreen size={16} />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent>Open full page</TooltipContent>
-              </Tooltip>
-              <NoteLabel note={note} />
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/notes/${note.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="shrink-0 rounded-lg transition-colors p-1.5 hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground"
+                >
+                  <Fullscreen size={16} />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>Open full page</TooltipContent>
+            </Tooltip>
           </div>
+          <NoteLabel note={note} variant="inline" />
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-0 pr-1 mt-4 custom-scrollbar">
@@ -392,7 +407,7 @@ export default function NoteCard({
           }`}
           style={note.color ? { backgroundColor: note.color } : undefined}
         >
-          <NoteLabel note={note} />
+          {labelCount > 0 && labelCount <= 2 && <NoteLabel note={note} />}
 
           <Tooltip>
             <TooltipTrigger asChild>
@@ -412,9 +427,20 @@ export default function NoteCard({
             <TooltipContent>Open full page</TooltipContent>
           </Tooltip>
 
-          <div className="mt-6 mb-12">
+          <div
+            className={`${
+              labelCount > 2
+                ? "mt-7"
+                : labelCount > 0
+                  ? "mt-9"
+                  : "mt-6"
+            } mb-12`}
+          >
+            {labelCount > 2 && (
+              <NoteLabel note={note} variant="inline" className="mb-2.5" />
+            )}
             <h3
-              className={`text-base font-semibold transition-colors ${
+              className={`text-base font-semibold leading-snug break-words transition-colors ${
                 note.textColor
                   ? ""
                   : isToolbarActive

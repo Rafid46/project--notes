@@ -6,8 +6,8 @@ interface NoteLabelProps {
   className?: string;
 }
 
-const NoteLabel = ({ note, variant = "badge", className }: NoteLabelProps) => {
-  const labels = Array.from(
+export const getNoteLabels = (note: NoteItem): string[] =>
+  Array.from(
     new Set(
       [
         ...(note.labels || []),
@@ -16,15 +16,18 @@ const NoteLabel = ({ note, variant = "badge", className }: NoteLabelProps) => {
     ),
   );
 
+const NoteLabel = ({ note, variant = "badge", className }: NoteLabelProps) => {
+  const labels = getNoteLabels(note);
+
   if (labels.length === 0) return null;
 
   if (variant === "inline") {
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className={`flex flex-wrap items-center gap-1.5 ${className ?? ""}`}>
         {labels.map((label) => (
           <span
             key={label}
-            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]"
+            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shadow-xs bg-[var(--sidebar-fg)] text-[var(--sidebar-bg)] dark:bg-[var(--sidebar-bg)] dark:text-[var(--sidebar-fg)]"
           >
             {label}
           </span>

@@ -47,14 +47,6 @@ const AUDIO_EXTENSIONS = new Set([
   "opus",
 ]);
 
-const IGNORED_NAMES = new Set([
-  ".ds_store",
-  "thumbs.db",
-  "desktop.ini",
-  "node_modules",
-  ".git",
-]);
-
 const CATEGORY_ORDER: Record<BoardFileCategory, number> = {
   image: 0,
   video: 1,
@@ -172,11 +164,6 @@ export async function verifyDirectoryPermission(handle: DirectoryHandleLike): Pr
   return requested === "granted";
 }
 
-function shouldIgnoreEntry(name: string): boolean {
-  const lower = name.toLowerCase();
-  return lower.startsWith(".") || IGNORED_NAMES.has(lower);
-}
-
 function createBoardFileItem(file: File, relativePath: string): BoardFileItem {
   const category = classifyFile(file);
   const extension = getFileExtension(file.name);
@@ -196,15 +183,11 @@ function createBoardFileItem(file: File, relativePath: string): BoardFileItem {
 
 export async function readFolderFromHandle(
   handle: DirectoryHandleLike,
-  maxFiles = 250,
 ): Promise<BoardFileItem[]> {
   const items: BoardFileItem[] = [];
 
   async function walk(dir: DirectoryHandleLike, prefix: string): Promise<void> {
     for await (const entry of dir.values()) {
-      if (items.length >= maxFiles) break;
-      if (shouldIgnoreEntry(entry.name)) continue;
-
       const relPath = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.kind === "file") {
         const file = await entry.getFile();
@@ -221,19 +204,16 @@ export async function readFolderFromHandle(
 
 export function readFolderFromFileList(
   fileList: FileList,
-  maxFiles = 250,
 ): { folderName: string; items: BoardFileItem[] } {
   const files = Array.from(fileList);
   const firstPath = files[0]?.webkitRelativePath || "";
-  const folderName = firstPath.includes("/") ? firstPath.split("/")[0] : "Selected Folder";
+  const folderName = firstPath.includes("/") ? firstPath.split("/")[0] : "Selected Files";
   const items: BoardFileItem[] = [];
 
   for (const file of files) {
-    if (items.length >= maxFiles) break;
     const rawRel = file.webkitRelativePath || file.name;
     const parts = rawRel.split("/");
     const trimmedRel = parts.length > 1 ? parts.slice(1).join("/") : rawRel;
-    if (parts.some((p) => shouldIgnoreEntry(p))) continue;
     items.push(createBoardFileItem(file, trimmedRel));
   }
 
