@@ -11,7 +11,10 @@ import {
   SETTINGS_CHANGE_EVENT,
   type WhiteboardControlSettings,
 } from "@/features/home/components/SettingsModal";
-import BottomToolbar, { COLOR_STORAGE_KEY } from "./BottomToolbar";
+import BottomToolbar, {
+  COLOR_STORAGE_KEY,
+  useCanvasColor,
+} from "./BottomToolbar";
 import { api } from "@/lib/axios";
 import { NOTES } from "@/constants/api.constant";
 import { useColorPickerStore } from "@/store/useColorPickerStore";
@@ -52,15 +55,7 @@ export default function Whiteboard({
   selectedLabel,
 }: WhiteboardProps) {
   const activeColorPickerNoteId = useColorPickerStore((s) => s.activeNoteId);
-  const [canvasColor, setCanvasColor] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem(COLOR_STORAGE_KEY);
-        if (saved) return saved;
-      } catch {}
-    }
-    return "#ffffff";
-  });
+  const [canvasColor, setCanvasColor] = useCanvasColor(COLOR_STORAGE_KEY);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
   const [isPanning, setIsPanning] = useState(false);
@@ -157,11 +152,6 @@ export default function Whiteboard({
   });
 
   useEffect(() => {
-    const savedColor = localStorage.getItem(COLOR_STORAGE_KEY);
-    if (savedColor) {
-      setCanvasColor(savedColor);
-    }
-
     const savedPositions = localStorage.getItem(POSITIONS_STORAGE_KEY);
     let loaded: Record<string, { x: number; y: number }> = {};
     if (savedPositions) {
@@ -174,8 +164,12 @@ export default function Whiteboard({
       ...cardPositionsRef.current,
       ...loaded,
     };
-    let col = 0;
     let hasNewCards = false;
+
+    const isSlotOccupied = (x: number, y: number) =>
+      Object.values(initial).some(
+        (pos) => Math.abs(pos.x - x) < 320 && Math.abs(pos.y - y) < 200,
+      );
 
     notes.forEach((parent) => {
       if (!initial[parent.id]) {
@@ -186,7 +180,11 @@ export default function Whiteboard({
         ) {
           initial[parent.id] = { x: parent.boardX, y: parent.boardY };
         } else {
-          initial[parent.id] = { x: 340 + col * 360, y: 120 };
+          let slotCol = 0;
+          while (isSlotOccupied(340 + slotCol * 360, 120)) {
+            slotCol++;
+          }
+          initial[parent.id] = { x: 340 + slotCol * 360, y: 120 };
         }
       }
       if (parent.subNotes && parent.subNotes.length > 0) {
@@ -199,15 +197,18 @@ export default function Whiteboard({
             ) {
               initial[sub.id] = { x: sub.boardX, y: sub.boardY };
             } else {
+              let subY = initial[parent.id].y + 240 + subIdx * 210;
+              while (isSlotOccupied(initial[parent.id].x, subY)) {
+                subY += 210;
+              }
               initial[sub.id] = {
                 x: initial[parent.id].x,
-                y: initial[parent.id].y + 240 + subIdx * 210,
+                y: subY,
               };
             }
           }
         });
       }
-      col++;
     });
 
     if (hasNewCards || Object.keys(cardPositionsRef.current).length === 0) {

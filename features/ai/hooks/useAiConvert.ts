@@ -33,7 +33,9 @@ export function useAiConvert() {
           payload.labels.forEach((label) => formData.append("labels", label));
         }
 
-        const { data } = await api.post<AiConvertResponse>(AI.convert, formData);
+        const { data } = await api.post<AiConvertResponse>(AI.convert, formData, {
+          signal: payload.signal,
+        });
         return data;
       }
 
@@ -47,7 +49,9 @@ export function useAiConvert() {
         background: payload.background || undefined,
       };
 
-      const { data } = await api.post<AiConvertResponse>(AI.convert, body);
+      const { data } = await api.post<AiConvertResponse>(AI.convert, body, {
+        signal: payload.signal,
+      });
       return data;
     },
     onSuccess: (_data, variables) => {

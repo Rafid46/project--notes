@@ -15,7 +15,9 @@ import {
   RotateCcw,
   BookmarkPlus,
   Loader2,
+  Square,
 } from "lucide-react";
+import axios from "axios";
 import type { Label, NoteItem } from "@/features/home/types";
 import {
   extractStructuredContent,
@@ -86,6 +88,7 @@ export default function AiChatDrawer({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const listEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const aiConvert = useAiConvert();
   const saveAiNote = useSaveAiNote();
@@ -99,6 +102,15 @@ export default function AiChatDrawer({
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const nextHeight = Math.min(el.scrollHeight, 300);
+    el.style.height = `${nextHeight}px`;
+    el.style.overflowY = el.scrollHeight > 300 ? "auto" : "hidden";
+  }, [input, isOpen]);
 
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -152,6 +164,9 @@ export default function AiChatDrawer({
     const activeLabelId =
       applyActiveLabel && selectedLabel ? selectedLabel.id : undefined;
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const response = await aiConvert.mutateAsync({
         file: currentFile,
@@ -164,7 +179,10 @@ export default function AiChatDrawer({
         saveToDb: effectiveAutoSave,
         labelId: activeLabelId,
         labels: activeLabelName ? [activeLabelName] : undefined,
+        signal: controller.signal,
       });
+
+      if (controller.signal.aborted) return;
 
       const rawNote = response.note;
       const isSavedRecord =
@@ -202,6 +220,18 @@ export default function AiChatDrawer({
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
+      if (controller.signal.aborted || axios.isCancel(error)) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `ai-stop-${Date.now()}`,
+            role: "assistant",
+            text: "Stopped generating note.",
+            createdAt: Date.now(),
+          },
+        ]);
+        return;
+      }
       const assistantError: AiChatMessage = {
         id: `ai-err-${Date.now()}`,
         role: "assistant",
@@ -210,7 +240,17 @@ export default function AiChatDrawer({
         createdAt: Date.now(),
       };
       setMessages((prev) => [...prev, assistantError]);
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
+  };
+
+  const handleStop = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    aiConvert.reset();
   };
 
   const handleSaveDraft = async (
@@ -642,20 +682,22 @@ export default function AiChatDrawer({
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Describe the note or instructions..."
-                  className="max-h-28 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none sidebar-scrollbar"
+                  className="max-h-[300px] min-h-8 flex-1 resize-none overflow-y-hidden bg-transparent py-1.5 text-xs text-foreground placeholder:text-muted-foreground outline-none sidebar-scrollbar"
                 />
 
                 <button
                   type="button"
-                  onClick={() => handleSend()}
+                  onClick={aiConvert.isPending ? handleStop : () => handleSend()}
                   disabled={
-                    aiConvert.isPending || (!input.trim() && !attachedFile)
+                    !aiConvert.isPending && !input.trim() && !attachedFile
                   }
-                  aria-label="Generate note"
+                  aria-label={
+                    aiConvert.isPending ? "Stop generating" : "Generate note"
+                  }
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#BBDC12] text-[#004030] transition-all hover:bg-[#BBDC12]/90 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {aiConvert.isPending ? (
-                    <Loader2 size={15} className="animate-spin" />
+                    <Square size={13} className="fill-current" />
                   ) : (
                     <ArrowUp size={16} />
                   )}

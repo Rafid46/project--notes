@@ -259,34 +259,34 @@ export default function Header({
             aria-label="Workspace navigation"
             className="flex h-12 min-w-0 items-center gap-1 rounded-full border border-border/80 bg-background/85 p-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]"
           >
-          <div
-            className={`group relative flex h-9 items-center rounded-full bg-secondary/75 transition-[width] duration-200 ${
-              searchQuery
-                ? "w-40 sm:w-48 xl:w-56"
-                : "w-9 sm:w-32 xl:w-40 focus-within:w-48"
-            } overflow-hidden`}
-          >
-            <button
-              type="button"
-              onClick={() => searchInputRef.current?.focus()}
-              aria-label="Search notes"
-              className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors group-focus-within:text-foreground hover:text-foreground cursor-pointer"
-            >
-              <Search size={15} />
-            </button>
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange?.(e.target.value)}
-              placeholder="Search notes..."
-              className={`h-full w-full min-w-0 bg-transparent pr-8 text-xs text-foreground placeholder:text-muted-foreground outline-none transition-opacity duration-200 ${
+            <div
+              className={`group relative flex h-9 items-center rounded-full bg-secondary/75 transition-[width] duration-200 ${
                 searchQuery
-                  ? "opacity-100"
-                  : "opacity-0 sm:opacity-100 group-focus-within:opacity-100"
-              }`}
-            />
-            {searchQuery ? (
+                  ? "w-40 sm:w-48 xl:w-56"
+                  : "w-9 sm:w-32 xl:w-40 focus-within:w-48"
+              } overflow-hidden`}
+            >
+              <button
+                type="button"
+                onClick={() => searchInputRef.current?.focus()}
+                aria-label="Search notes"
+                className="flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors group-focus-within:text-foreground hover:text-foreground cursor-pointer"
+              >
+                <Search size={15} />
+              </button>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="Search notes..."
+                className={`h-full w-full min-w-0 bg-transparent pr-8 text-xs text-foreground placeholder:text-muted-foreground outline-none transition-opacity duration-200 ${
+                  searchQuery
+                    ? "opacity-100"
+                    : "opacity-0 sm:opacity-100 group-focus-within:opacity-100"
+                }`}
+              />
+
               <button
                 type="button"
                 onClick={() => onSearchChange?.("")}
@@ -295,35 +295,60 @@ export default function Header({
               >
                 <X size={14} />
               </button>
-            ) : (
-              <kbd className="pointer-events-none absolute right-2.5 hidden rounded border border-border/80 bg-background/80 px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground group-focus-within:hidden lg:inline-flex">
-                ⌘K
-              </kbd>
-            )}
-          </div>
+            </div>
 
-          <span
-            aria-hidden="true"
-            className="mx-1 h-4 w-px shrink-0 bg-border"
-          />
+            <span
+              aria-hidden="true"
+              className="mx-1 h-4 w-px shrink-0 bg-border"
+            />
 
-          <div className="flex items-center gap-0.5">
-            {primaryViews.map((item) => (
+            <div className="flex items-center gap-0.5">
+              {primaryViews.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setIsGridDropdownOpen(false);
+                    onSelectView(item.id);
+                  }}
+                  aria-pressed={item.isActive}
+                  className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    item.isActive
+                      ? "text-foreground font-semibold"
+                      : "text-muted-foreground font-medium hover:text-foreground hover:bg-secondary/50"
+                  }`}
+                >
+                  {item.isActive && (
+                    <motion.span
+                      layoutId="header-active-view"
+                      transition={{
+                        type: "spring",
+                        stiffness: 420,
+                        damping: 32,
+                      }}
+                      className="absolute inset-0 rounded-full bg-secondary shadow-xs"
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    {item.icon}
+                    <span className="hidden md:inline">{item.label}</span>
+                  </span>
+                </button>
+              ))}
+
               <button
-                key={item.id}
                 type="button"
-                onClick={() => {
-                  setIsGridDropdownOpen(false);
-                  onSelectView(item.id);
-                }}
-                aria-pressed={item.isActive}
+                data-grid-trigger="true"
+                onClick={handleGridTriggerClick}
+                aria-expanded={isGridDropdownOpen}
+                aria-haspopup="menu"
                 className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  item.isActive
+                  isGridActive
                     ? "text-foreground font-semibold"
                     : "text-muted-foreground font-medium hover:text-foreground hover:bg-secondary/50"
                 }`}
               >
-                {item.isActive && (
+                {isGridActive && (
                   <motion.span
                     layoutId="header-active-view"
                     transition={{ type: "spring", stiffness: 420, damping: 32 }}
@@ -331,133 +356,110 @@ export default function Header({
                   />
                 )}
                 <span className="relative z-10 flex items-center gap-1.5">
-                  {item.icon}
-                  <span className="hidden md:inline">{item.label}</span>
+                  <Columns3 size={15} />
+                  <span className="hidden md:inline">{currentGridLabel}</span>
+                  <ChevronDown
+                    size={13}
+                    className={`transition-transform duration-200 ${
+                      isGridDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </span>
               </button>
-            ))}
+            </div>
 
-            <button
-              type="button"
-              data-grid-trigger="true"
-              onClick={handleGridTriggerClick}
-              aria-expanded={isGridDropdownOpen}
-              aria-haspopup="menu"
-              className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                isGridActive
-                  ? "text-foreground font-semibold"
-                  : "text-muted-foreground font-medium hover:text-foreground hover:bg-secondary/50"
-              }`}
-            >
-              {isGridActive && (
-                <motion.span
-                  layoutId="header-active-view"
-                  transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  className="absolute inset-0 rounded-full bg-secondary shadow-xs"
-                />
-              )}
-              <span className="relative z-10 flex items-center gap-1.5">
-                <Columns3 size={15} />
-                <span className="hidden md:inline">{currentGridLabel}</span>
-                <ChevronDown
-                  size={13}
-                  className={`transition-transform duration-200 ${
-                    isGridDropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </span>
-            </button>
-          </div>
+            <span
+              aria-hidden="true"
+              className="mx-1 h-4 w-px shrink-0 bg-border"
+            />
 
-          <span
-            aria-hidden="true"
-            className="mx-1 h-4 w-px shrink-0 bg-border"
-          />
-
-          <div className="flex items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={() => setIsLabelManagerOpen(true)}
-                  aria-label="Manage Labels"
-                  className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-                >
-                  <Tag size={15} />
-                  <span className="hidden xl:inline">Labels</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Manage labels</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href="/board"
-                  aria-label="Open Folder Whiteboard"
-                  aria-current={isFolderBoard ? "page" : undefined}
-                  className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    isFolderBoard
-                      ? "text-foreground font-semibold"
-                      : "text-muted-foreground font-medium hover:bg-secondary/70 hover:text-foreground"
-                  }`}
-                >
-                  {isFolderBoard && (
-                    <motion.span
-                      layoutId="header-active-view"
-                      transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 rounded-full bg-secondary shadow-xs"
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    <FolderOpen size={15} />
-                    <span className="hidden xl:inline">Folder Board</span>
-                  </span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>Folder Board</TooltipContent>
-            </Tooltip>
-
-            {onOpenAiChat && (
+            <div className="flex items-center gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    onClick={onOpenAiChat}
-                    aria-label="AI Note Assistant"
-                    aria-pressed={isAiChatOpen}
-                    className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer ${
-                      isAiChatOpen
-                        ? "bg-secondary text-foreground font-semibold shadow-2xs"
+                    onClick={() => setIsLabelManagerOpen(true)}
+                    aria-label="Manage Labels"
+                    className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium text-muted-foreground whitespace-nowrap transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                  >
+                    <Tag size={15} />
+                    <span className="hidden xl:inline">Labels</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Manage labels</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/board"
+                    aria-label="Open Folder Whiteboard"
+                    aria-current={isFolderBoard ? "page" : undefined}
+                    className={`relative flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      isFolderBoard
+                        ? "text-foreground font-semibold"
                         : "text-muted-foreground font-medium hover:bg-secondary/70 hover:text-foreground"
                     }`}
                   >
-                    <Sparkles size={15} />
-                    <span className="hidden xl:inline">AI Notes</span>
-                  </button>
+                    {isFolderBoard && (
+                      <motion.span
+                        layoutId="header-active-view"
+                        transition={{
+                          type: "spring",
+                          stiffness: 420,
+                          damping: 32,
+                        }}
+                        className="absolute inset-0 rounded-full bg-secondary shadow-xs"
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      <FolderOpen size={15} />
+                      <span className="hidden xl:inline">Folder Board</span>
+                    </span>
+                  </Link>
                 </TooltipTrigger>
-                <TooltipContent>AI Note Assistant (⌘J)</TooltipContent>
+                <TooltipContent>Folder Board</TooltipContent>
               </Tooltip>
+
+              {onOpenAiChat && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={onOpenAiChat}
+                      aria-label="AI Note Assistant"
+                      aria-pressed={isAiChatOpen}
+                      className={`flex h-9 items-center gap-1.5 rounded-full px-3 text-xs whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer ${
+                        isAiChatOpen
+                          ? "bg-secondary text-foreground font-semibold shadow-2xs"
+                          : "text-muted-foreground font-medium hover:bg-secondary/70 hover:text-foreground"
+                      }`}
+                    >
+                      <Sparkles size={15} />
+                      <span className="hidden xl:inline">AI Notes</span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>AI Note Assistant (⌘J)</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </nav>
+
+          <Button
+            type="button"
+            onClick={onOpenAddNote}
+            aria-label="Add Note"
+            className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[#BBDC12] px-5 text-xs font-semibold text-[#004030] shadow-[0_4px_24px_-8px_rgba(0,0,0,0.18)] transition-all duration-200 hover:bg-[#BBDC12]/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          >
+            <PenLine size={16} />
+            <span>Note</span>
+            {typeof notesCount === "number" && notesCount >= 5 && (
+              <span className="rounded-full bg-[#004030]/15 px-1.5 py-0.5 text-[10px] font-semibold">
+                {notesCount}/5
+              </span>
             )}
-
-          </div>
-        </nav>
-
-        <Button
-          type="button"
-          onClick={onOpenAddNote}
-          aria-label="Add Note"
-          className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-[#BBDC12] px-5 text-xs font-semibold text-[#004030] shadow-[0_4px_24px_-8px_rgba(0,0,0,0.18)] transition-all duration-200 hover:bg-[#BBDC12]/90 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-        >
-          <PenLine size={16} />
-          <span>Note</span>
-          {typeof notesCount === "number" && notesCount >= 5 && (
-            <span className="rounded-full bg-[#004030]/15 px-1.5 py-0.5 text-[10px] font-semibold">
-              {notesCount}/5
-            </span>
-          )}
-        </Button>
-      </div>
+          </Button>
+        </div>
 
         <div className="pointer-events-auto flex h-12 shrink-0 items-center gap-1.5 rounded-full border border-border/80 bg-background/85 px-1.5 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12)] backdrop-blur-md dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.45)]">
           <ThemeToggle />

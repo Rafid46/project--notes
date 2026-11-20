@@ -12,6 +12,7 @@ export interface AiConvertPayload {
   labelId?: string | null;
   labels?: string[];
   background?: string;
+  signal?: AbortSignal;
 }
 
 export interface AiGeneratedNoteDraft {

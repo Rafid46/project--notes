@@ -1,10 +1,57 @@
 "use client";
 
+import { useCallback, useSyncExternalStore } from "react";
 import CustomColorPicker from "@/components/common/ColorPicker";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Minus, Plus } from "lucide-react";
 
 export const COLOR_STORAGE_KEY = "project_notes_canvas_color";
+const CANVAS_COLOR_EVENT = "project_notes_canvas_color_change";
+
+export function useCanvasColor(
+  storageKey = COLOR_STORAGE_KEY,
+  fallbackKey?: string,
+): [string, (color: string) => void] {
+  const subscribe = useCallback((callback: () => void) => {
+    const onChange = () => callback();
+    window.addEventListener("storage", onChange);
+    window.addEventListener(CANVAS_COLOR_EVENT, onChange);
+    return () => {
+      window.removeEventListener("storage", onChange);
+      window.removeEventListener(CANVAS_COLOR_EVENT, onChange);
+    };
+  }, []);
+
+  const getSnapshot = () => {
+    try {
+      return (
+        localStorage.getItem(storageKey) ||
+        (fallbackKey ? localStorage.getItem(fallbackKey) : null) ||
+        "#ffffff"
+      );
+    } catch {
+      return "#ffffff";
+    }
+  };
+
+  const canvasColor = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    () => "#ffffff",
+  );
+
+  const setCanvasColor = useCallback(
+    (color: string) => {
+      try {
+        localStorage.setItem(storageKey, color);
+        window.dispatchEvent(new Event(CANVAS_COLOR_EVENT));
+      } catch {}
+    },
+    [storageKey],
+  );
+
+  return [canvasColor, setCanvasColor];
+}
 
 export const CANVAS_COLORS = [
   { label: "White", value: "#ffffff" },
@@ -21,6 +68,7 @@ interface BottomToolbarProps {
   onResetZoom: () => void;
   canvasColor: string;
   onCanvasColorChange: (color: string) => void;
+  storageKey?: string;
   className?: string;
 }
 
@@ -30,12 +78,13 @@ export default function BottomToolbar({
   onResetZoom,
   canvasColor,
   onCanvasColorChange,
+  storageKey = COLOR_STORAGE_KEY,
   className,
 }: BottomToolbarProps) {
   const handleColorChange = (newColor: string) => {
     onCanvasColorChange(newColor);
     try {
-      localStorage.setItem(COLOR_STORAGE_KEY, newColor);
+      localStorage.setItem(storageKey, newColor);
     } catch {}
   };
 

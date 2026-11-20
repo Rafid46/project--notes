@@ -10,7 +10,10 @@ import {
   SETTINGS_CHANGE_EVENT,
   type WhiteboardControlSettings,
 } from "@/features/home/components/SettingsModal";
-import BottomToolbar, { COLOR_STORAGE_KEY } from "./BottomToolbar";
+import BottomToolbar, {
+  COLOR_STORAGE_KEY,
+  useCanvasColor,
+} from "./BottomToolbar";
 import BoardFileCard from "./BoardFileCard";
 import BoardFilePreviewModal from "./BoardFilePreviewModal";
 import FolderBar from "./FolderBar";
@@ -60,18 +63,10 @@ interface ResizeItemState {
 const FOLDER_CANVAS_COLOR_KEY = "project_notes_folder_canvas_color";
 
 export default function FolderWhiteboard() {
-  const [canvasColor, setCanvasColor] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return (
-          localStorage.getItem(FOLDER_CANVAS_COLOR_KEY) ||
-          localStorage.getItem(COLOR_STORAGE_KEY) ||
-          "#ffffff"
-        );
-      } catch {}
-    }
-    return "#ffffff";
-  });
+  const [canvasColor, setCanvasColor] = useCanvasColor(
+    FOLDER_CANVAS_COLOR_KEY,
+    COLOR_STORAGE_KEY,
+  );
 
   const router = useRouter();
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -170,9 +165,6 @@ export default function FolderWhiteboard() {
 
   const handleCanvasColorChange = (color: string) => {
     setCanvasColor(color);
-    try {
-      localStorage.setItem(FOLDER_CANVAS_COLOR_KEY, color);
-    } catch {}
   };
 
   const applyLoadedFolder = (
@@ -935,6 +927,7 @@ export default function FolderWhiteboard() {
               onResetZoom={() => setZoom(1)}
               canvasColor={canvasColor}
               onCanvasColorChange={handleCanvasColorChange}
+              storageKey={FOLDER_CANVAS_COLOR_KEY}
             />
           </>
         )}
