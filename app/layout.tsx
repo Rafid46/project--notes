@@ -7,6 +7,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { UserProvider } from "@/providers/UserProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import MobileDesktopGate from "@/components/common/MobileDesktopGate";
 import { cn } from "@/lib/utils";
 
 const interTight = Inter_Tight({
@@ -52,7 +53,9 @@ export default async function RootLayout({
                 enableSystem
                 disableTransitionOnChange
               >
-                <TooltipProvider>{children}</TooltipProvider>
+                <TooltipProvider>
+                  <MobileDesktopGate>{children}</MobileDesktopGate>
+                </TooltipProvider>
               </ThemeProvider>
             </UserProvider>
           </QueryProvider>
