@@ -46,6 +46,8 @@ export interface NoteItem {
   subNotes?: NoteItem[];
   files?: NoteFile[];
   linkPreviews?: LinkPreviewMetadata[];
+  isArchived?: boolean;
+  deletedAt?: string | null;
 }
 
 export interface DockItemData {

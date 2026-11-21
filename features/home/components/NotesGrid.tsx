@@ -15,6 +15,7 @@ interface NotesGridProps {
   onOpenAddNote?: (e: React.MouseEvent) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
   onDeleteNote?: (noteId: string) => void;
+  onArchiveNote?: (noteId: string) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
   selectedLabel?: Label | null;
@@ -29,6 +30,7 @@ export default function NotesGrid({
   onOpenAddNote,
   onUpdateNote,
   onDeleteNote,
+  onArchiveNote,
   onLoadMore,
   hasMore = false,
   selectedLabel,
@@ -88,6 +90,7 @@ export default function NotesGrid({
                 onClick={() => onSelectNote(note.id)}
                 onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
                 onDelete={onDeleteNote}
+                onArchive={onArchiveNote}
                 className="cursor-pointer w-full"
               />
             ))}
@@ -146,6 +149,7 @@ export default function NotesGrid({
                 onClick={() => onSelectNote(note.id)}
                 onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
                 onDelete={onDeleteNote}
+                onArchive={onArchiveNote}
                 className="cursor-pointer w-full"
               />
             ))}

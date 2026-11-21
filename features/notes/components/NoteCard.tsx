@@ -39,6 +39,7 @@ export interface NoteCardProps {
   onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
   onUpdate?: (updates: Partial<NoteItem>) => void;
   onDelete?: (id: string) => void;
+  onArchive?: (id: string) => void;
   className?: string;
   style?: React.CSSProperties;
   disableLayoutAnimation?: boolean;
@@ -53,6 +54,7 @@ export default function NoteCard({
   onPointerDown,
   onUpdate,
   onDelete,
+  onArchive,
   className = "",
   style,
   disableLayoutAnimation = false,
@@ -358,6 +360,7 @@ export default function NoteCard({
             note={note}
             onUpdate={onUpdate}
             onDelete={onDelete}
+            onArchive={onArchive}
             contentRef={contentRef}
             isModal
           />
@@ -557,6 +560,7 @@ export default function NoteCard({
                 note={note}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
+                onArchive={onArchive}
                 onActionClick={() => onClick?.()}
                 onMenuOpenChange={setIsMenuOpen}
                 isModal={false}

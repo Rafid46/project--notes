@@ -4,6 +4,8 @@ import { useRef, useEffect } from "react";
 import { Plus, Lightbulb, Archive, Trash2, Tag } from "lucide-react";
 import type { NoteItem, Label } from "../types";
 import { useInfiniteLabels } from "@/features/notes/hooks/useLabels";
+import { useArchivedNotes, useBinNotes } from "@/features/notes/hooks/useNotes";
+import { useAppUser } from "@/providers/UserProvider";
 import {
   Tooltip,
   TooltipTrigger,
@@ -24,17 +26,24 @@ interface SidebarProps {
   onToggle?: () => void;
   selectedLabel?: Label | null;
   onSelectLabel?: (label: Label | null) => void;
+  onOpenArchive?: () => void;
+  onOpenBin?: () => void;
 }
 
 export default function Sidebar({
   onOpenAddNoteWithLabel,
   selectedLabel,
   onSelectLabel,
+  onOpenArchive,
+  onOpenBin,
 }: SidebarProps) {
+  const { isSignedIn } = useAppUser();
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
     useInfiniteLabels({
       limit: 15,
     });
+  const { data: archivedNotes = [] } = useArchivedNotes(Boolean(isSignedIn));
+  const { data: binNotes = [] } = useBinNotes(Boolean(isSignedIn));
 
   const labels = data?.pages.flatMap((page) => page.labels) || [];
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -161,14 +170,32 @@ export default function Sidebar({
       </div>
 
       <div className="mt-2 pt-2 border-t border-border/70 flex flex-col gap-0.5">
-        <div className="flex h-9 items-center gap-3 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground cursor-pointer">
-          <Archive size={16} />
-          <span>Archive</span>
-        </div>
-        <div className="flex h-9 items-center gap-3 rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground cursor-pointer">
-          <Trash2 size={16} />
-          <span>Bin</span>
-        </div>
+        <button
+          type="button"
+          onClick={onOpenArchive}
+          className="flex h-9 w-full items-center justify-between rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground cursor-pointer"
+        >
+          <span className="flex items-center gap-3">
+            <Archive size={16} />
+            <span>Archive</span>
+          </span>
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            {archivedNotes.length}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenBin}
+          className="flex h-9 w-full items-center justify-between rounded-xl px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground cursor-pointer"
+        >
+          <span className="flex items-center gap-3">
+            <Trash2 size={16} />
+            <span>Bin</span>
+          </span>
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+            {binNotes.length}
+          </span>
+        </button>
       </div>
     </aside>
   );

@@ -16,5 +16,6 @@ export interface NotePayload {
   sortOrder?: number;
   parentId?: string | null;
   labelId?: string | null;
+  isArchived?: boolean;
   attachments?: NoteAttachmentPayload[];
 }

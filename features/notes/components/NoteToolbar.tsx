@@ -21,6 +21,7 @@ import {
   ListOrdered,
   Paperclip,
   Plus,
+  Archive,
 } from "lucide-react";
 
 import {
@@ -40,7 +41,7 @@ import {
 import { Button } from "@/components/ui/button";
 import CustomColorPicker from "@/components/common/ColorPicker";
 import { useLabels, useCreateLabel } from "@/features/notes/hooks/useLabels";
-import { useDeleteNote } from "@/features/notes/hooks/useNotes";
+import { useArchiveNote, useDeleteNote } from "@/features/notes/hooks/useNotes";
 
 const TEXT_COLORS: { label: string; value?: string; previewColor: string }[] = [
   { label: "Default", value: undefined, previewColor: "var(--card)" },
@@ -95,6 +96,7 @@ export interface NoteToolbarProps {
   note: NoteItem;
   onUpdate?: (updates: Partial<NoteItem>) => void;
   onDelete?: (id: string) => void;
+  onArchive?: (id: string) => void;
   contentRef?: React.RefObject<HTMLDivElement | null>;
   onActionClick?: (action: string) => void;
   className?: string;
@@ -106,6 +108,7 @@ export default function NoteToolbar({
   note,
   onUpdate,
   onDelete,
+  onArchive,
   contentRef,
   onActionClick,
   className = "",
@@ -120,6 +123,7 @@ export default function NoteToolbar({
   const [isTextColorOpen, setIsTextColorOpen] = useState(false);
   const { data: serverLabels = [] } = useLabels();
   const createLabelMutation = useCreateLabel();
+  const archiveNoteMutation = useArchiveNote();
   const deleteNoteMutation = useDeleteNote();
   const [newLabel, setNewLabel] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +137,20 @@ export default function NoteToolbar({
   useEffect(() => {
     onMenuOpenChange?.(isAnyMenuOpen);
   }, [isAnyMenuOpen, onMenuOpenChange]);
+
+  const handleArchive = () => {
+    if (note.id.startsWith("temp-")) {
+      return;
+    }
+    archiveNoteMutation.mutate(
+      { id: note.id, isArchived: true },
+      {
+        onSuccess: () => {
+          onArchive?.(note.id);
+        },
+      },
+    );
+  };
 
   const handleDelete = () => {
     if (note.id.startsWith("temp-")) {
@@ -630,6 +648,25 @@ export default function NoteToolbar({
           <TooltipContent side="top">Add color</TooltipContent>
         </Tooltip>
 
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="Archive note"
+              disabled={archiveNoteMutation.isPending || note.id.startsWith("temp-")}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleArchive();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="p-2 text-white/80 hover:text-foreground hover:bg-muted rounded-full transition-colors outline-none cursor-pointer disabled:opacity-50"
+            >
+              <Archive size={14} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">Archive</TooltipContent>
+        </Tooltip>
+
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -699,10 +736,10 @@ export default function NoteToolbar({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <DialogHeader>
-              <DialogTitle>Delete note?</DialogTitle>
+              <DialogTitle>Move note to Bin?</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete this note? This action cannot be
-                undone.
+                This note will be moved to the Bin where you can restore it or
+                permanently delete it.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="mt-4 flex gap-2 sm:justify-end">

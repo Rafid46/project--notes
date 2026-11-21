@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { FileUp, AlertCircle, X } from "lucide-react";
 import NoteModal from "@/features/notes/components/NoteModal";
+import ArchiveBinModal from "@/features/notes/components/ArchiveBinModal";
 import { useAutosave } from "@/features/notes/hooks/useAutosave";
 import { useInfiniteNotes } from "@/features/notes/hooks/useNotes";
 import { useAppUser } from "@/providers/UserProvider";
@@ -51,6 +52,8 @@ export default function HomeClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isBinOpen, setIsBinOpen] = useState(false);
 
   useEffect(() => {
     const handleAiShortcut = (e: KeyboardEvent) => {
@@ -423,6 +426,14 @@ export default function HomeClient() {
     }
   };
 
+  const handleArchiveNote = (noteId: string) => {
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    const modalState = useNoteModalStore.getState();
+    if (modalState.selectedNoteId === noteId) {
+      modalState.closeNoteModal();
+    }
+  };
+
   const handleUpdateNote = (noteId: string, updates: Partial<NoteItem>) => {
     const existing = findNoteById(notes, noteId);
     if (
@@ -547,6 +558,7 @@ export default function HomeClient() {
             }
             onUpdateNote={handleUpdateNote}
             onDeleteNote={handleDeleteNote}
+            onArchiveNote={handleArchiveNote}
             selectedLabel={selectedLabel}
           />
         ) : (
@@ -564,6 +576,7 @@ export default function HomeClient() {
             }
             onUpdateNote={handleUpdateNote}
             onDeleteNote={handleDeleteNote}
+            onArchiveNote={handleArchiveNote}
             onLoadMore={() => fetchNextPage()}
             hasMore={Boolean(hasNextPage && !isFetchingNextPage)}
             selectedLabel={selectedLabel}
@@ -584,6 +597,8 @@ export default function HomeClient() {
         }
         selectedLabel={selectedLabel}
         onSelectLabel={setSelectedLabel}
+        onOpenArchive={() => setIsArchiveOpen(true)}
+        onOpenBin={() => setIsBinOpen(true)}
       />
 
       <Header
@@ -638,6 +653,19 @@ export default function HomeClient() {
         onClose={() => closeNoteModal()}
         onUpdateNote={handleUpdateNote}
         onDeleteNote={handleDeleteNote}
+        onArchiveNote={handleArchiveNote}
+      />
+
+      <ArchiveBinModal
+        mode="archive"
+        isOpen={isArchiveOpen}
+        onClose={() => setIsArchiveOpen(false)}
+      />
+
+      <ArchiveBinModal
+        mode="bin"
+        isOpen={isBinOpen}
+        onClose={() => setIsBinOpen(false)}
       />
 
       {limitNotice && (

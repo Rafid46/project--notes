@@ -30,6 +30,8 @@ export interface BackendNoteItem {
   attachments?: BackendAttachment[];
   files?: BackendAttachment[];
   linkPreviews?: LinkPreviewMetadata[];
+  isArchived?: boolean;
+  deletedAt?: string | null;
 }
 
 export interface StructuredAiNoteContent {
@@ -199,5 +201,7 @@ export function mapBackendNoteToNoteItem(note: BackendNoteItem): NoteItem {
     linkPreviews: note.linkPreviews || [],
     content: formatNoteContentToHtml(note.content, note.plainText),
     category: note.label?.name || note.category,
+    isArchived: Boolean(note.isArchived),
+    deletedAt: note.deletedAt ?? null,
   };
 }

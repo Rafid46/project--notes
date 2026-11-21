@@ -7,6 +7,11 @@ import {
 import { NOTES } from "@/constants/api.constant";
 import { api } from "@/lib/axios";
 import { NotePayload } from "@/types/Note-type";
+import {
+  mapBackendNoteToNoteItem,
+  type BackendNoteItem,
+} from "@/features/notes/utils/note-content";
+import type { NoteItem } from "@/features/home/types";
 
 export function useNotes(params?: {
   keyword?: string;
@@ -110,6 +115,90 @@ export function useDeleteNote() {
     mutationFn: async (id: string) => {
       const { data } = await api.delete(NOTES.delete(id));
       return data.notes || [];
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+  });
+}
+
+export function useArchivedNotes(enabled = true) {
+  return useQuery<NoteItem[]>({
+    queryKey: ["notes", "archived"],
+    queryFn: async () => {
+      const { data } = await api.get<{ notes?: BackendNoteItem[] }>(
+        `${NOTES.getAll}?archived=true`,
+      );
+      return (data.notes || []).map(mapBackendNoteToNoteItem);
+    },
+    enabled,
+  });
+}
+
+export function useBinNotes(enabled = true) {
+  return useQuery<NoteItem[]>({
+    queryKey: ["notes", "bin"],
+    queryFn: async () => {
+      const { data } = await api.get<{ notes?: BackendNoteItem[] }>(
+        `${NOTES.getAll}?trashed=true`,
+      );
+      return (data.notes || []).map(mapBackendNoteToNoteItem);
+    },
+    enabled,
+  });
+}
+
+export function useArchiveNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      isArchived,
+    }: {
+      id: string;
+      isArchived: boolean;
+    }) => {
+      const { data } = await api.patch(NOTES.archive(id), { isArchived });
+      return data.note;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+  });
+}
+
+export function useRestoreNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.patch(NOTES.restore(id));
+      return data.note;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+  });
+}
+
+export function usePermanentDeleteNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(NOTES.permanentDelete(id));
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+  });
+}
+
+export function useEmptyBin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.delete(NOTES.emptyBin);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });

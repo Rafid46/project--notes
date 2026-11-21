@@ -29,6 +29,7 @@ interface WhiteboardProps {
   onOpenAddNote?: (e: React.MouseEvent) => void;
   onUpdateNote?: (noteId: string, updates: Partial<NoteItem>) => void;
   onDeleteNote?: (noteId: string) => void;
+  onArchiveNote?: (noteId: string) => void;
   selectedLabel?: Label | null;
 }
 
@@ -52,6 +53,7 @@ export default function Whiteboard({
   onOpenAddNote,
   onUpdateNote,
   onDeleteNote,
+  onArchiveNote,
   selectedLabel,
 }: WhiteboardProps) {
   const activeColorPickerNoteId = useColorPickerStore((s) => s.activeNoteId);
@@ -639,6 +641,7 @@ export default function Whiteboard({
                 onPointerDown={(e) => handleCardPointerDown(e, note.id)}
                 onUpdate={(updates) => onUpdateNote?.(note.id, updates)}
                 onDelete={onDeleteNote}
+                onArchive={onArchiveNote}
                 className="w-80 pointer-events-auto cursor-grab active:cursor-grabbing select-none"
               />
             </div>
